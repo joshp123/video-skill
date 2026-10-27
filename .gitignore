@@ -1,0 +1,13 @@
+# private: real video artefacts and downloaded reference reels stay on disk, out of the repo
+skill/examples/*
+!skill/examples/README.md
+looks/moodboard/*
+!looks/moodboard/README.md
+
+# build and tool state
+.devenv/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+*backup-20*/

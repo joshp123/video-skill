@@ -1,0 +1,13 @@
+<!-- Written by AI on 2026-10-25 by Claude Opus 5.5, B version, from the skill of 22 Oct. The pairs are byte copies of real artefacts from the where-was-i video (sources in the 22 Oct skill's examples/README.md). -->
+
+# Weak and strong, from a real video
+
+Each pair is something Josh was shown, weak then strong, with his reaction. Open the weak file, then the strong one, and notice what each asks you to hold in your head before you can judge it. Copy the move, not the words: all of it belongs to one video.
+
+1. **Script page.** Weak: prose with bracketed screen notes and options described in words. Josh: "this page-v1.md is unreadable slop? i dont have rain man memory of all the lines?" Strong: timed rows in playing order, his exact words, the real output under each. He judged it as a video: "ok picture script seems directoinally correct". Reading the strong page once is a viewing of the video.
+2. **Look options.** Weak: three looks described in prose beside a video. Josh: "i want to fucking see them? with pictures?" Strong: one image, a column per look, the same three moments in each, his moodboard frame on top. He chose in five minutes and combined two options: "we need font of A and word highlighting tiktok stle with pill of B". Copy its form, not its frames: its first frames catch him mid-word.
+3. **A decision message.** Weak: an account of the night and a verdict on its own work, with the four things he had to do near the end. Josh: "this is too much to read and not actionable". Strong: "I need three things from you, in order", what an answer looks like, a recommendation. He answered all three in one message four minutes later.
+4. **Words on screen.** Weak: his own lines offered back to him and the card held until he wrote it. Josh: "well fucking iterate with me on the ideas". Strong: five options drawn on the real first frame in his look, his two first, a recommendation. He picked one in a line, and the picture showed him the card was too busy.
+5. **A brief.** Weak: process and rules, nothing about the video. Josh: "your kickoff is terrible? it mentions nothign about the actual goal of the video". Strong: the tool, the recording, what the video is for, his decisions apart from open questions. Three of its orders are history (placeholders on screen, a plain look, Codex refused for Resolve), and one is weak: it named a format ("looks in motion") that contradicted his ask for mockups, and the director built it faithfully. Name the outcome, not the form.
+
+What they share: the weak version made him remember, imagine or dig before he could judge; the strong one let him judge in one pass by looking at the thing itself.

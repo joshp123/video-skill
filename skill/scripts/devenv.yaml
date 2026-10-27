@@ -1,0 +1,4 @@
+# Written by AI on 2026-10-22 by Claude Opus 5.5, fault pass: the same nixpkgs as the pipeline's devenv.
+inputs:
+  nixpkgs:
+    url: github:NixOS/nixpkgs/nixpkgs-unstable

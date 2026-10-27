@@ -1,0 +1,384 @@
+-- Signpost Closing: made by pipeline/b/make_templates.py from 2026-10-16-signpost-pill/look.json (written by AI on 2026-10-25 by Claude Opus 5.5). Remake it rather than editing it.
+{
+	Tools = {
+		["Signpost Closing"] = MacroOperator {
+			Inputs = {
+				Headline = InstanceInput {
+					SourceOp = "HeadlineText",
+					Page = "Controls",
+					Source = "StyledText",
+					Name = "Headline"
+				},
+				HeadlinePosition = InstanceInput {
+					SourceOp = "HeadlineText",
+					Page = "Controls",
+					Source = "Center",
+					Name = "HeadlinePosition"
+				},
+				Ask = InstanceInput {
+					SourceOp = "AskText",
+					Page = "Controls",
+					Source = "StyledText",
+					Name = "Ask"
+				},
+				AskPosition = InstanceInput {
+					SourceOp = "AskText",
+					Page = "Controls",
+					Source = "Center",
+					Name = "AskPosition"
+				},
+				Address = InstanceInput {
+					SourceOp = "AddressText",
+					Page = "Controls",
+					Source = "StyledText",
+					Name = "Address"
+				},
+				AddressPosition = InstanceInput {
+					SourceOp = "AddressText",
+					Page = "Controls",
+					Source = "Center",
+					Name = "AddressPosition"
+				},
+				AddressSize = InstanceInput {
+					SourceOp = "AddressText",
+					Page = "Controls",
+					Source = "Size",
+					Name = "AddressSize"
+				},
+				HeadlineSize = InstanceInput {
+					SourceOp = "HeadlineText",
+					Page = "Controls",
+					Source = "Size",
+					Name = "HeadlineSize"
+				},
+				AskSize = InstanceInput {
+					SourceOp = "AskText",
+					Page = "Controls",
+					Source = "Size",
+					Name = "AskSize"
+				},
+				DarkFrames = InstanceInput {
+					SourceOp = "Fade",
+					Page = "Controls",
+					Source = "NumberIn1",
+					Name = "DarkFrames"
+				},
+				DarkTo = InstanceInput {
+					SourceOp = "Fade",
+					Page = "Controls",
+					Source = "NumberIn2",
+					Name = "DarkTo"
+				},
+				PlainFrames = InstanceInput {
+					SourceOp = "Fade",
+					Page = "Controls",
+					Source = "NumberIn3",
+					Name = "PlainFrames"
+				}
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "ColourNode",
+					Source = "Output"
+				}
+			},
+			ViewInfo = GroupInfo {
+			},
+			Tools = ordered() {
+				Background = Background {
+					Inputs = {
+						GlobalOut = Input { Value = 2499 },
+						Width = Input { Value = 1080 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } },
+						TopLeftRed = Input { Value = 0.0901960784313725 },
+						TopLeftGreen = Input { Value = 0.0901960784313725 },
+						TopLeftBlue = Input { Value = 0.0901960784313725 },
+						TopLeftAlpha = Input { Expression = "iif(time < Fade.NumberIn1, time / Fade.NumberIn1 * Fade.NumberIn2, min(1, Fade.NumberIn2 + (time - Fade.NumberIn1) / Fade.NumberIn3 * (1 - Fade.NumberIn2)))" },
+						Depth = Input { Value = 4 },
+						UseFrameFormatSettings = Input { Value = 1 },
+						Height = Input { Value = 1920 }
+					}
+				},
+				Fade = Custom {
+					Inputs = {
+						LUTIn4 = Input {
+							SourceOp = "CustomTool1LUTIn4",
+							Source = "Value"
+						},
+						LUTIn3 = Input {
+							SourceOp = "CustomTool1LUTIn3",
+							Source = "Value"
+						},
+						LUTIn1 = Input {
+							SourceOp = "CustomTool1LUTIn1",
+							Source = "Value"
+						},
+						LUTIn2 = Input {
+							SourceOp = "CustomTool1LUTIn2",
+							Source = "Value"
+						},
+						NumberIn2 = Input { Value = 0.8 },
+						NumberIn1 = Input { Value = 10 },
+						NumberIn3 = Input { Value = 12 }
+					}
+				},
+				CustomTool1LUTIn1 = LUTBezier {
+					SplineColor = { Red = 0, Green = 0, Blue = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, Flags = { Linear = true }, LH = { 0.666666666666667, 0.666666666666667 } }
+						}
+					}
+				},
+				CustomTool1LUTIn2 = LUTBezier {
+					SplineColor = { Red = 0, Green = 0, Blue = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, Flags = { Linear = true }, LH = { 0.666666666666667, 0.666666666666667 } }
+						}
+					}
+				},
+				CustomTool1LUTIn3 = LUTBezier {
+					SplineColor = { Red = 0, Green = 0, Blue = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, Flags = { Linear = true }, LH = { 0.666666666666667, 0.666666666666667 } }
+						}
+					}
+				},
+				CustomTool1LUTIn4 = LUTBezier {
+					SplineColor = { Red = 0, Green = 0, Blue = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, Flags = { Linear = true }, LH = { 0.666666666666667, 0.666666666666667 } }
+						}
+					}
+				},
+				HeadlineText = TextPlus {
+					Version = 1,
+					Inputs = {
+						LineSpacing = Input { Value = 0.830040110766086 },
+						TransformRotation = Input { Value = 1 },
+						Enabled2 = Input { Value = 1 },
+						Enabled3 = Input { Value = 1 },
+						Softness1 = Input { Value = 1 },
+						Font = Input { Value = "Futura" },
+						Center = Input { Value = { 0.5, 0.337631659895833 } },
+						VerticalTopCenterBottom = Input { Value = -1 },
+						VerticalJustificationNew = Input { Value = 0 },
+						HorizontalJustificationNew = Input { Value = 3 },
+						Thickness2 = Input {
+							Value = 0.00737642641645828,
+							Expression = "0.0011111111111111111/Size"
+						},
+						OutsideOnly2 = Input { Value = 1 },
+						Green2 = Input { Value = 1 },
+						Blue2 = Input { Value = 1 },
+						Softness2 = Input { Value = 1 },
+						Alpha3 = Input { Value = 0.6 },
+						Softness3 = Input { Value = 1 },
+						SoftnessX3 = Input { Value = 12.6153846153846 },
+						SoftnessY3 = Input { Value = 12.6153846153846 },
+						PriorityBack3 = Input { Value = -10 },
+						Offset3 = Input {
+							Value = { 0, -0.0235689492316054 },
+							Expression = "Point(0.0/Size, -0.0035501908227567225/Size)"
+						},
+						Style = Input { Value = "Bold" },
+						GlobalOut = Input { Value = 2499 },
+						UseFrameFormatSettings = Input { Value = 1 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } },
+						StyledText = Input { Value = "Headline" },
+						Depth = Input { Value = 4 },
+						Height = Input { Value = 1920 },
+						Width = Input { Value = 1080 },
+						Size = Input { Value = 0.15063 },
+						Wrap = Input { Value = 1 },
+						LayoutType = Input { Value = 1 },
+						LayoutWidth = Input { Value = 0.888888888888889 },
+						LayoutHeight = Input { Value = 0.625 },
+						LayoutRotation = Input { Value = 1 }
+					}
+				},
+				AskText = TextPlus {
+					Version = 1,
+					Inputs = {
+						LineSpacing = Input { Value = 1.02032389094809 },
+						TransformRotation = Input { Value = 1 },
+						Enabled2 = Input { Value = 1 },
+						Enabled3 = Input { Value = 1 },
+						Softness1 = Input { Value = 1 },
+						Font = Input { Value = "Futura" },
+						Center = Input { Value = { 0.5, 0.257442821072917 } },
+						VerticalTopCenterBottom = Input { Value = -1 },
+						VerticalJustificationNew = Input { Value = 0 },
+						HorizontalJustificationNew = Input { Value = 3 },
+						Thickness2 = Input {
+							Value = 0.0127179765801005,
+							Expression = "0.0011111111111111111/Size"
+						},
+						OutsideOnly2 = Input { Value = 1 },
+						Green2 = Input { Value = 0.92156862745098 },
+						Blue2 = Input { Value = 0.92156862745098 },
+						Softness2 = Input { Value = 1 },
+						Alpha3 = Input { Value = 0.6 },
+						Softness3 = Input { Value = 1 },
+						SoftnessX3 = Input { Value = 12.6153846153846 },
+						SoftnessY3 = Input { Value = 12.6153846153846 },
+						PriorityBack3 = Input { Value = -10 },
+						Offset3 = Input {
+							Value = { 0, -0.0406361193648369 },
+							Expression = "Point(0.0/Size, -0.003550190822756723/Size)"
+						},
+						Red1 = Input { Value = 0.92156862745098 },
+						Green1 = Input { Value = 0.92156862745098 },
+						Blue1 = Input { Value = 0.92156862745098 },
+						Style = Input { Value = "Medium" },
+						Red2 = Input { Value = 0.92156862745098 },
+						GlobalOut = Input { Value = 2499 },
+						UseFrameFormatSettings = Input { Value = 1 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } },
+						StyledText = Input { Value = "The ask,\non two lines." },
+						Depth = Input { Value = 4 },
+						Height = Input { Value = 1920 },
+						Width = Input { Value = 1080 },
+						Size = Input { Value = 0.0873654 },
+						Wrap = Input { Value = 1 },
+						LayoutType = Input { Value = 1 },
+						LayoutWidth = Input { Value = 0.888888888888889 },
+						LayoutHeight = Input { Value = 0.625 },
+						LayoutRotation = Input { Value = 1 }
+					}
+				},
+				AddressText = TextPlus {
+					Version = 1,
+					Inputs = {
+						LineSpacing = Input { Value = 0.845411223928421 },
+						TransformRotation = Input { Value = 1 },
+						Enabled2 = Input { Value = 1 },
+						Softness1 = Input { Value = 1 },
+						Font = Input { Value = "Futura" },
+						Center = Input { Value = { 0.5, 0.156887138010417 } },
+						VerticalTopCenterBottom = Input { Value = -1 },
+						VerticalJustificationNew = Input { Value = 0 },
+						HorizontalJustificationNew = Input { Value = 3 },
+						Thickness2 = Input {
+							Value = 0.0136600489193672,
+							Expression = "0.0011111111111111111/Size"
+						},
+						OutsideOnly2 = Input { Value = 1 },
+						Green2 = Input { Value = 1 },
+						Blue2 = Input { Value = 1 },
+						Softness2 = Input { Value = 1 },
+						Style = Input { Value = "Bold" },
+						GlobalOut = Input { Value = 2499 },
+						UseFrameFormatSettings = Input { Value = 1 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } },
+						ExtendHorizontal4 = Input { Value = 0.192561487702459 },
+						ExtendVertical4 = Input { Value = 0.0722855428914218 },
+						Round4 = Input { Value = 1 },
+						Red4 = Input { Value = 0.850980392156863 },
+						StyledText = Input { Value = "owner/repository" },
+						Blue4 = Input { Value = 0.117647058823529 },
+						Softness4 = Input { Value = 1 },
+						PriorityBack4 = Input { Value = -5 },
+						Depth = Input { Value = 4 },
+						Height = Input { Value = 1920 },
+						Width = Input { Value = 1080 },
+						Size = Input { Value = 0.0813402 },
+						Offset4 = Input { Expression = "Point(0.0*Size, -0.0*Size)" },
+						Green4 = Input { Value = 0.325490196078431 },
+						Level4 = Input { Value = 0 },
+						Enabled4 = Input { Value = 1 },
+						Wrap = Input { Value = 1 },
+						LayoutType = Input { Value = 1 },
+						LayoutWidth = Input { Value = 0.888888888888889 },
+						LayoutHeight = Input { Value = 0.625 },
+						LayoutRotation = Input { Value = 1 }
+					}
+				},
+				AskOver = Merge {
+					Inputs = {
+						Foreground = Input {
+							SourceOp = "AskText",
+							Source = "Output"
+						},
+						PerformDepthMerge = Input { Value = 0 },
+						Background = Input {
+							SourceOp = "HeadlineText",
+							Source = "Output"
+						}
+					}
+				},
+				AddressOver = Merge {
+					Inputs = {
+						Foreground = Input {
+							SourceOp = "AddressText",
+							Source = "Output"
+						},
+						PerformDepthMerge = Input { Value = 0 },
+						Background = Input {
+							SourceOp = "AskOver",
+							Source = "Output"
+						}
+					}
+				},
+				Page = Merge {
+					Inputs = {
+						Blend = Input {
+							SourceOp = "PageBlend",
+							Source = "Value"
+						},
+						Background = Input {
+							SourceOp = "Background",
+							Source = "Output"
+						},
+						PerformDepthMerge = Input { Value = 0 },
+						Foreground = Input {
+							SourceOp = "AddressOver",
+							Source = "Output"
+						}
+					}
+				},
+				PageBlend = BezierSpline {
+					SplineColor = { Red = 205, Green = 205, Blue = 205 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyFrames = {
+						[0] = { 0.333333333333333, RH = { 0.333333333333333, 0.444444444444444 }, Flags = { Linear = true } },
+						{ 0.666666666666667, RH = { 1.33333333333333, 0.777777777777778 }, Flags = { Linear = true }, LH = { 0.666666666666667, 0.555555555555556 } },
+						{ 1, Flags = { Linear = true }, LH = { 1.66666666666667, 0.888888888888889 } }
+					}
+				},
+				ColourNode = ColorSpaceTransform {
+					Version = 1,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Page",
+							Source = "Output"
+						},
+						SrcLumMax = Input { Disabled = true },
+						IsRec2390ScalingEnabled = Input { Value = 1 },
+						InputGamma = Input { Value = FuID { "REC709_GAMMA" } },
+						UseHDRStandardConversions = Input { Value = 1 },
+						OutputColorSpace = Input { Value = FuID { "DWG_COLORSPACE" } },
+						DstLumMax = Input { Disabled = true },
+						ToneMappingMethod = Input { Value = FuID { "TM_NONE" } }
+					}
+				}
+			}
+		}
+	}
+}

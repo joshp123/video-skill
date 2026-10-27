@@ -1,0 +1,184 @@
+-- Signpost Highlight: made by pipeline/b/make_templates.py from 2026-10-16-signpost-pill/look.json (written by AI on 2026-10-25 by Claude Opus 5.5). Remake it rather than editing it.
+{
+	Tools = {
+		["Signpost Highlight"] = MacroOperator {
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					Source = "Output",
+					SourceOp = "ColourNode"
+				}
+			},
+			ViewInfo = GroupInfo {
+			},
+			Tools = ordered() {
+				Region = Custom {
+					Inputs = {
+						LUTIn2 = Input {
+							Source = "Value",
+							SourceOp = "CustomTool1LUTIn2"
+						},
+						LUTIn3 = Input {
+							Source = "Value",
+							SourceOp = "CustomTool1LUTIn3"
+						},
+						NumberIn1 = Input { Value = 480 },
+						NumberIn2 = Input { Value = 900 },
+						NumberIn3 = Input { Value = 599 },
+						NumberIn4 = Input { Value = 959 },
+						NumberIn5 = Input { Value = 10 },
+						LUTIn1 = Input {
+							Source = "Value",
+							SourceOp = "CustomTool1LUTIn1"
+						},
+						LUTIn4 = Input {
+							Source = "Value",
+							SourceOp = "CustomTool1LUTIn4"
+						}
+					}
+				},
+				CustomTool1LUTIn1 = LUTBezier {
+					SplineColor = { Red = 0, Blue = 0, Green = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					}
+				},
+				CustomTool1LUTIn2 = LUTBezier {
+					SplineColor = { Red = 0, Blue = 0, Green = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					}
+				},
+				CustomTool1LUTIn3 = LUTBezier {
+					SplineColor = { Red = 0, Blue = 0, Green = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					}
+				},
+				CustomTool1LUTIn4 = LUTBezier {
+					SplineColor = { Red = 0, Blue = 0, Green = 0 },
+					CtrlWZoom = false,
+					NameSet = true,
+					KeyColorSplines = {
+						[0] = {
+							[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+							{ 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+						}
+					}
+				},
+				Outer = RectangleMask {
+					Inputs = {
+						Center = Input { Expression = "Point((Region.NumberIn1 + Region.NumberIn3 + 1) / 2 / 1080, 1 - (Region.NumberIn2 + Region.NumberIn4 + 1) / 2 / 1920)" },
+						Width = Input { Expression = "(Region.NumberIn3 + 1 - Region.NumberIn1 + 2 * (Region.NumberIn5 + 6)) / 1080" },
+						MaskHeight = Input { Value = 1920 },
+						PixelAspect = Input { Value = { 1, 1 } },
+						UseFrameFormatSettings = Input { Value = 1 },
+						ClippingMode = Input { Value = FuID { "None" } },
+						CornerRadius = Input { Expression = "min(1, (min(24, (Region.NumberIn4 + 1 - Region.NumberIn2 + 2 * Region.NumberIn5) / 2) + 6) / (min((Region.NumberIn3 + 1 - Region.NumberIn1 + 2 * (Region.NumberIn5 + 6)), (Region.NumberIn4 + 1 - Region.NumberIn2 + 2 * (Region.NumberIn5 + 6))) / 2))" },
+						Height = Input { Expression = "(Region.NumberIn4 + 1 - Region.NumberIn2 + 2 * (Region.NumberIn5 + 6)) / 1920" },
+						MaskWidth = Input { Value = 1080 },
+						Filter = Input { Value = FuID { "Fast Gaussian" } }
+					}
+				},
+				Inner = RectangleMask {
+					Inputs = {
+						Center = Input { Expression = "Point((Region.NumberIn1 + Region.NumberIn3 + 1) / 2 / 1080, 1 - (Region.NumberIn2 + Region.NumberIn4 + 1) / 2 / 1920)" },
+						MaskWidth = Input { Value = 1080 },
+						MaskHeight = Input { Value = 1920 },
+						PixelAspect = Input { Value = { 1, 1 } },
+						UseFrameFormatSettings = Input { Value = 1 },
+						ClippingMode = Input { Value = FuID { "None" } },
+						EffectMask = Input {
+							Source = "Mask",
+							SourceOp = "Outer"
+						},
+						CornerRadius = Input { Expression = "min(1, (min(24, (Region.NumberIn4 + 1 - Region.NumberIn2 + 2 * Region.NumberIn5) / 2) + 0) / (min((Region.NumberIn3 + 1 - Region.NumberIn1 + 2 * (Region.NumberIn5 + 0)), (Region.NumberIn4 + 1 - Region.NumberIn2 + 2 * (Region.NumberIn5 + 0))) / 2))" },
+						Height = Input { Expression = "(Region.NumberIn4 + 1 - Region.NumberIn2 + 2 * (Region.NumberIn5 + 0)) / 1920" },
+						PaintMode = Input { Value = FuID { "Subtract" } },
+						Width = Input { Expression = "(Region.NumberIn3 + 1 - Region.NumberIn1 + 2 * (Region.NumberIn5 + 0)) / 1080" },
+						Filter = Input { Value = FuID { "Fast Gaussian" } }
+					}
+				},
+				Outline = Background {
+					Inputs = {
+						Height = Input { Value = 1920 },
+						TopLeftRed = Input { Value = 0.850980392156863 },
+						TopLeftGreen = Input { Value = 0.325490196078431 },
+						GlobalOut = Input { Value = 2499 },
+						UseFrameFormatSettings = Input { Value = 1 },
+						Depth = Input { Value = 4 },
+						EffectMask = Input {
+							Source = "Mask",
+							SourceOp = "Inner"
+						},
+						TopLeftBlue = Input { Value = 0.117647058823529 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } },
+						Width = Input { Value = 1080 }
+					}
+				},
+				ColourNode = ColorSpaceTransform {
+					Version = 1,
+					Inputs = {
+						OutputColorSpace = Input { Value = FuID { "DWG_COLORSPACE" } },
+						Input = Input {
+							Source = "Output",
+							SourceOp = "Outline"
+						},
+						ToneMappingMethod = Input { Value = FuID { "TM_NONE" } },
+						IsRec2390ScalingEnabled = Input { Value = 1 },
+						SrcLumMax = Input { Disabled = true },
+						DstLumMax = Input { Disabled = true },
+						InputGamma = Input { Value = FuID { "REC709_GAMMA" } },
+						UseHDRStandardConversions = Input { Value = 1 }
+					}
+				}
+			},
+			Inputs = {
+				RegionBottom = InstanceInput {
+					Source = "NumberIn4",
+					Name = "RegionBottom",
+					SourceOp = "Region",
+					Page = "Controls"
+				},
+				RegionLeft = InstanceInput {
+					Source = "NumberIn1",
+					Name = "RegionLeft",
+					SourceOp = "Region",
+					Page = "Controls"
+				},
+				RegionTop = InstanceInput {
+					Source = "NumberIn2",
+					Name = "RegionTop",
+					SourceOp = "Region",
+					Page = "Controls"
+				},
+				Padding = InstanceInput {
+					Source = "NumberIn5",
+					Name = "Padding",
+					SourceOp = "Region",
+					Page = "Controls"
+				},
+				RegionRight = InstanceInput {
+					Source = "NumberIn3",
+					Name = "RegionRight",
+					SourceOp = "Region",
+					Page = "Controls"
+				}
+			}
+		}
+	}
+}

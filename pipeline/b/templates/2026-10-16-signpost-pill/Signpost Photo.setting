@@ -1,0 +1,239 @@
+-- Signpost Photo: made by pipeline/b/make_templates.py from 2026-10-16-signpost-pill/look.json (written by AI on 2026-10-25 by Claude Opus 5.5). Remake it rather than editing it.
+{
+	Tools = {
+		["Signpost Photo"] = MacroOperator {
+			Inputs = {
+				PhotoIsDisplayP3 = InstanceInput {
+					Source = "Blend",
+					Name = "PhotoIsDisplayP3",
+					Page = "Controls",
+					SourceOp = "PhotoFromP3"
+				},
+				Label = InstanceInput {
+					Source = "StyledText",
+					Name = "Label",
+					Page = "Controls",
+					SourceOp = "LabelText"
+				},
+				Photo = InstanceInput {
+					Source = "Clip",
+					Name = "Photo",
+					Page = "Controls",
+					SourceOp = "Photo"
+				}
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					Source = "Output",
+					SourceOp = "ColourNode"
+				}
+			},
+			ViewInfo = GroupInfo {
+			},
+			Tools = ordered() {
+				Photo = Loader {
+					Clips = {
+						Clip {
+							ID = "Clip1",
+							ExtendFirst = 0,
+							Loop = 0,
+							AspectMode = 0,
+							TimeCode = 0,
+							GlobalEnd = 100000,
+							Filename = "/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/pipeline/b/templates/no photo.png",
+							Depth = 5,
+							GlobalStart = 0,
+							ExtendLast = 100000,
+							FormatID = "PNGFormat",
+							TrimOut = 0,
+							StartFrame = -1,
+							LengthSetManually = true,
+							TrimIn = 0
+						}
+					},
+					Inputs = {
+						Depth = Input { Value = 5 },
+						["Clip1.PNGFormat.PostMultiply"] = Input { Value = 1 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } }
+					}
+				},
+				PhotoCover = Letterbox {
+					Inputs = {
+						Height = Input { Value = 1920 },
+						Width = Input { Value = 1080 },
+						Mode = Input { Value = 1 },
+						HiQOnly = Input { Value = 0 },
+						Input = Input {
+							Source = "Output",
+							SourceOp = "Photo"
+						}
+					}
+				},
+				PhotoFromP3 = ColorSpaceTransform {
+					Inputs = {
+						InputGamma = Input { Value = FuID { "SRGB_GAMMA" } },
+						OutputGamma = Input { Value = FuID { "SRGB_GAMMA" } },
+						ToneMappingMethod = Input { Value = FuID { "TM_NONE" } },
+						SrcLumMax = Input { Disabled = true },
+						DstLumMax = Input { Disabled = true },
+						UseHDRStandardConversions = Input { Value = 1 },
+						IsRec2390ScalingEnabled = Input { Value = 1 },
+						Blend = Input { Value = 0 },
+						InputColorSpace = Input { Value = FuID { "P3D65_COLORSPACE" } },
+						Input = Input {
+							Source = "Output",
+							SourceOp = "PhotoCover"
+						}
+					},
+					Version = 1
+				},
+				PhotoClip = BrightnessContrast {
+					Inputs = {
+						ClipBlack = Input { Value = 1 },
+						ClipWhite = Input { Value = 1 },
+						Input = Input {
+							Source = "Output",
+							SourceOp = "PhotoFromP3"
+						}
+					}
+				},
+				LabelText = TextPlus {
+					Inputs = {
+						Height = Input { Value = 1920 },
+						SoftnessY3 = Input { Value = 12.6153846153846 },
+						Width = Input { Value = 1080 },
+						Offset3 = Input {
+							Value = { 0, -0.0478557344804171 },
+							Expression = "Point(0.0/Size, -0.003550190822756723/Size)"
+						},
+						Level4 = Input { Value = 0 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } },
+						Style = Input { Value = "Bold" },
+						Round4 = Input { Value = 0.307003517748641 },
+						Blue4 = Input { Value = 0 },
+						Alpha4 = Input { Value = 0.55 },
+						Softness4 = Input { Value = 1 },
+						PriorityBack4 = Input { Value = -20 },
+						Offset4 = Input { Expression = "Point(-0.41185047491892074*Size, 1.7061413431260873e-17*Size)" },
+						Center = Input { Value = { 0.536108796296296, 0.579974660207031 } },
+						Wrap = Input { Value = 1 },
+						Size = Input { Value = 0.074185275 },
+						ExtendVertical4 = Input { Value = 0.086475598281359 },
+						GlobalOut = Input { Value = 2499 },
+						UseFrameFormatSettings = Input { Value = 1 },
+						LayoutType = Input { Value = 1 },
+						LayoutWidth = Input { Value = 0.883337962962963 },
+						LayoutHeight = Input { Value = 0.625 },
+						LayoutRotation = Input { Value = 1 },
+						LineSpacing = Input { Value = 0.845411223928421 },
+						TransformRotation = Input { Value = 1 },
+						Enabled2 = Input { Value = 1 },
+						Enabled3 = Input { Value = 1 },
+						Enabled4 = Input { Value = 1 },
+						Softness1 = Input { Value = 1 },
+						ExtendHorizontal4 = Input { Value = 0.380716750051005 },
+						Font = Input { Value = "Futura" },
+						PriorityBack3 = Input { Value = -10 },
+						SoftnessX3 = Input { Value = 12.6153846153846 },
+						VerticalTopCenterBottom = Input { Value = -1 },
+						VerticalJustificationNew = Input { Value = 0 },
+						HorizontalLeftCenterRight = Input { Value = -1 },
+						HorizontalJustificationNew = Input { Value = 0 },
+						Thickness2 = Input {
+							Value = 0.0149775155664128,
+							Expression = "0.0011111111111111111/Size"
+						},
+						StyledText = Input { Value = "Lisbon" },
+						Depth = Input { Value = 4 },
+						OutsideOnly2 = Input { Value = 1 },
+						Green2 = Input { Value = 1 },
+						Blue2 = Input { Value = 1 },
+						Softness2 = Input { Value = 1 },
+						Alpha3 = Input { Value = 0.6 },
+						Softness3 = Input { Value = 1 }
+					},
+					Version = 1
+				},
+				LabelOver = Merge {
+					Inputs = {
+						Foreground = Input {
+							Source = "Output",
+							SourceOp = "LabelText"
+						},
+						PerformDepthMerge = Input { Value = 0 },
+						Background = Input {
+							Source = "Output",
+							SourceOp = "PhotoClip"
+						}
+					}
+				},
+				Pin = Loader {
+					Clips = {
+						Clip {
+							ID = "Clip1",
+							ExtendFirst = 0,
+							Loop = 0,
+							AspectMode = 0,
+							TimeCode = 0,
+							GlobalEnd = 100000,
+							Filename = "/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/looks/2026-10-16-signpost-pill/pin.png",
+							Depth = 5,
+							GlobalStart = 0,
+							ExtendLast = 100000,
+							FormatID = "PNGFormat",
+							TrimOut = 0,
+							StartFrame = -1,
+							LengthSetManually = true,
+							TrimIn = 0
+						}
+					},
+					Inputs = {
+						Depth = Input { Value = 5 },
+						["Clip1.PNGFormat.PostMultiply"] = Input { Value = 1 },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" } },
+						PostMultiplyByAlpha = Input { Value = 1 }
+					}
+				},
+				PinSize = Transform {
+					Inputs = {
+						Size = Input { Value = 0.3078125 },
+						Input = Input {
+							Source = "Output",
+							SourceOp = "Pin"
+						}
+					}
+				},
+				PinOver = Merge {
+					Inputs = {
+						Foreground = Input {
+							Source = "Output",
+							SourceOp = "PinSize"
+						},
+						PerformDepthMerge = Input { Value = 0 },
+						Center = Input { Value = { 0.0561342592592593, 0.875115885416667 } },
+						Background = Input {
+							Source = "Output",
+							SourceOp = "LabelOver"
+						}
+					}
+				},
+				ColourNode = ColorSpaceTransform {
+					Inputs = {
+						InputGamma = Input { Value = FuID { "REC709_GAMMA" } },
+						IsRec2390ScalingEnabled = Input { Value = 1 },
+						Input = Input {
+							Source = "Output",
+							SourceOp = "PinOver"
+						},
+						ToneMappingMethod = Input { Value = FuID { "TM_NONE" } },
+						UseHDRStandardConversions = Input { Value = 1 },
+						OutputColorSpace = Input { Value = FuID { "DWG_COLORSPACE" } },
+						SrcLumMax = Input { Disabled = true },
+						DstLumMax = Input { Disabled = true }
+					},
+					Version = 1
+				}
+			}
+		}
+	}
+}

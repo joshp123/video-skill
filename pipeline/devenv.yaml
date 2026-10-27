@@ -1,0 +1,4 @@
+# Written by AI on 2026-10-22 by GPT-6.1 Sol.
+inputs:
+  nixpkgs:
+    url: github:NixOS/nixpkgs/nixpkgs-unstable
