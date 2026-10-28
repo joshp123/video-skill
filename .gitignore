@@ -11,3 +11,6 @@ __pycache__/
 *.pyc
 .DS_Store
 *backup-20*/
+
+# private notes: Josh's raw steering and internal assessments
+private/

@@ -172,7 +172,7 @@ def list_sessions(pattern):
     candidates = list(CLAUDE_SESSIONS.glob("*/*.jsonl")) + list(CODEX_SESSIONS.glob("*/*/*/*.jsonl"))
     rows = []
     for session in candidates:
-        if session.stat().st_mtime < cutoff:
+        if not session.exists() or session.stat().st_mtime < cutoff:
             continue
         raw = session.read_text(errors="ignore")
         mentions = len(pattern.findall(raw))
