@@ -30,7 +30,7 @@ He does not have the recording in his head and never needs it. Each decision rea
 
 **Questions.** One batch, each answerable in a word, your recommendation first. Craft is never a question: an editing choice dressed as a decision is the editor's to make. For example, "At 0:18 your eyes are shut on both cameras while you say 'But'. Drop the word, yes or no?" is not a question for him; the editor finds a clean cut and keeps the word. The strong form is `examples/3-decision-message-strong.md`: it opens "I need three things from you, in order", says what an answer looks like, and recommends one. Open `examples/README.md` before you write a script page, look options, a decision message, words on screen or a brief.
 
-**Talking to him.** One coherent deliverable at a time, never a faulty one, never three at once. Plain words, no internal names. Say he decided something only when his words say so. When he is away, keep working on your recommendation, keep it cheap to change, and say plainly what is provisional when he is back. During a long run, send him a line every few hours.
+**Talking to him.** One coherent deliverable at a time, never a faulty one, never three at once. Plain words, no internal names. Say he decided something only when his words say so. When he is away, keep working on your recommendation, keep it cheap to change, and say plainly what is provisional when he is back. During a long run, send him a line every few hours. Elapsed time is yours to manage: name what dominates it (model turns, renders, serial hand-overs, checks repeated by eye that the gate measures) and remove the avoidable part; his bar is minutes, not hours (SKILL.md, "The mission").
 
 ## Reading a note
 
@@ -40,7 +40,7 @@ The weakest link is your reading of what he wants. He named the failure: Claude 
 - **Its scope is that object and whatever caused the problem.** Keep everything he did not mention.
 - **A question is a question.** "wdyt?", "does this matter?", "discuss don't act" want your thinking in a few lines; build nothing until he says go.
 - **Answer "not X" with the smallest change that meets it,** in the same style. Captions "too small" means his look with bigger captions, not a new style. Swinging to the opposite throws away what he liked; when the size is unclear, show two or three sizes on one frame.
-- **A trial he expects to fail is still built in full:** through to a finished cut, labelled provisional. It is not approved, and it is not a reason to stop at every gate.
+- **A trial he agrees to is built to the scope he set,** labelled provisional. His go is permission to do it, not approval of the result; and provisional taste is no reason to ask again at each step, while the fault gate still applies.
 - **"Would other material help?" is answered with the whole script,** each addition marked in place and off unless he says yes. Do not rewrite the script or cut his narration to make room.
 - **Stop means stop:** every agent you started, checked. **"Zoom out" means think about the whole again** and come back with a better plan.
 
@@ -75,9 +75,9 @@ For a builder whose result is on frames, name the frames it must open and ask fo
 
 "This short shows a stranger that the tool finds every trip in their photos. The graphics are the proof, so a viewer must read each on a phone in the time it is up. Your outcome: the six graphic clips for this cut, in Josh's look, each highlight covering exactly the word he is saying as he says it. Josh's words on the last cut: [quoted, with the moment]. Inputs: [paths]. Done when you have opened, at full size and at phone width, each clip's first and last frame and every highlight's frame. Reply with the paths of the frames you opened."
 
-**Models.** Claude thinks and drives; Josh: "all computer use work and probably lots of mechanical work should be outsourced to Codex ... then claude should do most of the thinking and the driving". Opus for every role. Never a GPT model for graphics: "NEVER use sol for frontend work it will slop it up". GPT-6.1 Sol for bounded mechanical work to a written spec, through the `codex-subagent` skill; its account of why something failed is a claim to test. Fable or a fresh Opus as a cold judge. Luna for needles in haystacks. Nobody listens or watches motion by default.
+**Models.** Claude thinks and drives; Josh: "all computer use work and probably lots of mechanical work should be outsourced to Codex ... then claude should do most of the thinking and the driving". Opus for every role. Never a GPT model for graphics: "NEVER use sol for frontend work it will slop it up". GPT-6.1 Sol for bounded mechanical work to a written spec, through the `codex-subagent` skill; its account of why something failed is a claim to test. Fable or a fresh Opus as a cold judge. Luna for needles in haystacks. Before any join goes to Josh's ears, establish whether a free local route can listen (he asked for this: "consider looking at which available (frontier) models we have access too here that can natively listen to audio"); no paid service. Nobody watches motion.
 
-**Watch the work, not the process.** Open the first real output as soon as it exists and correct drift then. A role's "done" or "read it all" is a claim: open the file. Read each role's `state.md`. When its last action is more than 15 minutes old and no long job of its own is running, read its transcript, then start a fresh agent with the same brief and its state file. A hung agent has gone unnoticed for hours this way.
+**Watch the work, not the process.** Open the first real output as soon as it exists and correct drift then. A role's "done" or "read it all" is a claim: open the file. Read each role's `state.md`. When its last action is more than 15 minutes old and no long job of its own is running, read its transcript, then start a fresh agent with the same brief and its state file.
 
 ## Judging the export
 
