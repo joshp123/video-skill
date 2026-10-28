@@ -70,3 +70,17 @@ Each line: date or run, what happened, and the rule it supports (file, heading).
 - codex-switch, first cut: the opening title held over his first words left six of them uncaptioned. Supports roles/editor.md, "Captions" (where they hide).
 - codex-switch: "bar app here." lit "here" over silence because the sound piece ended after "app" (`tools/faults.md` records it as run 3). Supports roles/editor.md, "Captions" (a word the sound cut leaves out comes out of the caption).
 - Run 4: a fix to four caption pages broke two others that had been right. Supports roles/editor.md, "Captions" (compare every page before and after a re-page).
+
+## roles/motion.md
+
+- 26 Oct: a word change on a placed title item took about 0.01 s in place, tested. Supports roles/motion.md, "Two routes" (a word change is an input on the item).
+- codex-switch: three reviewers read the caption-style opening title as a caption; the dark top band of "Signpost Opening" makes it read as a card. Supports roles/motion.md, "Two routes" (the opening title).
+- codex-switch and 26 Oct: the outline "Signpost Highlight" was improvised on codex-switch for real app pixels, liked by three reviewers, and made part of the look on 26 Oct, before Josh saw it. Supports roles/motion.md, "The highlight is the signature" (show it on a real frame the first time).
+- 16 Oct: Josh: "your subtitles and pills and highlights on terminal stuff do NOT properly cover words and look WRONG". Supports roles/motion.md, "The highlight is the signature".
+- where-was-i: Josh found a seven-word card too fast at 1.5 s and did not raise it at 2.5 s; of a list of findings he said "honestly this is all too fast to see". Supports roles/motion.md, "Motion and reading time" (about 0.3 s per word plus 0.5 s, counted from the first fully readable frame).
+- Josh asked for "a HOLISTIC style that matches BOTH the subtitles AND the various title/subtitle/on screen graphics and is COHERENT", and on reusing a look, "we should keep as much in possible in code". The file had left durations, easing and overshoot to whoever built each template. Supports roles/motion.md, "Motion and reading time" (every motion value belongs to the look).
+- Run 4: five of his phrases, among them "window positioning." and "Nobody's breaking down", could not sit on one caption row inside the safe line. Supports roles/motion.md, "The look" (caption row length is a look decision for Josh).
+- Undated: Josh chose his current look from a grid of stills in one reply, combining two options; from a prose description of the same looks he could not choose. Supports roles/motion.md, "The look" (options as stills, one column per look).
+- Undated: Josh, on the intro card: "card is a little noisy atm too.? should have the card for 1.5s or smth before the subs come in?", and later, "intro card still needs a little longer its too fast." Supports roles/motion.md, "Cards" (the intro card alone at least about 1.5 s).
+- where-was-i: Josh: "your action card is still hunched up what the fuck are you taking about look at the empty space / also the mission on same page as action. no second slide. KISS". Supports roles/motion.md, "Cards" (the closing card is one page; judge the empty space).
+- Run 4: the menu crop scrolled 51 px in one frame under a held highlight and carried the outline from "77%" onto the usage bar. Supports roles/motion.md, "How to tell", step 4 (the frame-difference trace under every held highlight; a one-line form of the case stays in the file).
