@@ -99,3 +99,13 @@ Each line: date or run, what happened, and the rule it supports (file, heading).
 - 18 Oct, tested: when more CineFocus aperture changed nothing visible, stretching the depth map with Adjust Map Levels made the background read as far away. Supports roles/colour.md, "The wide camera's fast lens" (use CineFocus).
 - 18 and 19 Oct, tested: CineFocus on a node keyed by an inverted Magic Mask of him kept the far arm of his glasses sharp, which the depth map alone did not. Supports roles/colour.md, "The wide camera's fast lens" (key it by an inverted Magic Mask).
 - Undated: on a gentle blur setting Josh said "both look identical to me?", and he saw a cut-out of him with a blur behind it as fake at a glance. Supports roles/colour.md, "The wide camera's fast lens" (strength is his call, judged at phone width; never a cut-out).
+
+## roles/finishing.md
+
+- 16 and 17 Oct: told that Resolve has animated captions that highlight each word as it is spoken, Josh: "well then why the fuck aren't we using this". Supports roles/finishing.md, "Captions on the track" (Resolve's own captions, so a fix is an edit with nothing to render).
+- Two videos: the caption template rendered its pill as (255, 69, 0) beside the graphics' true #D9531E, and nobody measured it. Supports roles/finishing.md, "Captions on the track" (measure one rendered pill against the look's orange and a graphic's pill).
+- codex-switch: the template paged the caption "say, hey," so that both words never showed at once, and a check of one middle frame passed it. Supports roles/finishing.md, "Captions on the track" (check every caption over its whole life, from the gate's page list).
+- codex-switch: the phone render at about 2.4 Mbit/s broke the closing page's fade into blocks across his face. Supports roles/finishing.md, "Rendering" (`phone` is a review copy, too low a rate to post; look at the post file's fades and darkest moments).
+- 22 Oct: after the Mac had slept, a render job reported Complete on frames that read "Media Offline". Supports roles/finishing.md, "Rendering" (a render can fail without an error: open its own frames first).
+- Run 4: the gate, a cold judge and finishing each measured highlights and the safe line their own way and found three different sets of faults. Supports roles/finishing.md, "The fault gate" (never re-implement a measured class).
+- Undated: Josh, on agents judging cuts from contact sheets: "not how a real professional would do it, its too compressed and you miss the full story". Supports roles/finishing.md, "Look before Josh does" (full size and consecutive frames, never a contact sheet).
