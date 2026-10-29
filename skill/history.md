@@ -77,7 +77,7 @@ Each line: date or run, what happened, and the rule it supports (file, heading).
 - codex-switch: three reviewers read the caption-style opening title as a caption; the dark top band of "Signpost Opening" makes it read as a card. Supports roles/motion.md, "Two routes" (the opening title).
 - codex-switch and 26 Oct: the outline "Signpost Highlight" was improvised on codex-switch for real app pixels, liked by three reviewers, and made part of the look on 26 Oct, before Josh saw it. Supports roles/motion.md, "The highlight is the signature" (show it on a real frame the first time).
 - 16 Oct: Josh: "your subtitles and pills and highlights on terminal stuff do NOT properly cover words and look WRONG". Supports roles/motion.md, "The highlight is the signature".
-- where-was-i: Josh found a seven-word card too fast at 1.5 s and did not raise it at 2.5 s; of a list of findings he said "honestly this is all too fast to see". Supports roles/motion.md, "Motion and reading time" (about a third of a second per word plus half a second, counted from the first fully readable frame; the number is the subtitlers' reading-speed norm, his calls agree with it).
+- where-was-i: Josh found a seven-word card too fast at 1.5 s and did not raise it at 2.5 s; of a list of findings he said "honestly this is all too fast to see". Supports roles/motion.md, "Motion and reading time" (about a third of a second per word plus half a second, counted from the first fully readable frame; the number is the subtitlers' reading-speed norm; his 1.5 s call sits inside it and the 2.5 s card he let pass was just under it).
 - Josh asked for "a HOLISTIC style that matches BOTH the subtitles AND the various title/subtitle/on screen graphics and is COHERENT", and on reusing a look, "we should keep as much in possible in code". The file had left durations, easing and overshoot to whoever built each template. Supports roles/motion.md, "Motion and reading time" (every motion value belongs to the look).
 - Run 4: five of his phrases, among them "window positioning." and "Nobody's breaking down", could not sit on one caption row inside the safe line. Supports roles/motion.md, "The look" (caption row length is a look decision for Josh).
 - Undated: Josh chose his current look from a grid of stills in one reply, combining two options; from a prose description of the same looks he could not choose. Supports roles/motion.md, "The look" (options as stills, one column per look).
@@ -109,3 +109,28 @@ Each line: date or run, what happened, and the rule it supports (file, heading).
 - 22 Oct: after the Mac had slept, a render job reported Complete on frames that read "Media Offline". Supports roles/finishing.md, "Rendering" (a render can fail without an error: open its own frames first).
 - Run 4: the gate, a cold judge and finishing each measured highlights and the safe line their own way and found three different sets of faults. Supports roles/finishing.md, "The fault gate" (never re-implement a measured class).
 - Undated: Josh, on agents judging cuts from contact sheets: "not how a real professional would do it, its too compressed and you miss the full story". Supports roles/finishing.md, "Look before Josh does" (full size and consecutive frames, never a contact sheet).
+
+## tools/faults.md
+
+- Run 4, frame 2173: a hand across his face made a pixel change the gate read as an unlisted cut. Supports tools/faults.md, "Eyes shut at a cut" (a pixel-only cut is a "look" row).
+- Run 2, frame 1527: a downward glance at his screen lowered eye openness as a blink does. Supports tools/faults.md, "Eyes shut at a cut" (the known false alarm; the evidence strip settles it).
+- Two judged cuts: a cold judge counted no sync slip of 1 to 3 frames on either. Supports tools/faults.md, "Lips out of sync" (4 frames is a fault, 1 to 3 a "look" row).
+- Run 4: a cold judge who took the wide camera's offset from its own sound, the lav's radio feed, measured the wide shots 58 ms ahead when they were 8 to 18 ms off. Supports tools/faults.md, "Lips out of sync" (picture offsets from `inventory.md`, never from a wireless mic's sound).
+- Run 2: the closing fade streaked across his face. Supports tools/faults.md, "Picture breaks up".
+- Run 4: "here" at 50.43 s, a weak word tail cut into room tone after a short fade, sat under -30 dBFS; a cold judge heard it as a chop after the gate passed it. Supports tools/faults.md, "Hard sound join" (the louder side counts at 12 dB or more above the room tone).
+- Run 3 (the editor's history files the same case under codex-switch): "here" lit over silence because the sound piece ended after "app". Supports tools/faults.md, "Caption word with no sound".
+- Run 4: five breaks no paging inside the safe line could avoid, among them "window positioning." and "Nobody's breaking down", each wider than the line on one row. Supports tools/faults.md, "Caption page broken mid-phrase" (an unavoidable break is not a fault; it goes to Josh with the look).
+- Run 4: "out" lit 4 frames late on builds 14 and 15. Supports tools/faults.md, "Highlight late or early" (after a pause, more than 3 frames is a fault).
+- Run 4, build 14: the connected-speech "look" rows held the judge's two early highlights ("down" after a one-frame "breaking", "don't" after a one-frame "please") among eleven others, most where Resolve's word time was late. Supports tools/faults.md, "Highlight late or early" (what a look row usually is).
+- 29 Oct: the change plan (`private/requirements/change-plan.md`, H5) proposed a local forced aligner of the known words to the placed sound, after run 4 showed every non-converging caption class came from word onsets. Supports tools/faults.md, "Highlight late or early" (the planned instrument; the look-row escape is temporary).
+- Run 4, build 14: the pill on "Nobody's breaking" ran from x 118 to 965. Supports tools/faults.md, "Caption past the safe line".
+- Run 4: lengthening a 0.33 s caption to one row put its letters 19 px into the button column, a fault the gate caught. Supports tools/faults.md, "Caption too short to read" (join only when the joined page fits the safe line).
+- where-was-i: Josh found a seven-word card too fast at 1.5 s and did not raise it at 2.5 s. Supports tools/faults.md, "Card or title too fast to read" (new measured class, from roles/motion.md, "Motion and reading time"; `qc.py` does not measure it yet).
+- Runs 2 to 4: a book spine reading "Rotterdam" on the shelf behind him was read as small text. Supports tools/faults.md, "Graphic clipped, unreadable or stray" (small text is measured only while a panel or title is on screen).
+
+## tools/checking.md
+
+- 22 Oct: a 2160-px side-by-side pair shrunk by the viewer looked banded where full-size crops were smooth. Supports tools/checking.md, "Frames from the delivered file" (open a pair at 1300 to 1800 px or crop it at full size).
+- 22 Oct: on the frame-difference trace a camera cut read 47 against neighbours of 0.5 to 3. Supports tools/checking.md, "Frames from the delivered file" (open every spike).
+- First video: pills that missed their words passed a contact-sheet check, and Josh found them. Supports tools/checking.md, "Frames from the delivered file" (a contact sheet finds where to look, never judges).
+- 17 Oct: comparing a cut with the version before found a frozen end frame on the wrong expression and a panel framed 61 to 140 px off within minutes. Supports tools/checking.md, "What changed since the last version".
