@@ -138,3 +138,7 @@ Each line: date or run, what happened, and the rule it supports (file, heading).
 ## Listening
 
 - 29 Oct 2026: a search for a free route to hear a join. Six synthesised clips (three clean joins, three bad: a word chopped mid-word, a 140 ms fragment left in a gap, a start 60 ms into a word). Ollama cloud (23 models, none with audio) and the Codex plan (gpt-6.1-sol, gpt-6-astra, gpt-6-luna, gpt-5.6-luna: "Audio input is not available") refused audio. Local on this Mac (24 GB, 17.8 GB to the GPU): LFM3-Audio said clean for all six, LFM3-Omni bad for all six, d1-omni 0.1 to 1% for all six, Qwen2.5-Omni-3B bad for all six. Untested: Qwen3-Omni-30B or Nemotron 3 Omni on the Mac mini. Supports roles/director.md, "Models" (nobody here can listen). Details: private/requirements/listening-route.md.
+
+## Aligner
+
+- 29 Oct 2026: `align.py` built and tested on synthesised British voices with known word times: sentence onsets within 33 ms; inside connected speech 89% of starts within 40 ms, worst 77 ms (MFA); MMS_FA placed numbers blind (confidence 0.02) and a wav2vec2-only route ran 46 ms late in the median, so MFA gives the times and wav2vec2 the confidence and cross-check. First run about 320 s of installs (1.4 GB MFA, 230 MB models, 1.26 GB wav2vec2); then about 35 s per file. Not yet proven on his real voice. Supports tools/faults.md, "Highlight late or early". Test files: private/align-test/.
