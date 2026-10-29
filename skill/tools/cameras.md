@@ -19,7 +19,7 @@ Auto white balance is his choice: "i'm not at that skill level yet (or effort le
 
 `ffprobe -v error -show_streams -show_format -of json CLIP` gives codec, size, rate, frame count and audio. It cannot show a log profile: both cameras tag their files BT.709 whatever they recorded, so a profile read from a tag is wrong. ExifTool on the Nikon reads its picture control, lens, aperture and focus distance (it is not on the `PATH`: `"$(ls -d /nix/store/*-Image-ExifTool-*/bin/exiftool | sort -t- -k5 -V | tail -1)"`). The Pocket's per-frame data sits in a DJI track ExifTool cannot read: confirm D-Log by eye (a flat, low-contrast picture) and from the camera's setting. Write each fact into `inventory.md` with how it was established.
 
-**Never sync on the clocks.** The two cameras' timecodes and file creation times disagree with each other and with the sound by seconds: on one session the timecodes were about seven hours apart, and creation times put the wide camera 15 s after the front when the sound put it 36.7 s after.
+**Never sync on the clocks.** The two cameras' timecodes and file creation times disagree with each other and with the sound: on one session the timecodes were about seven hours apart, and creation times put the wide camera 15 s after the front when the sound put it 36.7 s after.
 
 ## Ingest
 
