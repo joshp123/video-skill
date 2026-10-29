@@ -19,6 +19,9 @@ found a pixel cut firing mid-shot on encoder noise). Reads the picture from the 
 `reference`.
 Since 2026-10-27 (Claude Opus 5.5, hill-climb stream L, after run 4's gate passed a build a cold judge failed): lit caption
 words against their onsets on the cut's own sound, caption pills and letters against the look's safe line, --range and --only.
+Sync offsets from the edit list's picture offsets since 2026-10-29 (Claude Opus 5.5): a camera's `picture_offset_s`, set picture
+against picture at ingest, replaces its own microphone, because the Pocket's microphone is the lav's radio feed, which arrives
+30 to 60 ms after its picture. A camera without one is still timed by its microphone, and the report says so.
 """
 import argparse
 import json
@@ -37,6 +40,7 @@ EYES_CLOSED_FRACTION_OF_SHOT_NORMAL = 0.65
 FRAMES_EACH_SIDE_OF_A_CUT = 3
 OUT_OF_SYNC_SECONDS = 0.06
 OUT_OF_SYNC_FAULT_FRAMES = 4
+MICROPHONE_OFFSET_WARNING = "offset from this camera's microphone; the Pocket's radio feed can lag the picture by 30 to 60 ms"
 SPEECH_DBFS = -30
 SILENCE_DBFS = -38
 HARD_JOIN_STEP_DB = 6
@@ -166,7 +170,7 @@ class Cut:
         self.look = look = json.load(open(EDITS / 'looks' / self.edit_list['look'] / 'look.json'))
         band_centre = round(self.height * (1 - look['subtitles']['resolveTemplate']['centreY']))
         self.band = (band_centre - CAPTION_BAND_HALF_HEIGHT_PX, band_centre + CAPTION_BAND_HALF_HEIGHT_PX)
-        self.rows, self.measurements = [], {}
+        self.rows, self.measurements, self.notes = [], {}, []
 
     def time(self, frame):
         return frame / self.fps
@@ -253,25 +257,50 @@ class Cut:
                                 'source_in_s': piece['source_in_s'], 'offset_s': offset, 'match': round(match, 3), 'gain_db': float(gain)})
         self.measurements['sound_pieces'] = self.pieces
 
-    def camera_offsets(self):
-        """Each camera file's clock against the lav's, by its own microphone: lav time = camera time + offset."""
+    def microphone_offset(self, camera_file, around_camera_s):
+        """A camera file's clock against the lav's, by matching its own microphone to the lav: lav time = camera time + offset.
+        Measured once per file, in a minute around around_camera_s, and cached in camera-offsets.json."""
         cache = self.out / 'camera-offsets.json'
         offsets = json.load(open(cache)) if cache.exists() else {}
-        rate = 8000
-        lav_low = None
+        if camera_file not in offsets:
+            rate = 8000
+            lav_low = decode_audio_mono(self.edit_list['sound']['lav'], rate)
+            window_start_s = max(0, around_camera_s - 30)
+            raw = run(['ffmpeg', '-v', 'error', '-ss', str(window_start_s), '-t', '60', '-i', camera_file, '-map', '0:a:0',
+                       '-af', 'pan=mono|c0=c0', '-ar', str(rate), '-f', 'f32le', '-']).stdout
+            lag, match = best_lag(lav_low, np.frombuffer(raw, np.float32))
+            offsets[camera_file] = {'lav_minus_camera_s': lag / rate - window_start_s, 'match': round(match, 3)}
+            json.dump(offsets, open(cache, 'w'), indent=1)
+        return offsets[camera_file]
+
+    def lav_minus_picture_offsets(self):
+        """Per camera file on the cut: lav time minus the time of the picture it shows, and where that came from.
+        A camera with `picture_offset_s` in the edit list (front-camera time = camera time + offset, set picture against
+        picture at ingest) takes it plus the front camera's own microphone offset: that microphone hears the room, so its
+        sound and picture agree. A camera without one takes its own microphone, which is late by the radio lag when it is a
+        wireless feed, as the Pocket's is."""
+        picture_offsets = {camera['file']: camera['picture_offset_s'] for camera in self.edit_list.get('cameras', {}).values()
+                           if 'picture_offset_s' in camera}
+        front_files = [name for name, offset in picture_offsets.items() if offset == 0]
+        if picture_offsets and len(front_files) != 1:
+            raise SystemExit(f'qc: picture_offset_s is front-camera time minus the camera\'s own, so exactly one camera, the front, '
+                             f'has 0; the edit list has {len(front_files)}: {picture_offsets}')
+        offsets = {}
         for clip in self.camera_clips():
             name = clip['file']
             if name in offsets:
                 continue
-            if lav_low is None:
-                lav_low = decode_audio_mono(self.edit_list['sound']['lav'], rate)
-            middle_s = clip['source_in'] / self.source_fps(name)
-            raw = run(['ffmpeg', '-v', 'error', '-ss', str(max(0, middle_s - 30)), '-t', '60', '-i', name, '-map', '0:a:0',
-                       '-af', 'pan=mono|c0=c0', '-ar', str(rate), '-f', 'f32le', '-']).stdout
-            camera = np.frombuffer(raw, np.float32)
-            lag, match = best_lag(lav_low, camera)
-            offsets[name] = {'lav_minus_camera_s': lag / rate - max(0, middle_s - 30), 'match': round(match, 3)}
-        json.dump(offsets, open(cache, 'w'), indent=1)
+            clip_s = clip['source_in'] / self.source_fps(name)
+            if name in picture_offsets:
+                front = self.microphone_offset(front_files[0], clip_s + picture_offsets[name])
+                offsets[name] = {'lav_minus_picture_s': picture_offsets[name] + front['lav_minus_camera_s'], 'timed_by_own_microphone': False,
+                                 'from': f'picture_offset_s {picture_offsets[name]} s, plus the front camera microphone (match {front["match"]})'}
+            else:
+                microphone = self.microphone_offset(name, clip_s)
+                offsets[name] = {'lav_minus_picture_s': microphone['lav_minus_camera_s'], 'timed_by_own_microphone': True,
+                                 'from': f'{MICROPHONE_OFFSET_WARNING} (match {microphone["match"]})'}
+                self.notes.append(f'Lip sync on {Path(name).name}: {MICROPHONE_OFFSET_WARNING}. Give its camera a picture_offset_s '
+                                  'in the edit list, from inventory.md.')
         self.measurements['camera_offsets'] = offsets
         return offsets
 
@@ -390,17 +419,17 @@ class Cut:
                 self.add('black frame', 'fault', frame, frame, f'mean level {luma[frame]:.1f}', 'a black frame inside the video', ('frame', frame))
 
     def picture_against_sound(self):
-        offsets = self.camera_offsets()
+        offsets = self.lav_minus_picture_offsets()
         clips = sorted(self.camera_clips(), key=lambda c: c.get('track', 2))
 
-        def picture_lav_time(frame):
+        def picture_lav_time_and_file(frame):
             for clip in reversed(clips):
                 length = clip['source_out'] - clip['source_in']
                 speed = clip.get('speed_percent', 100) / 100
                 if clip['record'] <= frame < clip['record'] + round(length / speed if speed >= 1 else length):
                     source_frame = clip['source_in'] + (frame - clip['record']) * speed
-                    return source_frame / self.source_fps(clip['file']) + offsets[clip['file']]['lav_minus_camera_s']
-            return None
+                    return source_frame / self.source_fps(clip['file']) + offsets[clip['file']]['lav_minus_picture_s'], clip['file']
+            return None, None
 
         def sound_lav_time(time):
             covering = [p for p in self.pieces if p['record_start_s'] <= time < p['record_end_s']]
@@ -409,23 +438,25 @@ class Cut:
         bad = []
         for frame in range(self.frame_count):
             middle = self.time(frame + 0.5)
-            picture, sound = picture_lav_time(frame), sound_lav_time(middle)
+            (picture, camera_file), sound = picture_lav_time_and_file(frame), sound_lav_time(middle)
             if picture is None or sound is None or self.frame_level[frame] < SPEECH_DBFS or not any(self.face(f) for f in range(max(0, frame - 3), min(self.frame_count, frame + 4))):
                 continue
             if abs(picture + 0.5 / self.fps - sound) > OUT_OF_SYNC_SECONDS:
-                bad.append((frame, picture + 0.5 / self.fps - sound))
+                bad.append((frame, picture + 0.5 / self.fps - sound, camera_file))
         runs = []
-        for frame, difference in bad:
+        for frame, difference, camera_file in bad:
             if runs and frame - runs[-1][1] <= 2:
-                runs[-1][1] = frame; runs[-1][2].append(difference)
+                runs[-1][1] = frame; runs[-1][2].append(difference); runs[-1][3].add(camera_file)
             else:
-                runs.append([frame, frame, [difference]])
-        for first, last, differences in runs:
+                runs.append([frame, frame, [difference], {camera_file}])
+        for first, last, differences, camera_files in runs:
             frames = last - first + 1
             verdict = 'fault' if frames >= OUT_OF_SYNC_FAULT_FRAMES else 'look'
             frozen = any(c.get('speed_percent', 100) < 100 and c['record'] <= first < c['record'] + c['source_out'] - c['source_in'] for c in clips)
             what = ('picture frozen while he speaks' if frozen else
                     f'his mouth is from {np.median(differences):+.2f} s against the sound he is heard saying')
+            if any(offsets[name]['timed_by_own_microphone'] for name in camera_files):
+                what += f' ({MICROPHONE_OFFSET_WARNING})'
             self.add('lips out of sync or frozen under speech', verdict, first, last, f'{frames} frames, {np.median(differences):+.2f} s', what, ('strip', first))
 
     def sound_joins(self):
@@ -823,13 +854,14 @@ class Cut:
             counts[row['class']][row['verdict']] += 1
         report = {'cut': str(self.path), 'frames': self.frame_count, 'fps': self.fps, 'faults': len(faults), 'counts': counts,
                   'checks': self.checks_run, 'span': self.span, 'rows': self.rows, 'picture_cuts': getattr(self, 'cuts', None),
-                  'pixel_cuts': getattr(self, 'pixel_cuts', None), 'measurements': self.measurements}
+                  'pixel_cuts': getattr(self, 'pixel_cuts', None), 'notes': self.notes, 'measurements': self.measurements}
         json.dump(report, open(self.out / 'report.json', 'w'), indent=1)
         lines = [f'<!-- Written by pipeline/b/qc.py. -->', f'# QC of {self.path.name}', '',
                  f'{len(faults)} faults. ' + (f'Loudness {self.measurements["loudness"]["integrated_lufs"]} LUFS, true peak {self.measurements["loudness"]["true_peak_dbtp"]} dBTP. ' if 'loudness' in self.measurements else '')
                  + (f'{len(self.cuts)} cuts on him in the edit list, {len(self.pixel_cuts)} picture changes in the pixels. ' if hasattr(self, 'cuts') else '')
                  + f'Checks run: {", ".join(self.checks_run)}.' + (f' Timeline frames {self.span[0]} to {self.span[1]} only.' if self.span else '')
                  + ' Rows marked look or listen are for a model or an ear to judge; they do not fail the gate.', '',
+                 *[f'- {note}' for note in self.notes], *([''] if self.notes else []),
                  '| Class | Verdict | Frame | Time | Number | What | Evidence |', '| --- | --- | --- | --- | --- | --- | --- |']
         for row in self.rows:
             span = f'{row["frame"]}' if row['last_frame'] == row['frame'] else f'{row["frame"]} to {row["last_frame"]}'
