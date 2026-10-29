@@ -64,7 +64,7 @@ Code is boring plumbing; models make every judgement (the ZFC memo, `~/code/nix/
 - **Code places, reads back, measures and renders,** and decides nothing. It lives in `Edits/pipeline/b/` (the primitives below) and the kept steps of `Edits/pipeline/` (ingest, project, render, in-place changes, the Remotion terminal).
 - **Josh decides** words and taste.
 
-A number measured on one recording (a silence level, a pause length, a framing value, how his voice ends a sentence) is a fact about that recording, never a rule: measure it again on the next one. The numbers in `tools/faults.md` are the other kind: limits of what a viewer notices, few, set from cold judges' calls and published norms, and reviewed when a judge disagrees with the instrument.
+A number measured on one recording (a silence level, a pause length, a framing value, how his voice ends a sentence) is a fact about that recording, never a rule: measure it again on the next one. The numbers in `tools/faults.md` are the other kind: limits of what a viewer notices, few, set from cold judges' calls and published norms. Some rest on only one or two judged cuts, and `tools/faults.md` says which beside each number, so you know how far to trust it.
 
 ## The roles, and why in this order
 
@@ -111,13 +111,13 @@ After lock the finish timeline also carries per-shot Color page work (the wide c
 
 ## The edit list and the primitives
 
-The Resolve timeline is the edit. The crew's working copy of it is `edit-list.json` in the video's folder: a row for each thing on the timeline, in its own terms (`segments`, `panels`, `titles`, `audio`, `sound`, `captions`, and `cameras` for each camera's file, offsets, grade and group), each with a few words of `why`. The fields are in `Edits/pipeline/edit-format.md`. Code executes the list exactly and reads any timeline back into the same shape, so the two never disagree. Two things cannot be read back: a CDL grade (the call that sets it must return True) and hand work on a colour group, which lives only in the project.
+The Resolve timeline is the edit. The crew's working copy of it is `edit-list.json` in the video's folder: a row for each thing on the timeline, in its own terms (`segments`, `panels`, `titles`, `audio`, `sound`, `captions`, and `cameras` for each camera's file, offsets, grade and group), each with a few words of `why`. The fields are in `Edits/pipeline/edit-format.md`. `place.py` and `finish.py` build exactly what the list says and compare the timeline they made with it, so a timeline built from the list matches the list. A change made in Resolve itself, by Josh or by an in-place script, does not reach the list by itself (below).
 
 | Primitive (`pipeline/b/` unless named) | What it does |
 | --- | --- |
 | `place.py LIST --timeline NAME` | The whole cut timeline in one command, in track order: V1; the V2 segments with their framing and their angles; V3; the V4 titles with their inputs; the sound on A1 and A2; the captions in the look's template. Saves, reads back, prints every difference from the list. Exit 0 only with none. Refuses a name that exists |
 | `finish.py LIST --timeline NAME` | Makes "NAME finish" from the cut timeline NAME: duplicate, flatten, groups and CDL grades from `cameras`, framing again, read back. Exit 0 only with no difference. An older finish timeline of the name is kept, renamed with its date |
-| `readback.py NAME` | Any timeline in the list's shape, with sub-frame audio edges and every caption word's frames. A CDL cannot be read back; it says so |
+| `readback.py NAME` | What any timeline holds, in the timeline's own terms (below): every video item, audio clip, crossfade and caption, with sub-frame audio edges and each caption word's frames. It changes nothing and does not write the list |
 | `frame.py NAME FRAME OUT.png` | One settled still from Resolve's viewer |
 | `envelope.py LAV --from S --to S` | The lav's level every 5 ms, the quiet runs under a level you give, the quiet step nearest a time |
 | `word_times.py NAME` | Resolve renders the timeline's sound and transcribes it: every heard word on the timeline's clock, and the sound file's path |
@@ -131,6 +131,25 @@ The Resolve timeline is the edit. The crew's working copy of it is `edit-list.js
 | `pipeline/resolve/copy_grades.py`, `remove_range.py`, `replace_media.py` | After lock: per-shot grades across to a new finish timeline; a ripple delete of whole clips; a file swapped behind a clip (`tools/resolve.md`, "Changing a placed timeline") |
 | `tidy.py` | Deletes superseded cut timelines, checks, tests and unused media; lays the bins out by kind. `--dry-run` prints the plan |
 
+### A change made in Resolve comes back into the list by hand
+
+`readback.py NAME` prints what the timeline holds, not the list:
+
+- `video`: every item on every track, with `track`, `record`, `frames`, `source_in` and `source_out` in its source's own frames, `speed_percent`, `retime`, `framing` (`ZoomX`, `ZoomY`, `Pan`, `Tilt` and the four crops), `group`, and the tools in each node. A multicam item on V2 has `angle` and `camera_file`, and its `source_in` is already in that camera's own frames. A title item has `template`, named without spaces ("SignpostTitle" for "Signpost Title"), and `inputs`, its styled text with the `[[ ]]` ranges.
+- `audio.clips`: `track`, `file`, `record_s`, `source_in_s`, `source_out_s`, `fade_in_s`, `fade_out_s`, and `voice_isolation` when it is on. `audio.crossfades`: `track`, `start_s`, `length_s`.
+- `captions`: text, start, end and each word's start and end, in seconds.
+
+Translating that into the list is the editor's job, by hand, whenever the cut timeline has been changed in Resolve:
+
+- each V2 item becomes its `segments` row: `camera` is the `cameras` entry whose `file` is the item's `camera_file`; `source_in`, `record`, `frames`, `framing`, `speed_percent` and `retime` as read;
+- V1 and V3 items become `panels` rows, and V4 items `titles` rows with the template's spaces put back;
+- A1 clips become `audio` rows, fades in milliseconds; a crossfade becomes `crossfade_ms` on the row whose end it is centred on (its centre is `start_s` plus half `length_s`); A2 is room tone, which the `sound` block already describes;
+- `captions` as read.
+
+What cannot be read back stays as the list and the project have it: a CDL grade (no call reads one), hand work on a camera's colour group (it lives in the project), and the Dialogue Leveler on a piece.
+
+Skip the translation and the change is undone or blocked. `finish.py` takes each segment's framing, speed and retime from the list, so a reframe made in Resolve is overwritten on the finish timeline by the list's old values. An angle switched in Resolve gets its new camera's grade, but `finish.py` compares against the list's camera and exits non-zero. A segment moved or removed in Resolve stops it outright, because every V2 item must have a `segments` row at its record frame. And the next `place.py` from the list builds the cut without the change.
+
 Scripts that use numpy (`envelope.py`, `qc.py`) run as `pipeline/.devenv/profile/bin/python3`. Resolve scripts run under `/usr/bin/python3 -B`, through the video's lock. Each script's `--help` gives its arguments. If a primitive is missing or wrong, fix it in `pipeline/b/` with the smallest change or tell the director; never fork a copy into a video's folder.
 
 ## The loop
@@ -143,7 +162,9 @@ Every role that changes the video works the same way, and this is the only place
 4. **Look where the gate cannot.** Each role's file names what that is. Compare with the timeline before the change: anything outside what you meant to change is a fault until explained.
 5. **Fix at the source,** in the list, and place again. A fault class that comes back means a misread mechanism: read the tool file again before looking harder.
 
-**Every render goes through the gate.** Nobody renders a whole cut to look at it: a still or a short span is a diagnostic. A whole render exists to send Josh a cut or to deliver the file he posts, and it is always of a finish timeline `finish.py` has just made. Finishing runs `qc.py` on it. Every fault row goes back to its owner and is fixed at its source, and the cut is rendered and measured again, until no fault row stands and a cold judge finds nothing. Look and listen rows are judged, not failed. Only then does the director judge it, and only then does Josh see it. His words: "if there are 'faults' ... that you can detect said faults we should just fucking fix that shit".
+**Every render goes through the gate.** Nobody renders a whole cut to look at it: a still or a short span is a diagnostic. A whole render exists to send Josh a cut or to deliver the file he posts, and it is always of a finish timeline `finish.py` has just made. Finishing runs `qc.py` on it. Every fault row goes back to its owner and is fixed at its source, and the cut is rendered and measured again, until no fault row stands, or is overridden in writing, and a cold judge finds nothing. Look and listen rows are judged, not failed.
+
+**The gate finds; the model decides; no finding is dropped silently.** A measured fault row is fixed at its source by default. A role may override one only by writing, in its hand-over, the row's frame, its evidence image and the reason the frames show it is not a fault here. Every override reaches the cold judge and the director, either of whom may reinstate it. When the cold judge or Josh sees a fault the gate missed, the role that owns it fixes the cut now, and the gap in the instrument is logged for the end of the video (`roles/director.md`, "At the end of a video"), never patched mid-run in place of fixing the cut. Only then does the director judge it, and only then does Josh see it. His words: "if there are 'faults' ... that you can detect said faults we should just fucking fix that shit".
 
 **Spend looking, not rules.** When you cannot tell which of two options is better, place both and look at the same frame of each. When Josh cannot picture a change, show him two or three sizes or strengths side by side on one real frame. When something fails once, find the mechanism that failed and fix that.
 

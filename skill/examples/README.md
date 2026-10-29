@@ -2,6 +2,8 @@
 
 # Weak and strong, from a real video
 
+The pairs are private: they hold real artefacts from Josh's videos, so they are kept out of the public repository and exist only in the copy of this folder on his Mac. A public clone has this README alone; the role files still point at the pairs by name.
+
 Each pair is something Josh was shown, weak then strong, with his reaction. Open the weak file, then the strong one, and notice what each asks you to hold in your head before you can judge it. Copy the move, not the words: all of it belongs to one video.
 
 1. **Script page.** Weak: prose with bracketed screen notes and options described in words. Josh: "this page-v1.md is unreadable slop? i dont have rain man memory of all the lines?" Strong: timed rows in playing order, his exact words, the real output under each. He judged it as a video: "ok picture script seems directoinally correct". Reading the strong page once is a viewing of the video.

@@ -13,7 +13,9 @@ Each class below says what the viewer notices, the number that decides it, what 
 - **listen:** a place only an ear can settle; nobody here can yet, so it is named for Josh;
 - **eyes:** no instrument; the role that owns the class, finishing and the cold judge look for it.
 
-Every number is a limit of what a viewer notices, set from cold judges' calls on real cuts or from a published norm, never a value measured on one recording. When a judge disagrees with the instrument, the number is reviewed. When the gate misses something a judge or Josh can see, the gate is what gets fixed.
+Every number is a limit of what a viewer notices, set from cold judges' calls on real cuts or from a published norm, never a value measured on one recording. Several rest on only one or two judged cuts; each class says what its number rests on, so you know how much to trust it.
+
+**The gate finds; the model decides.** A measured fault row is fixed at its source by default. A role may override one only in writing, in its hand-over: the row's frame, its evidence image, and the reason the frames show it is not a fault here. Every override reaches the cold judge and the director, either of whom may reinstate it. When the cold judge or Josh sees a fault the gate missed, the owner fixes the cut now, and the gap in the instrument is logged for the end of the video. A number a judge keeps disagreeing with is reviewed then, with the frames.
 
 ## How the gate works
 
@@ -23,7 +25,7 @@ Every number is a limit of what a viewer notices, set from cold judges' calls on
 - **Sound,** decoded to mono at 48 kHz. Each sound piece of the list is found in the cut by matching its samples to the lav, so the gate knows each piece's real offset and level. A level trace every 5 ms finds word onsets in the cut's own sound.
 - **Heard words,** when given (`--heard-words`, Resolve's transcription of the file's own sound by `word_times.py --media`), are paired in order with the lit caption words.
 
-It writes `report.md`, `report.json` and an `evidence/` folder of images (frame strips, crops, level traces, spectrograms) into the video's `build/qc/<file name>/`, one row per finding with its class, frames, time, number and evidence. It exits 1 while any row is a fault. A row whose evidence shows it is wrong is an instrument error: log it with the frame, and fix the instrument, not the cut.
+It writes `report.md`, `report.json` and an `evidence/` folder of images (frame strips, crops, level traces, spectrograms) into the video's `build/qc/<file name>/`, one row per finding with its class, frames, time, number and evidence. It exits 1 while any row is a fault. A row whose evidence shows the instrument misread the frame (a hand taken for a blink, a book spine read as a caption) is overridden in writing as above and logged as an instrument error for the end of the video.
 
 **What the gate cannot see:** a face touch; framing, face size and background across a camera change; a bare jump cut; his eyes anywhere but at segment starts; the content of a graphic and whether its pill covers its word; encoding breakup; the story at a join; how a join sounds; motion. Each role's file says which of these are its to look at, and finishing and the director look at all of them on the whole film.
 
@@ -54,14 +56,15 @@ $L ../pipeline/b/word_times.py "NAME finish" --media scratch/ROLE/span.mp4 > scr
 - Decided by: eye openness below 0.65 of that shot's median.
 - A cut on him is the first frame of each `segments` row. The pixels cross-check the list: a pixel cut on his face with no listed cut within 2 frames, or a listed cut the pixels do not show, is a "look" row, and so is the eye check at it. A hand across his face can make one.
 - A downward glance at his screen lowers eye openness as a blink does; the evidence strip settles it.
+- Rests on: the 3-frame window, because cuts checked on their first frame alone passed blinks a viewer saw. The 0.65 has no separately judged basis recorded: treat a row near it as a place to look.
 
 **Lips out of sync, or a frozen picture while he speaks** (measured). We see his mouth from a different moment from the words we hear.
-- Decided by: 4 frames or more where the picture's moment and the sound's moment differ by more than 60 ms, while the sound is at -30 dBFS or louder and his face is on screen. 1 to 3 frames is a "look" row: on the cuts judged so far, a cold judge did not count runs that short.
+- Decided by: 4 frames or more where the picture's moment and the sound's moment differ by more than 60 ms, while the sound is at -30 dBFS or louder and his face is on screen. 1 to 3 frames is a "look" row. Rests on: two judged cuts, on which a cold judge did not count runs that short.
 - The picture's moment comes from each segment's camera and source frame, and each camera's `picture_offset_s` in the list's `cameras` (picture measured against picture at ingest, `tools/cameras.md`). A camera without one is timed by its own microphone, and the report says so; on a camera whose microphone is the lav's radio feed, that reads its shots tens of milliseconds early. A judge checking by hand takes offsets from `inventory.md` for the same reason.
 
 **Camera colour mismatch** (measured). The two cameras do not look like one camera from two angles.
 - Decided by: on his skin (the nose and inner cheeks, the median of the pixels between the 20th and 95th percentile of lightness, per shot, then per camera), a camera's red/green ratio at most 0.015 above the reference camera's, and its blue/green within 0.015 of it. The reference is the camera `cameras` marks `reference`.
-- Rests on two judged cuts: a wide camera paler than the front with blue/green level was passed; one warmer by more than these limits was failed on every camera change. Warmer is what the eye catches as a different room. One row per camera pair, listing every change between them.
+- Rests on two judged cuts and no more: a wide camera paler than the front with blue/green level was passed; one warmer by more than these limits was failed on every camera change. So 0.015 is a narrow basis. Warmer is what the eye catches as a different room; a row just past the limit is a strong case for a still pair and the cold judge, not a verdict. One row per camera pair, listing every change between them.
 
 **Flash** (measured). A clip on V2 or above on screen for under 3 frames, from the list.
 
@@ -77,12 +80,13 @@ $L ../pipeline/b/word_times.py "NAME finish" --media scratch/ROLE/span.mp4 > scr
 - **A fragment.** The kept side holds a word's start or end within 250 ms of the edge (a rise of 10 dB or more out of a level under -33 dBFS), and the dropped side carries on at -25 dBFS or louder. 250 ms is about a syllable.
 - **Through a word.** The lav is at speech level, -30 dBFS or louder, for the whole 40 ms around the edge.
 - An edge where the source runs on unbroken into the next piece is not a join.
+- Rests on: no judged basis is recorded for these levels beyond the cuts the gate was built against; 250 ms is the length of a syllable.
 
 An edge just after an unvoiced consonant has to pass both tests at once: the dropped side under the fragment line, and a fade-in that ends before the next word's rise.
 
 **Hard sound join** (measured; sometimes listen). The sound stops or starts more sharply than his voice does at that point. Decided by the steepest 20 ms change of level within 60 ms of the edge, against the lav's own change at the same moment. A fault when all hold:
 - the step is 6 dB or more;
-- the louder side is at -30 dBFS or louder, or 12 dB or more above the room tone within 100 ms of the edge (a weak word tail cut into room tone after a short fade sits under -30 dBFS and is still heard as a chop);
+- the louder side is at -30 dBFS or louder, or 12 dB or more above the room tone within 100 ms of the edge (a weak word tail cut into room tone after a short fade sits under -30 dBFS and is still heard as a chop; this clause rests on one join a cold judge heard);
 - the step is 10 dB or more steeper than the lav's.
 
 A step 6 to 10 dB steeper than the lav's is a "listen" row.
@@ -97,11 +101,11 @@ A step 6 to 10 dB steeper than the lav's is a "listen" row.
 - Decided by: the lit words and the heard words aligned in order; a lit word with no heard partner within 2 s is a fault when at least half its lit frames are under -38 dBFS.
 - A lit word with no partner over sound is a "look" row: usually an OCR slip or a spelling ("1" for "a", "$600" for "six hundred").
 
-**Caption on his face** (measured). The caption band sits on his mouth or nose, or too close under his lip. Decided by the look: his lower lip's lowest point, from Vision's landmarks on every frame, at least `subtitles.faceClearance.lowerLipToBandTopPx` above the band's top (`look.json`). One row per run of frames.
+**Caption on his face** (measured). The caption band sits on his mouth or nose, or too close under his lip. Decided by the look: his lower lip's lowest point, from Vision's landmarks on every frame, at least `subtitles.faceClearance.lowerLipToBandTopPx` above the band's top (`look.json`). One row per run of frames. Rests on: two judged cuts, on which every frame a judge called "captions over his face" had the band within 113 px of his lip and every frame passed had 130 px or more.
 
 **Caption past the safe line** (measured). A caption's pill or letters run into the button column (right of the look's `fusion.safeArea.buttonsLeft`) or past its mirror on the left, below `buttonsTop`. Decided on every frame: the white letters and orange pill across the middle half of each caption line's height, joined while the gap is 40 px or less. `captions.py` warns on the same line before the build.
 
-**Highlight late or early** (measured after a pause; look inside connected speech). The pill lights more than 3 frames before or after he starts the word. In his look the pill walks the eye through his speech, so a viewer sees it miss.
+**Highlight late or early** (measured after a pause; look inside connected speech). The pill lights more than 3 frames before or after he starts the word. In his look the pill walks the eye through his speech, so a viewer sees it miss. Rests on: judged cuts where a highlight 4 frames late was called; nothing tighter has been judged.
 - An onset is a rise of 10 dB or more within 80 ms, out of a dip of at least 30 ms, reaching speech, on the cut's own sound. After a pause (100 ms under -33 dBFS) a rise can only be a word's start, so the first word lit after a pause is measured against the rise nearest its lit frame, and more than 3 frames either way is a fault.
 - Inside connected speech, a closure inside a word ("brea|king") and the gap between two words look alike on the level, so the gate cannot fail there. Where Resolve's heard word and a rise agree on an onset that the lit frame misses by more than 3 frames, and no rise sits at the lit frame, it writes a "look" row with a spectrogram: a yellow line at the lit frame, red at the rise. Judge each by reading the spectrogram against the words. Most are Resolve's word time running late; a few are real early highlights, typically on the word after a very short one.
 - `align.py` gives the start of each known word on the placed sound (`roles/editor.md`, "Word times on the placed sound"). Once it is proven on his real voice and the gate reads it, this class becomes measured in connected speech too, at the same 3 frames, and the look rows go.

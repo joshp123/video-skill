@@ -87,7 +87,7 @@ Open each role's first real output as soon as it exists and correct drift then, 
 
 ## Applying a note
 
-The timeline is built so a note is quick to apply (SKILL.md, "The timeline"). A note is a change to the cut timeline (for a grade, to the list alone) and then a re-finish: change the cut, read it back with `readback.py` so the list follows it, make its finish timeline with `finish.py`, look at both sides of the change there, render, and send the render through the gate. Josh sees the change only in that render.
+The timeline is built so a note is quick to apply (SKILL.md, "The timeline"). A note is a change to the cut timeline (for a grade, to the list alone) and then a re-finish: change the cut, bring any change made in Resolve itself back into the list by hand (SKILL.md, "A change made in Resolve comes back into the list by hand"), make its finish timeline with `finish.py`, look at both sides of the change there, render, and send the render through the gate. Josh sees the change only in that render.
 
 The cut changes in one of three ways (`tools/resolve.md`, "Changing a placed timeline"):
 
@@ -95,7 +95,7 @@ The cut changes in one of three ways (`tools/resolve.md`, "Changing a placed tim
 - **In place, on a duplicate of the cut timeline** under a new name: a title's words, a whole-line removal, a swapped file, a reframe.
 - **Not at all, for a regrade:** the grade lives in the list's `cameras` and only on the finish timeline.
 
-Josh can change the cut timeline himself, for example switch an angle in the viewer. When he has, read it back before anyone places again, so the list takes his change; the editor reframes the switched segment, and the re-finish gives it its new camera's grade. Finishing reads the cut back before every re-finish, so a change he did not mention is found too.
+Josh can change the cut timeline himself, for example switch an angle in the viewer. When he has, the editor reads it back and translates his change into the list before anyone places or re-finishes again (SKILL.md, "A change made in Resolve comes back into the list by hand"), and reframes a switched segment for its new camera; the re-finish then gives it that camera's grade. Skipped, the re-finish overwrites his reframe or refuses his switch. Finishing compares the cut with the list before every re-finish, so a change he did not mention is found too.
 
 After lock, the finish timeline carries per-shot Color page work (the wide camera's shallow focus). Make every post-lock change on a new cut name, and bring that work across from the old finish timeline with `copy_grades.py`; work on the camera groups lives in the project and comes across by itself. A switch Josh makes after lock is his decision: it goes through the same steps, and a segment newly on the wide camera needs its own mask. Nothing he has seen changes: what he saw is the export in `versions/`.
 
@@ -106,10 +106,10 @@ You judge a render only after the gate has passed it and finishing has looked at
 He watches the export on his phone, in motion, muted and then with sound. The faults he catches are plain at full size or in motion, and invisible in the views agents reach for when they want to pass a cut: a contact sheet, a few frames chosen from a fix list, a measured number, another agent's sentence. So look at the file he will get, whole and in order, at phone width, and compare it frame by frame with the version he last saw (`tools/checking.md`, "What changed since the last version"). For each of his notes, put before and after side by side at phone size: if you cannot tell them apart, the note is not done. Then judge the whole as a stranger would: what is this, why should I care, does it really work, what do I do now.
 
 - **Instruments find; they never pass.** A level, a spectrogram, a colour patch or a frame difference says where to look; only real frames, looked at, say something is right.
-- **A measured finding over its number is never argued away,** not by another role's opinion that it looks fine. What `tools/faults.md` calls taste you may leave; everything else is fixed.
+- **The gate finds; you decide; nothing is dropped silently.** A measured fault row is fixed at its source by default, and another role's opinion that it looks fine is not a reason to leave it. A role may override a row only in writing, with its frame, its evidence image and the reason, and every override comes to you and to the cold judge: read each against the frames and reinstate any you do not accept. What `tools/faults.md` calls taste you may leave. When you, the judge or Josh see a fault the gate missed, the owner fixes the cut now, and the gap in the instrument goes on the list for the end of the video.
 - **A known fault never reaches him.** A hand-over that lists "known flaws" is not finished. A moment for his eyes is only something nobody here can judge, such as how a join sounds.
 - **One look that converges.** Make the first look whole: every cut, every caption, every crop's edges, every join, the whole file at phone width. Fix only real faults, at their source. Then look again only where the difference says something changed. If a second whole look finds new faults, the first was not whole. A fault class that comes back twice is a gap in a tool or in this skill: fix that, not the instance.
-- **A cold judge** (Fable or a fresh Opus) reads every cut before Josh does, from the first render that passes the gate, given his words, `tools/faults.md`, the moodboard and the real file, nothing from you. Its measured findings are faults; its other findings are claims to test against his words before you act.
+- **A cold judge** (Fable or a fresh Opus) reads every cut before Josh does, from the first render that passes the gate, given his words, `tools/faults.md`, the moodboard and the real file, nothing from you. Its measured findings are faults unless it agrees with an override; its other findings are claims to test against his words and the frames before you act, and the overrides it reinstates are fixed.
 
 ## When it goes wrong
 
@@ -123,4 +123,4 @@ The signs: he says it is misaligned, the work swings from note to note, a fault 
 
 ## At the end of a video
 
-When the file is posted, two things, both for Josh's approval: what in this skill let the crew down, with the evidence (a gap a role had to re-derive, a mechanism misdescribed, a fault class with no instrument); and whether Resolve's version has moved past the one `tools/resolve.md` was last checked against (SKILL.md, "Keep moving into Resolve"). The skill changes only then.
+When the file is posted, two things, both for Josh's approval: what in this skill and its instruments let the crew down, with the evidence (a gap a role had to re-derive, a mechanism misdescribed, a fault the gate missed, an override the judge reinstated, a number a judge kept disagreeing with); and whether Resolve's version has moved past the one `tools/resolve.md` was last checked against (SKILL.md, "Keep moving into Resolve"). The skill changes only then.

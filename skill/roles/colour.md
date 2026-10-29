@@ -47,7 +47,7 @@ The gate measures his skin on every shot and fails a camera that is warmer than 
 - **Warmer is the fault the eye catches:** skin warmer than the reference reads as a different room on every camera change, while a slightly paler wide camera with the same blue/green balance reads as the same room.
 - **When the wide reads warm,** compare its grade's saturation and blue slope with the front camera's before anything else: more saturation, or a blue slope under green, pushes skin warm.
 - **The number finds the fault; eyes confirm it.** Take a still pair at each change too.
-- **Your eyes adapt.** The eye that tuned a pair stops seeing its difference. Put your pairs in front of a cold judge (`roles/director.md`, "Judging the export") before the cut goes on, and when a regrade passes the number but still reads warm to a judge, the limit is what gets reviewed.
+- **Your eyes adapt.** The eye that tuned a pair stops seeing its difference. Put your pairs in front of a cold judge (`roles/director.md`, "Judging the export") before the cut goes on, and when a regrade passes the number but still reads warm to a judge, it is a fault: fix it now, and log the limit for review at the end of the video.
 
 A second video from the same session starts from the first video's values, checked on its own frames. Screen recordings and app captures are plain clips on V3, already Rec.709: they take Resolve's Rec.709 input, no grade, and a colour group of their own.
 

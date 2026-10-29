@@ -21,7 +21,7 @@ Before every cut goes out:
 
 Render only a finish timeline, never a cut timeline: the cut carries no grade (SKILL.md, "The timeline"). Before each render:
 
-1. **Read the cut timeline back** (`readback.py`) and compare it with the list. Anyone may have changed the cut since, Josh included. A difference is a change somebody made in Resolve: the list takes it, and a switched angle goes to the editor to reframe before you go on (`roles/director.md`, "Applying a note").
+1. **Read the cut timeline** (`readback.py`) and compare it with the list. Anyone may have changed the cut since, Josh included. A difference is a change somebody made in Resolve: it goes to the editor to translate into the list, and a switched angle to be reframed, before you go on (SKILL.md, "A change made in Resolve comes back into the list by hand"). Re-finishing before that would overwrite the change or fail.
 2. **Make the finish timeline** with `finish.py`. It must exit 0 with no difference from the list. After lock the finish timeline carries per-shot Color page work that a re-finish would not carry: when the cut has not changed, render the finish timeline that exists; when it has, re-finish on a new cut name and bring the per-shot work across with `copy_grades.py`.
 3. **Tidy the project** (`tidy.py`, dry-run first), keeping the cut and its finish timeline (SKILL.md, "The timeline").
 4. **Render** with `pipeline/resolve/render_timeline.py`, through the video's lock, with `--subtitles` (it burns in the enabled caption track) and `--load-render-preset` the loudness preset `pipeline/b/loudness.py` wrote, so the file is at the delivery's level (`tools/audio.md`, "Level").
@@ -48,9 +48,9 @@ mv scratch/finishing/render/cut-vN.mp4 versions/cut-vN.mp4
 
 The first line is Resolve's transcription of the file's own sound, which the gate pairs with the lit caption words. The gate writes `build/qc/cut-vN/report.md`, one row per finding with its class, frame, time, number and evidence image, measures loudness and true peak on the whole file, and exits non-zero while any row is a fault. What each class means and how it is measured is in `tools/faults.md`.
 
-- **Every fault row goes back to its owner** with the frame and the time. You fix none yourself, and you send nothing on while a fault row stands. When the owners have fixed theirs, render again and run the gate again.
-- **The instrument finds; it never passes.** Open every evidence image. A row the frames show is wrong goes back with that frame as an instrument error (`tools/faults.md`, "How the gate works").
-- **When the gate misses something you can see,** the gate is what gets fixed, and the director hears so.
+- **Every fault row goes back to its owner** with the frame and the time. You fix none yourself, and you send nothing on while a fault row stands that is neither fixed nor overridden in writing by its owner, with the frame, the evidence image and the reason (SKILL.md, "The loop"). List every override in your hand-over. When the owners have fixed theirs, render again and run the gate again.
+- **The instrument finds; it never passes.** Open every evidence image. A row the frames show the instrument misread goes back to its owner with that frame, to override in writing, and is logged as an instrument error.
+- **When the gate misses something you can see,** it goes back to its owner as a fault to fix now, and the gap in the instrument goes to the director for the end of the video.
 
 ## Look before Josh does
 

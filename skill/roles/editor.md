@@ -67,7 +67,7 @@ When the picture cut lands on a blink but the sound cut is right, move only the 
 
 His standard: "cut all the moments where i touch my face etc (as a pro director would do)". Both cameras film the same moment, so a touch on one camera is a touch on both. Cut round it, or cover it with the tool on screen.
 
-The first frame is the thumbnail and must work with the sound off: his eyes on the lens with his mouth closed, or the tool's most telling picture with the opening title over it. The video never ends on a frozen frame of his face: "make it fade out from the stuff over  of my face so we don't just stare at a freeze frame of me". The closing card arrives as his last word ends, over his live footage darkening behind it, and holds long enough to read at phone size.
+The first frame is the thumbnail and must work with the sound off: his eyes on the lens with his mouth closed, or the tool's most telling picture with the opening title over it. The video never ends on a frozen frame of his face: "make it fade out from the stuff over  of my face so we don't just stare at a freeze frame of me". The closing card holds long enough to read at phone size; how it arrives over him is the look's, chosen per video (`roles/motion.md`, "Cards").
 
 ### The frame is built for a phone held upright
 
@@ -114,7 +114,7 @@ You phrase and time every caption. Resolve's own captioning (`CreateSubtitlesFro
 
 V2 holds the cameras' multicam clip, cut into segments. A segment is `{camera, source_in, record, frames, framing}`. `source_in` is a frame of that camera's own file; `place.py` adds the angle's offset inside the multicam, so the same moment has a different `source_in` on each camera. Convert between them with the offsets in `inventory.md` (front-camera time = a file's own time + its offset). `framing` (`ZoomX`, `ZoomY`, `Pan`, `Tilt`) is the shot's whole framing on that camera; `Pan` and `Tilt` are not pixels (`tools/resolve.md` gives the units).
 
-A camera switch changes `camera`, the `source_in` for the same moment, and the `framing` for the same kind of shot on the new camera; the record frame stays. The cut timeline carries no grade. `finish.py` makes the graded finish timeline from it, and a switched segment takes its new camera's grade there. When Josh switches an angle himself, Resolve keeps the old camera's framing on the segment: read the timeline back (`readback.py`) so the list takes his change, then reframe that segment.
+A camera switch changes `camera`, the `source_in` for the same moment, and the `framing` for the same kind of shot on the new camera; the record frame stays. The cut timeline carries no grade. `finish.py` makes the graded finish timeline from it, and a switched segment takes its new camera's grade there. When Josh changes the cut timeline himself, the list does not know. Read the timeline (`readback.py`) and translate his change into the list by hand: for an angle switch, the segment's `camera` from the item's `camera_file`, with its `source_in` as read, which is already that camera's own frame (SKILL.md, "A change made in Resolve comes back into the list by hand"). Resolve keeps the old camera's framing on a switched segment, so reframe it for the new camera. Until the list holds his change, `finish.py` would put back the list's framing over his and refuse the switch.
 
 ### Sound: one dialogue track, edges to the sample
 
@@ -184,7 +184,7 @@ Write `scratch/editor/state.md` as you go (SKILL.md, "The roles, and why in this
 ## What proves the cut right
 
 - `place.py` exits 0: the timeline is the list.
-- The gate passes your classes on a render of the finish timeline at the delivery's loudness.
+- The gate passes your classes on a render of the finish timeline at the delivery's loudness, or every row left is overridden in writing in your hand-over, with its frame, evidence and reason (SKILL.md, "The loop").
 - You have looked at full size at everything the gate cannot see, on every cut, not on a sample.
 - You have read the placed cut's heard words (`word_times.py`) from start to end, as a stranger hears them: every join reads as one thought, nothing is said twice, nothing refers to something not yet heard, and it ends on the ask.
 
