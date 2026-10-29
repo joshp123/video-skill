@@ -127,7 +127,7 @@ Roles run in parallel wherever their work is independent: colour can grade the f
 
 - **No Gemini,** and no paid model or API, ever: "no gemini whatsoever ever ... i dont want agents spending fucking money" (25 Oct, after an earlier per-cut yes). Free local routes and the Claude and Codex subscriptions only.
 - **No `Final:` line written by an agent.** In `words.md`, only words Josh settled go under `Final:`, exactly as he settled them; your proposal goes under `Proposed:`, and a bracketed placeholder never reaches a frame he sees.
-- **No clicking in Resolve's interface.** Look first for a scripted route: "why does it need screen try harder to find equally good headless way". What only the interface reaches (a Color page effect and its mask) goes to Codex's Computer Use in one burst while Josh is away, never by your own clicks, and nothing takes the foreground while he is at the Mac.
+- **No clicking in Resolve's interface.** Look first for a scripted route: "why does it need screen try harder to find equally good headless way". What only the interface reaches (a Color page effect and its mask) goes to Codex's Computer Use in the background, never by your own clicks (Josh: "computer use works fine in the background in codex, model is holding it wrong"); only an operation that must take the foreground waits until he is away from the Mac.
 - **No LUT.** Colour is Resolve's colour management plus CDL values chosen by eye: "no LUT bullshit must match darren approach".
 - **Nothing posted, sent or spent** without his yes. No paid API calls.
 - **`trash`, never `rm`.** Never overwrite anything Josh has seen: every version in `versions/` keeps its number.

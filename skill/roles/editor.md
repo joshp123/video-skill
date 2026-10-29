@@ -17,8 +17,9 @@ You decide every one of these values yourself, by looking. Nothing in code decid
 
    ```sh
    # from the video folder, through the lock, with Resolve's variables set, as in roles/finishing.md, "The fault gate"
-   ../pipeline/resolve/render_timeline.py PROJECT "NAME finish" SPAN.mp4 --preset phone --range FIRST LAST --load-render-preset LOUDNESS
-   ../pipeline/b/qc.py SPAN.mp4 --range FIRST LAST --only eyes sync joins highlights caption-edges captions
+   ../pipeline/resolve/render_timeline.py PROJECT "NAME finish" SPAN.mp4 --preset phone --subtitles --range FIRST LAST --load-render-preset LOUDNESS
+   ../pipeline/b/word_times.py "NAME finish" --media SPAN.mp4 > heard-SPAN.json   # the gate's caption checks need the heard words
+   ../pipeline/b/qc.py SPAN.mp4 --range FIRST LAST --heard-words heard-SPAN.json --only eyes sync joins highlights caption-edges captions
    ```
 
    A 200-frame span checks in seconds. The loudness preset matters: the join tests measure levels, and a span rendered at the master's level can sit 11 dB under the delivery's, so they pass or fail a different sound from the one Josh hears. Open every fault and look row's evidence. Never copy the gate's tests into a script of your own.
@@ -92,7 +93,7 @@ You phrase and time the captions; `captions.py` then does only what Resolve's te
 - **Length.** A caption is never shorter than the words it carries take to say. One up for under about 0.5 s is joined to a neighbour when a page of the joined phrase fits the safe line, and otherwise stays (taste, `tools/faults.md`). One that runs over the next thought is a fault.
 - **Where they hide.** No caption under a graphic that already shows his words, such as his request typing into an agent's box. An opening title held over his first words leaves them uncaptioned: start his words as the title leaves, or let the title carry them.
 
-Words a caption shows are the words he says on the placed sound, and only those: a word the sound cut leaves out comes out of the caption too, and a lit word with no onset under it is a fault (`tools/faults.md`, "Caption word with no sound"). After a re-place that moves his words, take the times again. Before you hand over, run the gate's `highlights` and `caption-edges` checks on a render of the cut, and judge every highlight "look" row by its spectrogram. After any re-page, compare every page in the gate's page list before and after: a fix to some pages can break others that were right.
+Words a caption shows are the words he says on the placed sound, plus the grammar tidy-ups he agreed on the page (a tidied word takes the timing of the word it replaces): a word the sound cut leaves out comes out of the caption too, and a lit word with no onset under it is a fault (`tools/faults.md`, "Caption word with no sound"). After a re-place that moves his words, take the times again. Before you hand over, run the gate's `highlights` and `caption-edges` checks on a render of the cut, and judge every highlight "look" row by its spectrogram. After any re-page, compare every page in the gate's page list before and after: a fix to some pages can break others that were right.
 
 ## Notes and lock
 
