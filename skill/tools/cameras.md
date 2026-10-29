@@ -31,6 +31,7 @@ Auto white balance is his choice: "i'm not at that skill level yet (or effort le
   ffmpeg -i POCKET.MP4 -map 0:a:0 -ac 1 -ar 16000 -c:a pcm_s16le SESSION/audio/lav_16k.wav
   ```
 - **One clock.** Pad the lav onto the front camera's clock once per session, name the file in `inventory.md`, and point the edit list's `sound.lav` at it, so a lav second is a front-camera second everywhere. A session may already hold one: look before making another.
+- **The two files the scripts read.** Each video's folder gets a small `edit/edit.json` for the kept Resolve scripts (`create_project.py`, `add_captions.py`, the in-place changes): `resolve_project`; `format` with `width`, `height` and `fps`; `look`; and `media` with `cameras.<name>` as `{file, log, colour_group}` (the file relative to the video's folder, `log` Resolve's own name for the input colour space, such as `"Nikon N-Log"` or `"DJI D-Gamut/D-Log"`) and `lav` as `{file}`. It holds those facts and nothing editorial. Ingest also starts `edit-list.json` (`pipeline/edit-format.md`): `resolve_project`, `fps`, `format`, `look`, `multicam` (`"cameras"`), each camera's `file`, `picture_offset_s`, `group` and a starting `grade` (the look's `colour.feel`, which the colourist then owns), with `reference: true` on the front camera, and `sound.lav`. `finish.py` needs every camera's group and grade. The roles fill in the rest.
 
 ## Sync, and how to prove it
 
@@ -40,7 +41,7 @@ Auto white balance is his choice: "i'm not at that skill level yet (or effort le
 - late in the take, his lips closing on a "p", "b" or "m" on each camera as the lav's sound starts, which shows drift;
 - **each camera's picture against the sound on its own.** The Pocket's picture can run about a frame ahead of its own sound, because its sound is the delayed radio feed. A camera whose picture is a frame or more off its sound gets its own picture offset.
 
-Each camera's picture offset goes into the edit list's `cameras` block as `picture_offset_s` (0 on the front camera), established picture against picture and written in `inventory.md` with how. The gate times lip sync from it (`tools/faults.md`, "Lips out of sync"). Apply every offset once: front-camera time = a file's own time + its offset; a lav padded onto the front clock has offset 0, and adding the offset as well moves every word twice.
+Each camera's picture offset goes into the edit list's `cameras` block as `picture_offset_s` (0 on the front camera), established picture against picture and written in `inventory.md` with how. The gate times lip sync from it (`tools/faults.md`, "Lips out of sync, or a frozen picture while he speaks"). Apply every offset once: front-camera time = a file's own time + its offset; a lav padded onto the front clock has offset 0, and adding the offset as well moves every word twice.
 
 ## Face touches
 

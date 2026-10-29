@@ -31,6 +31,8 @@ It writes `report.md`, `report.json` and an `evidence/` folder of images (frame 
 
 Any role runs it on the classes it is changing, through the video's lock for the Resolve steps, from the video's folder with Resolve's variables set (`tools/resolve.md`, "Driving it"). Never write a copy of its tests: two instruments measuring one class their own ways find different faults, and then nobody knows which cut is right.
 
+`qc.py` needs ffmpeg, ffprobe and Xcode's `swiftc` on the `PATH`; it compiles `qc_vision.swift` into the report folder when the binary there is missing or older than the source.
+
 **The level matters.** Every render the gate measures loads the delivery-loudness preset that `pipeline/b/loudness.py` wrote (`tools/audio.md`, "Level"). The sound tests measure levels; a render at the master's level can sit 11 dB under the delivery and pass or fail a different sound from the one Josh hears.
 
 **A span,** in seconds for sound joins, frames for anything visual. `--range` takes timeline frames, both ends included:
