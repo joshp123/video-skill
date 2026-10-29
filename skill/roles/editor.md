@@ -179,7 +179,7 @@ Your time goes on turns, not on placing. A cut built one edge at a time (look at
 
 A fault class that comes back after you fixed it means you have misread a mechanism: read its section in `tools/faults.md` and the tool file again before you look harder. A join that will not come clean is a reason to change the join (another take, a different edge, a crossfade, a covering shot), not to measure it again.
 
-Write `scratch/editor/state.md` as you go (SKILL.md, "The roles").
+Write `scratch/editor/state.md` as you go (SKILL.md, "The roles, and why in this order").
 
 ## What proves the cut right
 
