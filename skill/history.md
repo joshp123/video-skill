@@ -134,3 +134,7 @@ Each line: date or run, what happened, and the rule it supports (file, heading).
 - 22 Oct: on the frame-difference trace a camera cut read 47 against neighbours of 0.5 to 3. Supports tools/checking.md, "Frames from the delivered file" (open every spike).
 - First video: pills that missed their words passed a contact-sheet check, and Josh found them. Supports tools/checking.md, "Frames from the delivered file" (a contact sheet finds where to look, never judges).
 - 17 Oct: comparing a cut with the version before found a frozen end frame on the wrong expression and a panel framed 61 to 140 px off within minutes. Supports tools/checking.md, "What changed since the last version".
+
+## Listening
+
+- 29 Oct 2026: a search for a free route to hear a join. Six synthesised clips (three clean joins, three bad: a word chopped mid-word, a 140 ms fragment left in a gap, a start 60 ms into a word). Ollama cloud (23 models, none with audio) and the Codex plan (gpt-6.1-sol, gpt-6-astra, gpt-6-luna, gpt-5.6-luna: "Audio input is not available") refused audio. Local on this Mac (24 GB, 17.8 GB to the GPU): LFM3-Audio said clean for all six, LFM3-Omni bad for all six, d1-omni 0.1 to 1% for all six, Qwen2.5-Omni-3B bad for all six. Untested: Qwen3-Omni-30B or Nemotron 3 Omni on the Mac mini. Supports roles/director.md, "Models" (nobody here can listen). Details: private/requirements/listening-route.md.
