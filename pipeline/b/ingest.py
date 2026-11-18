@@ -459,7 +459,7 @@ def work(session):
                     "front": {"file": rel(by_kind["front"]["path"]), "log": LOG_NAMES["front"], "group": "front",
                               "grade": feel, "picture_offset_s": 0, "reference": True},
                     "wide": {"file": rel(by_kind["wide"]["path"]), "log": LOG_NAMES["wide"], "group": "wide",
-                             "grade": feel, "picture_offset_s": round(wide_picture_s, 3)}},
+                             "grade": feel, "picture_offset_s": round(wide_picture_s, 3), "blur": True}},
                 "sound": {"lav": rel(padded["padded"]), "room_tone_s": tone.get("window"), "room_tone_crossfade_ms": 200,
                           "room_tone_end_fade_ms": 300},
                 "transcript": rel(str(transcript_base) + ".json")}

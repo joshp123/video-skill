@@ -124,7 +124,8 @@ def main():
         if done.returncode:
             needs.append(f"{name}: {result.get('error') or result.get('differences', [])[:5]}")
             finish(1)
-    render = py + ["render.py", str(edit_list), "--timeline", f"{args.timeline} finish", "--out", str(render_file), "--preset", args.preset]
+    render = py + ["render.py", str(edit_list), "--timeline", f"{args.timeline} finish", "--out", str(render_file), "--preset", args.preset,
+                   "--blur", "off"]  # the check render: the background blur adds about 7 minutes and no check reads it
     if args.loudness:
         render += ["--loudness", args.loudness]
     if render_file.exists():

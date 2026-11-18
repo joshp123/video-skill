@@ -17,7 +17,8 @@ The plan (paths relative to the plan's folder; times in seconds on the front cam
 
 {
   "resolve_project", "look", "fps", "format": {"width", "height"}, "multicam",
-  "cameras": {NAME: {"file", "log", "group", "grade", "picture_offset_s", "reference"?, "framing"?}},
+  "cameras": {NAME: {"file", "log", "group", "grade", "picture_offset_s", "reference"?, "framing"?, "blur"?}}
+             ("blur": true gives that camera the look's background blur at every finish: the wide camera),
   "sound": {"lav", "room_tone_s", "room_tone_crossfade_ms", "room_tone_end_fade_ms"},
   "transcript": the word-timed transcript of the lav ({"words": [{"word", "start", "end"}]}),
   "crossfade_ms": the crossfade at every join (joins place; 0 for butt joins), "fade_ms": [in, out] at the film's ends,

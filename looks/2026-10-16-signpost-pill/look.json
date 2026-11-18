@@ -1584,6 +1584,10 @@
   },
   "colour": {
     "_about": "The look's colour feel as primaries a script can apply (ASC CDL, no LUT), added 22 Oct by Claude Fable 5.1. The Color page version was Temp +40, Contrast 0.95 in both camera groups' Post-Clip (where-was-i, 16 Oct). The values below are the first codex-switch run's front-camera grade, judged on frames against the posted where-was-i by its colourist: a starting point for the next video's colourist, never a rule; a camera's match to the reference camera is added on top of them, per video, in edit.json's media.cameras.<name>.grade.",
+    "backgroundBlur": {
+      "_about": "The wide camera's shallow focus, as Josh approved it on where-was-i (19 Oct: 'stong but fix glasses'): Resolve's AI CineFocus (aperture 1.0, focus 0.60, depth of field 0.12, Skip Foreground Blur, Higher Precision, map levels far 0.2 near 0.55) over an inverted AI Magic Mask of him, so the bookcase goes soft and his hair, glasses and edges stay sharp. The carrier is a one-clip timeline holding that node stack, its clip offline on purpose; finish.py copies it onto every clip of a camera marked \"blur\". The mask is not tracked on the new clips (the only scripted tracking shows a strip on screen), so the far rim of his glasses can break up where it crosses the bookcase. Written by AI on 2026.11.18 by model claude opus 5.5.",
+      "carrier": "resolve/background-blur.drt"
+    },
     "feel": {
       "slope": [
         1.064,

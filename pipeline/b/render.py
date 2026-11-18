@@ -35,7 +35,19 @@ FORMATS = {"phone": ("mp4", "H264"), "post": ("mp4", "H264"), "master": ("mov", 
            "sound": ("wav", None)}
 
 
-def render(project, timeline, output, preset="phone", frame_range=None, captions=True, loudness=None):
+def blur_nodes(timeline):
+    """Every (graph, node) of the look's background blur on TIMELINE: a node using the CineFocus plug-in."""
+    found = []
+    for track in range(1, timeline.GetTrackCount("video") + 1):
+        for item in timeline.GetItemListInTrack("video", track) or []:
+            graph = item.GetNodeGraph()
+            for node in range(1, (graph.GetNumNodes() if graph else 0) + 1):
+                if "OFX: CineFocus" in graph.GetToolsInNode(node):
+                    found.append((graph, node))
+    return found
+
+
+def render(project, timeline, output, preset="phone", frame_range=None, captions=True, loudness=None, blur=True):
     """Render TIMELINE to OUTPUT and wait. Returns {output, seconds, status}."""
     output = Path(output)
     if output.exists() or (preset == "still" and list(output.parent.glob(output.stem + "*.png"))):
@@ -91,6 +103,7 @@ def render(project, timeline, output, preset="phone", frame_range=None, captions
         return project.AddRenderJob()
     began = time.monotonic()
     job = None
+    switched_off = [] if blur else [(g, n) for g, n in blur_nodes(timeline) if g.GetNodeEnabled(n) and g.SetNodeEnabled(n, False)]
     try:
         job = session.start_render(project, add_job)
         while True:
@@ -102,6 +115,8 @@ def render(project, timeline, output, preset="phone", frame_range=None, captions
                 raise RuntimeError(f"Render {state}: {status}")
             time.sleep(1)
     finally:
+        for graph, node in switched_off:
+            graph.SetNodeEnabled(node, True)
         timeline.ClearMarkInOut("all")
         if job:
             project.DeleteRenderJob(job)
@@ -112,10 +127,11 @@ def render(project, timeline, output, preset="phone", frame_range=None, captions
         kinds = sorted(stream["codec_type"] for stream in json.loads(probe or "{}").get("streams", []))
         if ("audio" if preset == "sound" else "video") not in kinds:
             raise RuntimeError(f"{output} has no video stream (streams: {kinds or 'none'}); do not use it")
-    return {"output": str(output), "seconds": round(time.monotonic() - began, 1), "status": status}
+    return {"output": str(output), "seconds": round(time.monotonic() - began, 1), "status": status,
+            "background_blur": "off for this render" if switched_off else ("on" if blur_nodes(timeline) else "none on the timeline")}
 
 
-def run(list_path, name, output, preset, frame_range, captions, loudness):
+def run(list_path, name, output, preset, frame_range, captions, loudness, blur=True):
     data = json.loads(list_path.read_text())
     resolve, project = session.connect(data["resolve_project"])
     if project.IsRenderingInProgress():
@@ -123,7 +139,7 @@ def run(list_path, name, output, preset, frame_range, captions, loudness):
     timeline = session.timeline_named(project, name)
     if timeline is None:
         raise ValueError(f"No timeline {name!r}")
-    result = render(project, timeline, output, preset, frame_range, captions, loudness)
+    result = render(project, timeline, output, preset, frame_range, captions, loudness, blur)
     resolve.OpenPage("edit")
     return result
 
@@ -137,6 +153,8 @@ if __name__ == "__main__":
     parser.add_argument("--range", dest="frame_range", type=int, nargs=2, metavar=("IN", "OUT"))
     parser.add_argument("--no-captions", action="store_true")
     parser.add_argument("--loudness", help="a loudness preset's name, or off")
+    parser.add_argument("--blur", choices=("on", "off"), default="on",
+                        help="the look's background blur (finish.py): off for a check render, about 20 times faster on the blurred frames")
     args = parser.parse_args()
     session.main(lambda: run(args.edit_list.resolve(), args.timeline, args.out.absolute(), args.preset, args.frame_range,
-                             not args.no_captions, args.loudness))
+                             not args.no_captions, args.loudness, args.blur == "on"))
