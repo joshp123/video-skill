@@ -2,7 +2,7 @@
 
 Written by AI on 2026-11-17 by Claude Opus 5.5, for the rebuild.
 
-cut.py PLAN.json --timeline NAME [--loudness PRESET] [--preset phone] [--render-anyway]
+cut.py PLAN.json --timeline NAME --loudness PRESET [--preset phone] [--render-anyway]
 
 Runs, in order, stopping at the first that fails: assemble.py (the edit list beside the plan, replaced), preflight.py
 (the gate's eye, lip and sync checks on the planned picture, about 30 s; a fault stops the pass here, before the
@@ -50,7 +50,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("plan", type=Path)
     parser.add_argument("--timeline", required=True)
-    parser.add_argument("--loudness")
+    parser.add_argument("--loudness", required=True,
+                        help="the loudness render preset's name (loudness.py writes one): without it the render is about 10 dB quiet, "
+                             "the gate fails on loudness and the pass is wasted (run 6, build 18)")
     parser.add_argument("--preset", default="phone")
     parser.add_argument("--render-anyway", action="store_true", help="place and render even when preflight finds a fault")
     args = parser.parse_args()
