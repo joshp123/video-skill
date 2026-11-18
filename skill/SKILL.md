@@ -123,7 +123,7 @@ All in `pipeline/` (in this repository, and linked as `Media/Edits/pipeline`). `
 | `session.py start / stop / status` | Resolve windowless; which project is open; any dialog | start 9 to 40 s |
 | `project.py LIST` | The video's project: colour management, groups, media, the multicam synced by sound, all read back | 21 s, once |
 | `assemble.py PLAN` | The plan to the edit list: finds his words, has `joins place` cut each edge inside a measured pause, force-aligns his words to time the captions, converts everything to frames; reports what needs you | tens of seconds, no Resolve |
-| `cut.py PLAN --timeline NAME` | assemble, place, finish, render, join check and gate in one call; one list of what needs you | about 3 min |
+| `cut.py PLAN --timeline NAME` | assemble, preflight (the gate's eye, lip and sync checks before placing; a fault stops the pass there), place, finish, render, join check and gate in one call; one list of what needs you | about 50 s when preflight stops it; 2 min 20 s to 6 min 30 s for a whole pass, depending on the machine's other load |
 | `look.py LIST --cuts --out DIR` | Every segment's first and last frame on both cameras, graded, on labelled sheets: for finding | 16 s |
 | `look.py LIST --timeline NAME --at F ... --out DIR` | Frames at full size and at phone width, without rendering; no captions | about 45 ms a frame |
 | `place.py`, `finish.py`, `render.py` | The stages `cut.py` runs, one at a time | 9 to 15 s, 1 to 4 s, 56 to 97 s |

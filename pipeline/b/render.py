@@ -16,7 +16,7 @@ loaded first and the format above set on top of it.
 
 Refuses an existing file and a timeline that still holds a multicam (render the finish timeline finish.py makes). A
 render blocks every other Resolve call until it ends (smoke tests, 17 Nov), so this returns only when the job is
-complete, with its marks cleared and the job deleted. StartRendering is retried for 30 s (Resolve refuses it now and then,
+complete, with its marks cleared and the job deleted. StartRendering is retried for 90 s (Resolve refuses it now and then,
 26 Oct). A finished file counts only when ffprobe finds a video stream in it (run 4 wrote two with sound and no picture).
 """
 import argparse
@@ -26,6 +26,8 @@ import time
 from pathlib import Path
 
 import session
+
+START_RETRY_S = 90  # Resolve refuses StartRendering now and then: once over 60 s (26 Oct), once over 30 s (18 Nov)
 
 FORMATS = {"phone": ("mp4", "H264"), "post": ("mp4", "H264"), "master": ("mov", "ProRes422HQ"), "still": ("png", "RGB16")}
 
@@ -76,10 +78,10 @@ def render(project, timeline, output, preset="phone", frame_range=None, captions
         raise RuntimeError("AddRenderJob returned no job")
     began = time.monotonic()
     try:
-        deadline = time.monotonic() + 30
+        deadline = time.monotonic() + START_RETRY_S
         while not project.StartRendering([job]):
             if time.monotonic() > deadline:
-                raise RuntimeError(f"StartRendering refused job {job} for 30 s")
+                raise RuntimeError(f"StartRendering refused job {job} for {START_RETRY_S} s")
             time.sleep(1)
         while True:
             status = project.GetRenderJobStatus(job) or {}

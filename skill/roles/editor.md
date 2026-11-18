@@ -110,7 +110,7 @@ You phrase and time every caption. Resolve's own captioning (`CreateSubtitlesFro
 
 - **`pieces`:** each kept stretch of his speech, in playing order, by its first and last words (`from`, `to`) and roughly where he says them (`near_s`, and `to_near_s` when the last words occur more than once in the piece). `pause_after_s` is the pause you want at the join after it, split between both sides. A piece is one clean run of his voice: the more of a line one piece carries, the fewer joins a listener can hear.
 - **`shots`** inside each piece: `camera`, `framing` (`ZoomX`, `ZoomY`, `Pan`, `Tilt`), `at` (the word the shot starts on; the piece's start by default) and `offset_frames` for a split edit at a piece's start. A piece without shots continues the camera before it.
-- **`captions`:** every caption in order, as it reads, with ` / ` at its row break. Together they show the kept words of every piece. `hold_s`, `start_s` and `word_starts_s` move a caption's end, its start, or one lit word you have measured off its voice.
+- **`captions`:** every caption in order, as it reads, with ` / ` at its row break. Together they show the kept words of every piece. `hold_s`, `start_s` and `word_starts_s` move a caption's end, its start, or one lit word you have measured off its voice; `word_starts_s` is on the lav's clock, so it stays right when anything earlier in the film moves.
 - **`titles` and `panels`:** each graphic, anchored to his words (`{"piece", "word", "edge"}`) rather than to frames, so it stays on its word when the cut changes.
 - **The film's ends:** `lead_in_s` before his first word, `tail_s` after his last, `fade_ms` in and out, `crossfade_ms` at every join, `caption_hold_s`.
 
@@ -180,7 +180,7 @@ Titles or panels that overlap on one track are refused: anchor the first one's e
 
 ### The checks that are yours
 
-`cut.py` runs two. `joins check` scores every join in the rendered sound (`tools/audio.md`). The gate, `qc.py`, measures the rendered file for the classes in `tools/faults.md`; these are yours: eyes shut at a cut; lips out of sync; a caption on his face; a caption past the safe line; a highlight late or early; and, when it is given the heard words, which `cut.py` does not do, a caption word with no sound under it. Run either alone on a span while you work (`tools/faults.md`, "Running the gate"); never a copy of their tests.
+`cut.py` runs three. Before anything is placed, `preflight.py` puts the gate's eye, lip and sync checks on the planned picture, in about 30 s, and stops the pass on a fault with the clean alternatives at that cut (`pipeline/README.md`, "preflight"). `joins check` scores every join in the rendered sound (`tools/audio.md`). The gate, `qc.py`, measures the rendered file for the classes in `tools/faults.md`; these are yours: eyes shut at a cut; lips out of sync; a caption on his face; a caption past the safe line; a highlight late or early; and, when it is given the heard words, which `cut.py` does not do, a caption word with no sound under it. Run either alone on a span while you work (`tools/faults.md`, "Running the gate"); never a copy of their tests.
 
 What the checks cannot see is yours to look at: a face touch; framing and face size across a camera change; a bare jump cut; a graphic's exit revealing him mid-blink (the gate checks eyes only at cuts); whether the words either side of each cut read as one thought; pitch and breath at a join.
 

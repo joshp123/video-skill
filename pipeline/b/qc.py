@@ -630,6 +630,8 @@ class Cut:
         if self.band[1] < safe['buttonsTop']:
             return
         left, right = self.width - safe['buttonsLeft'], safe['buttonsLeft']
+        padding = self.look['subtitles'].get('activeWord', {}).get('padding', 36)
+        pill_padding = padding[1] if isinstance(padding, list) else padding
         top, bottom = self.band
         height = bottom - top
         decoder = subprocess.Popen(['ffmpeg', '-v', 'error', '-i', str(self.path), '-vf',
@@ -657,9 +659,12 @@ class Cut:
                 if not len(inside):
                     continue
                 low, high = inside[0], inside[-1]
-                while low > 0 and columns[low] - columns[low - 1] <= CAPTION_INK_GAP_PX:
+                # Ink beyond the row's box can be its pill or a letter Vision missed, never more than the pill's padding
+                # away; past that it is the background (red and white book spines joined the row on run 5, 18 Nov).
+                reach = pill_padding + 8
+                while low > 0 and columns[low] - columns[low - 1] <= CAPTION_INK_GAP_PX and columns[low - 1] >= x0 - reach:
                     low -= 1
-                while high + 1 < len(columns) and columns[high + 1] - columns[high] <= CAPTION_INK_GAP_PX:
+                while high + 1 < len(columns) and columns[high + 1] - columns[high] <= CAPTION_INK_GAP_PX and columns[high + 1] <= x1 + reach:
                     high += 1
                 ink_left, ink_right = int(columns[low]), int(columns[high])
                 if ink_left < left or ink_right > right:

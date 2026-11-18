@@ -2,9 +2,11 @@
 
 Written by AI on 2026-11-17 by Claude Opus 5.5, for the rebuild.
 
-cut.py PLAN.json --timeline NAME [--loudness PRESET] [--preset phone]
+cut.py PLAN.json --timeline NAME [--loudness PRESET] [--preset phone] [--render-anyway]
 
-Runs, in order, stopping at the first that fails: assemble.py (the edit list beside the plan, replaced), place.py
+Runs, in order, stopping at the first that fails: assemble.py (the edit list beside the plan, replaced), preflight.py
+(the gate's eye, lip and sync checks on the planned picture, about 30 s; a fault stops the pass here, before the
+3 to 6 minutes of place, render and gate, unless --render-anyway), place.py
 (timeline NAME), finish.py ("NAME finish"), render.py (versions-check/NAME.mp4 in the plan's folder, captions burnt in),
 `joins check` on the render's sound at every join, and qc.py (every class but joins, which the join check replaces).
 Prints one summary: each stage's seconds; every join's score on the lav and in the render, side by side (the render
@@ -49,6 +51,7 @@ def main():
     parser.add_argument("--timeline", required=True)
     parser.add_argument("--loudness")
     parser.add_argument("--preset", default="phone")
+    parser.add_argument("--render-anyway", action="store_true", help="place and render even when preflight finds a fault")
     args = parser.parse_args()
     plan = args.plan.resolve()
     folder = plan.parent
@@ -82,8 +85,28 @@ def main():
               for j in lav_check["joins"] if abs(j.get("level_step_db", 0)) > LEVEL_STEP_WORTH_A_LOOK_DB]
     needs += [f"caption words: {c}" for c in report["captions"] if "is in no caption" in c]
     needs += [f"doubtful word time: piece {d.get('piece')} {d}" for d in report.get("doubtful_words", [])]
+    needs += [f"piece {u['piece']} also holds {u['words']!r} (at {u['at_s']} s on the lav): {u['why']}" for u in report.get("unchosen_words", [])]
+    needs += [f"caption row too wide: {w}" for w in report.get("caption_width", [])]
     if report.get("caption_refusals"):
         needs += [f"caption: {c}" for c in report["caption_refusals"]]
+        finish(1)
+    done = stage("preflight", py + ["preflight.py", str(edit_list), "--out", str(work / "preflight")], work / "preflight.json", summary)
+    checked_faces = json.loads(done.stdout or "{}")
+    if "error" in checked_faces:
+        needs.append(f"preflight: {checked_faces['error']}")
+        finish(1)
+    by_cut = {c["cut"]: c for c in checked_faces["cuts"]}
+    for f in checked_faces["faults"]:
+        options = by_cut.get(f.get("cut"), {}).get("options")
+        needs.append(f"before placing, {f['class']} at frame {f['frame']}: {f['what']}" + (f"; clean instead: {options}" if options else ""))
+    needs += [f"borderline before placing, {f['class']} at frame {f['frame']}: {f['what']}" for f in checked_faces["borderline"]]
+    needs += [f"look before placing: a {j['camera']}-to-{j['camera']} cut at frame {j['cut']} changes scale by {j['scale_change']}x "
+              "(a small change reads as a jump cut)" for j in checked_faces["jump_candidates"]]
+    needs += [f"look before placing: {m['what']}" for m in checked_faces.get("panel_moves", [])]
+    summary["preflight"] = {"faults": len(checked_faces["faults"]), "borderline": len(checked_faces["borderline"]),
+                            "jump_candidates": checked_faces["jump_candidates"], "output": str(work / "preflight.json")}
+    if checked_faces["faults"] and not args.render_anyway:
+        needs.append("stopped before place and render: fix the faults above in the plan, or run again with --render-anyway")
         finish(1)
     for name, command in (("place", py + ["place.py", str(edit_list), "--timeline", args.timeline]),
                           ("finish", py + ["finish.py", str(edit_list), "--timeline", args.timeline])):
@@ -131,7 +154,18 @@ def main():
     report_md = qc_out / "report.md"
     if report_md.exists():
         rows = [line for line in report_md.read_text().splitlines() if "| fault |" in line]
-        needs += sorted(set(re.sub(r"\s+", " ", row) for row in rows))
+        audio_rows = json.loads(edit_list.read_text())["audio"]
+        fps = float(json.loads(edit_list.read_text())["fps"])
+
+        def on_lav(frame):
+            """A timeline frame as seconds on the lav's clock, the clock word_starts_s takes."""
+            t = frame / fps
+            row = max((a for a in audio_rows if a["record_s"] <= t + 1e-6), key=lambda a: a["record_s"], default=None)
+            return round(row["source_in_s"] + t - row["record_s"], 3) if row else None
+        for row in sorted(set(re.sub(r"\s+", " ", row) for row in rows)):
+            onset = re.search(r"onset at frame ([0-9.]+)", row)
+            needs.append(row + (f" [onset on the lav's clock: {on_lav(float(onset.group(1)))} s, the value word_starts_s takes]"
+                                if onset and "highlight" in row else ""))
         summary["gate_report"] = str(report_md)
     else:
         needs.append("gate failed: see its log")

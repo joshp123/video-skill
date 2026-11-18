@@ -12,7 +12,7 @@ The flow for a video, after ingest:
 4. The model reads that, looks where it must (`look.py`), changes the plan, and runs `cut.py` again.
 5. A note on a cut that exists, from Josh or the crew, goes on with `note.py`, in place, in seconds.
 
-Every command prints JSON and exits 0 only when nothing needs attention. Run the Resolve commands with `/usr/bin/python3 -B` from `pipeline/b` (they set Resolve's scripting variables themselves); `qc.py` needs the pipeline devenv's Python (`cd pipeline && devenv shell -- python3 ...`; `cut.py` finds it itself). Paths in an edit list or a plan are relative to its own folder. Caches, scratch timelines' files and renders go on the media drive, under `Media/Edits/.cache/` and the video's folder (`session.CACHE`); nothing goes on the internal disk.
+Every command prints JSON and exits 0 only when nothing needs attention. Times below are on this MacBook and scale with the machine's other load: at a load average of 20 to 40 (other sessions' jobs) passes took two to three times as long, so say the load beside any time you report. Run the Resolve commands with `/usr/bin/python3 -B` from `pipeline/b` (they set Resolve's scripting variables themselves); `qc.py` needs the pipeline devenv's Python (`cd pipeline && devenv shell -- python3 ...`; `cut.py` finds it itself). Paths in an edit list or a plan are relative to its own folder. Caches, scratch timelines' files and renders go on the media drive, under `Media/Edits/.cache/` and the video's folder (`session.CACHE`); nothing goes on the internal disk.
 
 ## Resolve runs windowless: `b/session.py`
 
@@ -44,7 +44,8 @@ The plan to the edit list (`edit-format.md`). In order:
    that gap, and `joins place` runs again with the moved cut given as `start_at` or `end_at`, scoring every join again.
    An edge the plan sets (`start_s`, `end_s`) goes to `joins place` the same way, as a cut used as given.
    The report carries the lav check's `calibration_span`, the stretch of the lav its threshold came from.
-4. Each piece is aligned on its exact audio, with exactly its words (`b/words.py`). These times set every caption
+4. Each piece is aligned on its exact audio, with every transcript word inside that audio (`b/words.py`), the
+   chosen ones and any `joins place` took in when it reached past them for a pause. These times set every caption
    word, every word anchor of a shot, title or panel, and nothing else.
 5. Lays the pieces end to end, converts every anchor to timeline frames, and computes each segment's source frame from
    the cameras' `picture_offset_s`. A shot at a piece's start can move its picture cut off the sound cut
@@ -52,14 +53,27 @@ The plan to the edit list (`edit-format.md`). In order:
 
 It reports, and decides nothing on: an edge with no pause (with the aligned words around it, and where it moved the
 cut), every join the join check flags, shown words that match no spoken word and spoken words in no caption, each word
-the aligner doubts, the three shortest segments, and every caption the look's template would page (a lit word starting
-more than 25 frames after the one before: split the caption there). It refuses titles or panels that overlap on a
+the aligner doubts, the three shortest segments, every caption the look's template would page (a lit word starting
+more than 25 frames after the one before: split the caption there), every caption row wider than the safe line (the
+same check as `captions.py`, with the 23 px by which the template draws rows wider than its font's metrics), and every
+word heard inside a piece outside its chosen words (`unchosen_words`: run 5 kept an "um" and a "Yeah." this way without
+being told; a word before the first chosen word or a filler always counts, a word after the last only when the
+confidence aligner hears it, because the transcript runs early and can make a following word look inside). It refuses titles or panels that overlap on a
 track. 25 to 80 s for 15 pieces on a quiet machine (most of it two aligners and the join model loading); up to 6 min
 while another job loads the machine.
 
 Limits: a shown word that matches no spoken word ("$600" for "six hundred dollars") is lit for all the words it stands
 for, so a long one can make the template page its caption; the report says so and the model splits the caption.
-`word_starts_s` on a caption still overrides a word's start by hand.
+`word_starts_s` on a caption still overrides a word's start by hand, given on the lav's clock (since 18 Nov; on the
+timeline's clock, run 5's two hand-set times went stale twice as earlier pieces moved). A value that falls in no piece's
+audio is refused with that reason. The gate's highlight rows give his onset as a timeline frame; `cut.py` prints the
+same onset on the lav's clock beside each such row, which is the value to write. A caption's `start_s` and `hold_s` are still on the timeline's clock.
+
+`lead_in_s` adds film before the first piece's sound but no picture: segments start at the first piece, so the lead-in
+shows the V1 background under whatever title is up. A shot's negative `offset_frames` at a piece's start brings in that
+camera's frames from before its sound starts; at a join of two takes these are usually other speech, so his mouth is
+out of sync (preflight lists it as `picture_first`); a positive one runs the outgoing picture on, which is in sync only
+while the incoming piece is silent (preflight faults it from 4 frames into his next words, as the gate does).
 
 ## `b/words.py` (called by `assemble.py`)
 
@@ -119,16 +133,43 @@ Makes "NAME finish", the timeline that is rendered: a duplicate with the multica
 
 ## `b/render.py EDIT_LIST --timeline NAME --out FILE [--preset phone|post|master|still] [--range IN OUT] [--no-captions] [--loudness PRESET]`
 
-Renders a finish timeline and waits. `phone` (H.264 sized to 28 MB, the file Josh watches), `post` (8 Mbit/s for X), `master` (ProRes 422 HQ, 24-bit PCM), `still` (one 16-bit PNG of a one-frame range; Resolve adds the frame number to the name). Captions are burnt in unless `--no-captions`. `--loudness` loads a render preset that normalises loudness (`b/loudness.py` writes one; "B loudness -12 LUFS -1 dBTP 282076f8" in this Resolve gives -14.5 LUFS, -1.2 dBTP). Refuses an existing file and a timeline that still holds a multicam. **The normalisation sticks to the project:** a render without `--loudness`, or after loading a stock preset such as "H.264 Master", still came out normalised to -14.5 LUFS (18 Nov), and no preset in the tooling switches it off (the 18 Nov control built a scratch one from October's audio-only donor, rendered sound only, and deleted it). The preset's mode ("Optimize") is not one fixed gain: against the lav joined exactly as the list says, the render's gain moved by 1 to 5 dB across cuts, and the same render without normalisation matched the joined lav to -93 dB or better. A 95 s phone render took 56 to 97 s; a still 1.2 s. **A render blocks every other Resolve call until it ends**, so nothing else may drive Resolve meanwhile.
+Renders a finish timeline and waits. `phone` (H.264 sized to 28 MB, the file Josh watches), `post` (8 Mbit/s for X), `master` (ProRes 422 HQ, 24-bit PCM), `still` (one 16-bit PNG of a one-frame range; Resolve adds the frame number to the name). Captions are burnt in unless `--no-captions`. `--loudness` loads a render preset that normalises loudness (`b/loudness.py` writes one; "B loudness -12 LUFS -1 dBTP 282076f8" in this Resolve gives -14.5 LUFS, -1.2 dBTP). Refuses an existing file and a timeline that still holds a multicam. **The normalisation sticks to the project:** a render without `--loudness`, or after loading a stock preset such as "H.264 Master", still came out normalised to -14.5 LUFS (18 Nov), and no preset in the tooling switches it off (the 18 Nov control built a scratch one from October's audio-only donor, rendered sound only, and deleted it). The preset's mode ("Optimize") is not one fixed gain: against the lav joined exactly as the list says, the render's gain moved by 1 to 5 dB across cuts, and the same render without normalisation matched the joined lav to -93 dB or better. A fixed gain plus a true-peak limiter is not the cure: reaching -14 LUFS from this lav (-25 LUFS, peaks at -3.9 dBFS) needs about 8 dB of peak limiting whatever applies it, and a reference gain-and-limiter chain lifted other clean joins' scores by up to 0.29 where "Optimize" lifted these (18 Nov, run 5's final plan). Scoring joins on the sound before loudness processing is the fix this points to: a render with normalisation off is possible by script (a preset built as `loudness.py` builds one, with RecordNormalizeAudio false; it scored within about 0.08 of the lav check at every join); `cut.py` does not do it yet. A 95 s phone render took 56 to 97 s; a still 1.2 s. **A render blocks every other Resolve call until it ends**, so nothing else may drive Resolve meanwhile.
 
 ## The checks
 
 - `joins/joins check --audio FILE --joins TIMES.json --lav LAV --span SPAN` scores every join in the rendered sound (`joins/README.md`): with the lav and the lav check's `calibration_span`, so both checks use one threshold, and with the exact join times (each piece's `record_s`). 13 to 38 s for 14 joins (the lav check inside `assemble.py`'s `joins place` adds 20 to 50 s the first time for a stretch, to fit its threshold, then is cached). On codex-switch with constant-power crossfades, 11 of 14 joins scored within 0.05 of the lav check; the render's normalisation raised two clean joins by 0.07 and 0.12, which put one (0.594 against a threshold of 0.569) over the flag as `borderline`.
 - `b/qc.py CUT.mp4 --edit-list EDIT_LIST --out DIR [--only CHECK ...]` is the gate for everything else: eyes shut at a cut, flashes, lips against sound, loudness, captions read back from the picture, lit words against his voice, caption edges, the cameras' colour against the reference camera, text too small at phone width. Fault rows fail it; look rows are for the model. 11 to 47 s for 95 s. Its sound-join class is gone: the join check replaces it.
 
-## `b/cut.py PLAN.json --timeline NAME [--loudness PRESET]`
+## `b/preflight.py EDIT_LIST [--out DIR] [--window 8]`
 
-All of the above in one call: assemble, place, finish, render (to the video's `versions-check/NAME.mp4`), join check, gate. Stops at the first stage that fails. Prints each stage's seconds, every join's score on the lav beside its score in the render (`joins`), and one list, `needs_the_model`: edges with no pause (and where a cut moved), joins flagged or borderline on the lav, joins flagged in the render (saying when the lav check passes them), speech level steps over 6 dB, captions the template would page, doubtful word times, place or finish differences, and the gate's fault rows with their evidence. Each stage's own output is in `build/cut/NAME/`. 2 min 50 s to 3 min 30 s on codex-switch while the machine was quiet or lightly loaded (3 min 11 s on 18 Nov with the final join model, at load average 22 to 28: assemble 63 s, place 13 s, finish 2 s, render 55 s, join check 13 s, gate 42 s); 11 min at load average 18 to 39.
+The gate's eye, lip and sync checks on the planned cut, before it is placed, with the clean alternatives at every cut.
+On a scratch timeline (deleted after) it lays the planned picture (each segment on its camera, framing and grade, and
+the panels over it, at their record frames) and, after it, for every cut, strips of both cameras on both sides; renders
+the picture alone (H.264, one pass, no sound or captions: about 19 s for 95 s) and reads every frame with the gate's own
+Vision instrument (about 11 s). Then:
+- **faults** (stop `cut.py`): eyes under 0.65 of the shot's normal within 3 frames of a cut; his lower lip within the
+  look's clearance of the caption band wherever the list has a caption up (band top from the look, by the caption's
+  rows); an outgoing picture running 4 frames or more into his next words at a join. The gate's own rules and numbers,
+  read from `qc.py`.
+- **borderline**: eyes within 0.05 above the limit. The same frame reads up to about 0.02 apart from one render to
+  another, so the gate's render can fall either side (run 5's build 18: 0.68 here, 0.58 in the gate).
+- **options** for every cut: each pairing of cameras and each shift of the cut within the window that is clean, at a
+  join only shifts that keep the outgoing picture over silence; or "no clean cut within the window", which means the
+  edge, the take or the pause must change.
+- **jump candidates**: every cut that keeps the camera, with its framing's scale change (the gate does not measure jump
+  cuts; run 5's 10 to 15% changes read as jump cuts).
+- **panel moves**: a screen-recording panel whose own picture jumps (a scroll, a new screen) while a highlight drawn
+  before the jump is still up.
+About 31 s for 19 cuts and 2,300 frames. Tested on run 5's builds 10, 12 and 18 (rebuilt exactly from its plans; no
+plans survive for builds 13 to 17): it raised as faults every eye, lip and sync row their gates raised from full
+renders except build 18's blink at frame 208, which it raised as borderline (0.68 of normal against the gate's 0.58),
+and no other fault row; it read the same frames as the gate within 0.03 of openness. A join is where the two segments
+show different moments at the cut; a shot starting on a word inside a piece is not one. What it cannot see: titles and captions over his face (it lays panels,
+not titles), and what the gate measures only on the sound.
+
+## `b/cut.py PLAN.json --timeline NAME [--loudness PRESET] [--render-anyway]`
+
+All of the above in one call: assemble, preflight, place, finish, render (to the video's `versions-check/NAME.mp4`), join check, gate. Stops at the first stage that fails, and after preflight when it finds a fault (about 50 s into the pass, before 2 to 6 minutes of place, render and gate), unless `--render-anyway`. Prints each stage's seconds, every join's score on the lav beside its score in the render (`joins`), and one list, `needs_the_model`: edges with no pause (and where a cut moved), joins flagged or borderline on the lav, joins flagged in the render (saying when the lav check passes them), speech level steps over 6 dB, captions the template would page, doubtful word times, place or finish differences, and the gate's fault rows with their evidence. Each stage's own output is in `build/cut/NAME/`. 2 min 21 s for run 5's final plan on a quiet machine (load average 2 to 6: assemble 16 s, preflight 32 s, place 7 s, finish 1 s, render 43 s, join check 8 s, gate 34 s); 2 min 50 s to 3 min 30 s while the machine was quiet or lightly loaded (3 min 11 s on 18 Nov with the final join model, at load average 22 to 28: assemble 63 s, place 13 s, finish 2 s, render 55 s, join check 13 s, gate 42 s); 11 min at load average 18 to 39.
 
 ## `b/note.py EDIT_LIST --from CUT --to NEW CHANGES.json`
 
@@ -149,7 +190,7 @@ What a timeline holds, in the list's terms: every video item (file or multicam a
 
 ## Other parts
 
-- `b/tidy.py`: deletes superseded cut timelines, checks and unused media, lays the bins out. `--dry-run` first.
+- `b/tidy.py`: deletes superseded cut timelines, checks and unused media, lays the bins out. `--dry-run` first. Give it either a project name or `--current`, not both: with both it stops with a usage error that does not say this.
 - `b/loudness.py`: writes the loudness render preset (`--target`, `--ceiling`).
 - `b/make_templates.py`, `b/template_kinds.py`, `b/templates/`, `resolve/build_graphics.py`: the look's Fusion templates (motion design). `make_templates.py` uses `build_graphics.py` as a library; `build_graphics.py`'s own command is the older route and needs the removed cut list.
 - `b/render-graphics.mjs` and `graphics/`: terminal graphics rendered in Remotion. Not exercised in this rebuild. `graphics/prepare.mjs` and `graphics/render-clips.mjs` are the older route and read the older cut list, whose builder was removed; `b/render-graphics.mjs` uses only `graphics/src` and `graphics/terminal-content.mjs`.

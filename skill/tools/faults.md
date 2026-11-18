@@ -31,7 +31,7 @@ It writes `report.md`, `report.json` and an `evidence/` folder of images (frame 
 
 ## Running the gate
 
-`cut.py` runs the gate on every whole render (every check but joins, which the join check covers) and lists its fault rows; its look rows are in `report.md`. To run it yourself, on a whole render or on the span you are changing, from the pipeline devenv with absolute paths:
+`cut.py` runs the gate's eye, lip and sync checks on the planned picture before placing (`preflight.py`), and the whole gate on every whole render (every check but joins, which the join check covers), and lists its fault rows; its look rows are in `report.md`. To run it yourself, on a whole render or on the span you are changing, from the pipeline devenv with absolute paths:
 
 ```sh
 cd pipeline && devenv shell -- python3 b/qc.py FILE --edit-list EDIT_LIST --out DIR [--range FIRST LAST] [--only CHECK ...] [--heard-words HEARD.json]
@@ -87,7 +87,7 @@ Render every span the gate measures with the loudness preset, so its level is th
 
 **Caption on his face** (measured). The caption band sits on his mouth or nose, or too close under his lip. Decided by the look: his lower lip's lowest point, from Vision's landmarks on every frame, at least `subtitles.faceClearance.lowerLipToBandTopPx` above the band's top (`look.json`). One row per run of frames. Rests on: two judged cuts, on which every frame a judge called "captions over his face" had the band within 113 px of his lip and every frame passed had 130 px or more.
 
-**Caption past the safe line** (measured). A caption's pill or letters run into the button column (right of the look's `fusion.safeArea.buttonsLeft`) or past its mirror on the left, below `buttonsTop`. Decided on every frame: the white letters and orange pill across the middle half of each caption line's height, joined while the gap is 40 px or less. `captions.py` warns on the same line before the build.
+**Caption past the safe line** (measured). A caption's pill or letters run into the button column (right of the look's `fusion.safeArea.buttonsLeft`) or past its mirror on the left, below `buttonsTop`. Decided on every frame: the white letters and orange pill across the middle half of each caption line's height, joined while the gap is 40 px or less and no further than the pill's padding (plus 8 px) beyond the row's own box, so red and white book spines beside a row are not read as part of it (they were, on every build of run 5). `captions.py` warns on the same line before the build, allowing for the 23 px by which the template draws rows wider than its font's metrics.
 
 **Highlight late or early** (measured after a pause; look inside connected speech). The pill lights more than 3 frames before or after he starts the word. In his look the pill walks the eye through his speech, so a viewer sees it miss. Rests on: judged cuts where a highlight 4 frames late was called; nothing tighter has been judged.
 - An onset is a rise of 10 dB or more within 80 ms, out of a dip of at least 30 ms, reaching speech, on the cut's own sound. After a pause (100 ms under -33 dBFS) a rise can only be a word's start, so the first word lit after a pause is measured against the rise nearest its lit frame, and more than 3 frames either way is a fault.

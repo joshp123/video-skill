@@ -34,7 +34,7 @@ The plan (paths relative to the plan's folder; times in seconds on the front cam
                  piece's start moves that picture cut off the sound cut (negative: the picture changes first);
   }],
   "captions": ["text as shown, / between its two rows", {"text": ..., "hold_s"?: ..., "start_s"?: ...,
-              "word_starts_s"?: {"word's index in the caption, from 0": its start on the timeline}}, ...]: in order,
+              "word_starts_s"?: {"word's index in the caption, from 0": its start on the lav's clock}}, ...]: in order,
               together showing the kept words of every piece; a shown word is timed by the spoken word it matches,
               and shown words that match none ("50,000" for "fifty thousand") share the time of the spoken words
               between their neighbours; start_s and hold_s are on the timeline's clock,
@@ -57,6 +57,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 JOINS = HERE.parent / "joins" / "joins"
 TORCH_PYTHON = HERE.parent / "joins" / ".devenv" / "state" / "venv" / "bin" / "python"  # torch, torchaudio, the aligners offline
+STRAY_HEARD_SCORE = 0.5  # words.py's confidence for a word it hears where the transcript puts it
 MIN_GAP_S = 0.03  # the shortest gap between two aligned words a cut is moved into
 WINDOW_S = 2.0  # each side of an edge with no pause: the words either side of it, aligned in context, for the report
 
@@ -177,7 +178,7 @@ def assemble(plan_path):
     lav = (folder / plan["sound"]["lav"]).resolve()
     everything = json.loads(transcript.read_text())["words"]
     tokens = spoken(everything)
-    pieces, report = [], {"pieces": [], "edges": [], "captions": [], "joins": None}
+    pieces, report = [], {"pieces": [], "edges": [], "captions": [], "joins": None, "unchosen_words": []}
     for k, p in enumerate(plan["pieces"]):
         first, _ = find_phrase(tokens, p["from"], p["near_s"])
         last, size = find_phrase(tokens, p["to"], p.get("to_near_s", tokens[first][1]["start"]), after_index=first - 1)
@@ -210,9 +211,26 @@ def assemble(plan_path):
     if any("moved_to" in e for e in report["edges"]):  # place again, the moved cuts given as start_at/end_at
         placed = joins_place(plan, folder, pieces, lav, transcript, work)
         report["joins"] = placed["check"]
-    for p, exact in zip(pieces, placed["pieces"]):
+    for k, (p, exact) in enumerate(zip(pieces, placed["pieces"])):
         p.update(start=exact["start"], end=exact["end"])
+        # every word heard in the piece's audio, not only the chosen ones: joins place can reach past them for a pause
+        chosen = {(w["start"], w["word"]) for w in p["tokens"]}
+        inside = [w for w in everything if p["start"] - 0.02 <= w["start"] and w["end"] <= p["end"] + 0.02]
+        p["heard"] = sorted({(w["start"], w["word"]): w for w in inside + p["tokens"]}.values(), key=lambda w: w["start"])
+        p["stray"] = [w for w in p["heard"] if (w["start"], w["word"]) not in chosen]
     found, doubtful = aligned_words(lav, transcript, pieces, work, exact=True)
+    for k, p in enumerate(pieces):
+        # The transcript runs early in connected speech, so a word after the piece's last chosen word can look inside it
+        # when it is not: such a word counts only if the confidence aligner hears it there. A word before the first chosen
+        # word, and a filler ([UM]), always count (run 5's "Yeah." scored 0.15 and was there).
+        first_chosen = p["tokens"][0]["transcript_start"] if "transcript_start" in p["tokens"][0] else p["tokens"][0]["start"]
+        heard_stray = [w for w in p["stray"] if w["word"].startswith("[") or w["start"] < first_chosen
+                       or found.get((w["start"], w["word"]), {}).get("score", 0) >= STRAY_HEARD_SCORE]
+        if heard_stray:
+            report["unchosen_words"].append({"piece": k, "words": " ".join(w["word"] for w in heard_stray),
+                                             "at_s": [round(found.get((w["start"], w["word"]), w)["start"], 2) for w in heard_stray],
+                                             "why": "heard inside the piece's audio but outside its from/to words: keep them (and "
+                                                    "caption them) or set the edge (start_s, end_s) to leave them out"})
     report["doubtful_words"] = []
     for k, p in enumerate(pieces):
         keys = [(w["start"], w["word"]) for w in p["tokens"]]
@@ -264,6 +282,12 @@ def assemble(plan_path):
             source_in = round((front_s - cameras[cam].get("picture_offset_s", 0.0)) * fps)
             segments.append({"camera": cam, "source_in": source_in, "record": first, "frames": nxt - first, "framing": fr})
     report["shortest_segments"] = sorted(({"record": s["record"], "frames": s["frames"]} for s in segments), key=lambda s: s["frames"])[:3]
+    def on_timeline(lav_s):
+        holder = next((p for p in pieces if p["start"] - 0.05 <= lav_s <= p["end"] + 0.05), None)
+        if holder is None:
+            raise ValueError(f"word_starts_s {lav_s} is in no piece's audio (it is on the lav's clock since 18 Nov)")
+        return holder["record_s"] + lav_s - holder["start"]
+
     said = [(w["word"], p["record_s"] + w["start"] - p["start"], p["record_s"] + w["end"] - p["start"])
             for p in pieces for w in p["tokens"]]
     entries = [c if isinstance(c, dict) else {"text": c} for c in plan.get("captions", [])]
@@ -277,9 +301,10 @@ def assemble(plan_path):
                  for w, t in zip(c["text"].replace("/", " ").split(), times[cursor:cursor + count])]
         cursor += count
         for index, moved in sorted((int(i), t) for i, t in c.get("word_starts_s", {}).items()):
-            words[index]["start"] = round(moved, 4)
+            at = on_timeline(moved)  # given on the lav's clock, so it stays right when anything earlier in the film moves
+            words[index]["start"] = round(at, 4)
             if index:
-                words[index - 1]["end"] = round(moved, 4)
+                words[index - 1]["end"] = round(at, 4)
         text = "\n".join(row.strip() for row in c["text"].split("/"))
         captions.append({"text": text, "start": c.get("start_s", words[0]["start"]), "end": words[-1]["end"] + c.get("hold_s", hold),
                          "words": words})
@@ -290,6 +315,8 @@ def assemble(plan_path):
         c["start"], c["end"] = round(c["start"], 4), round(c["end"], 4)
     report["captions"] = unmatched
     import captions as template  # the look's caption template's own limits, checked here so place.py does not refuse later
+    lookfile = json.loads((HERE.parents[1] / "looks" / plan["look"] / "look.json").read_text())
+    report["caption_width"] = template.width_warnings(captions, lookfile, plan["format"]["width"], plan["format"]["height"])[0]
     report["caption_refusals"] = []
     for c in captions:
         try:

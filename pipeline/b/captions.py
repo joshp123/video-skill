@@ -14,7 +14,8 @@ does only what the Resolve template needs, and changes nothing else:
   to split it before; a word is never lit before it is said.
 
 It warns, and changes nothing, when a row with the pill's padding is wider than the look's safe line, measured with
-the template's own face (Futura Bold) at the size in look.json's subtitles.resolveTemplate.
+the template's own face (Futura Bold) at the size in look.json's subtitles.resolveTemplate, plus the 23 px by which the
+template's rows came out wider than those metrics on 95% of run 5's rows.
 
 Not here, because each is the editor's decision on frames and sound, made in the edit list: snapping caption edges to
 picture cuts, closing short blanks, a minimum duration, joining a one-word remainder, a hold after the last word,
@@ -30,6 +31,9 @@ from pathlib import Path
 LOOKS = Path(__file__).resolve().parents[2] / "looks"
 TEMPLATE_FACE = "Futura Bold"
 TEMPLATE_NEW_PAGE_AFTER_FRAMES = 25
+# The template draws a row wider than its font's metrics add up to: on run 5's build 18 (114 rows), 0 to 34 px wider,
+# 23 px or less on 95 of 100 rows (Vision's text boxes on the render against row_width_px, 18 Nov).
+RENDERED_EXCESS_PX = 23
 
 
 def frames_for_template(caption, fps):
@@ -74,7 +78,7 @@ def width_warnings(captions, look, frame_width, frame_height):
     warnings = []
     for caption in captions:
         for row in caption["text"].split("\n"):
-            width = row_width_px(row, face["metrics"], size_px) + 2 * padding
+            width = row_width_px(row, face["metrics"], size_px) + RENDERED_EXCESS_PX + 2 * padding
             if width > limit:
                 warnings.append(f"{row!r} is {width:.0f} px with the pill, wider than the {limit:g} px safe line")
     return warnings, size_px, limit
