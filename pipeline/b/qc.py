@@ -12,7 +12,8 @@ Writes report.json, report.md and evidence/ there. Exits 1 when any row is a fau
 span (render it with the loudness preset loaded, so its level is the delivery's) or of the whole timeline; only rows inside
 the span are reported, at timeline frames. --only runs the named checks and nothing else (see CHECKS below), so a role runs
 the gate itself on the class it is fixing, in seconds, instead of a copy of its tests.
-Run it with pipeline/.devenv/profile/bin/python3; it needs ffmpeg, ffprobe and swiftc (Xcode's) on PATH.
+Run it with the pipeline devenv's Python (`cd pipeline && devenv shell -- python3 b/qc.py ...`); it needs ffmpeg, ffprobe and
+Xcode's swiftc, which it calls without the devenv's SDK variables.
 Takes the cuts on him from the list, with the pixels as a cross-check, since 2026-10-26 (stream A, after stream I
 found a pixel cut firing mid-shot on encoder noise). Reads the picture from the list's `segments` (each a moment of its camera's file) and `panels` since 2026-10-26
 (Claude Opus 5.5, stream I of the hill-climb); the colour reference is the camera the list's `cameras` marks
@@ -28,6 +29,7 @@ against picture at ingest, replaces its own microphone, because the Pocket's mic
 import argparse
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -186,7 +188,9 @@ class Cut:
     def read_vision(self):
         binary = self.out / 'qc_vision'
         if not binary.exists() or binary.stat().st_mtime < VISION_SOURCE.stat().st_mtime:
-            run(['swiftc', '-O', '-suppress-warnings', '-o', str(binary), str(VISION_SOURCE)])
+            # Xcode's compiler without a devenv's Nix SDK variables, which break it inside `devenv shell` (run 6)
+            subprocess.run(['/usr/bin/swiftc', '-O', '-suppress-warnings', '-o', str(binary), str(VISION_SOURCE)], check=True, capture_output=True,
+                           env={k: v for k, v in os.environ.items() if k not in ('DEVELOPER_DIR', 'SDKROOT', 'MACOSX_DEPLOYMENT_TARGET')})
         frames_file = self.out / 'vision.ndjson'
         if not frames_file.exists() or frames_file.stat().st_mtime < max(self.path.stat().st_mtime, binary.stat().st_mtime):
             with open(frames_file, 'w') as sink:
@@ -407,7 +411,7 @@ class Cut:
                         worst = (relative, frame)
             if worst and worst[0] < EYES_CLOSED_FRACTION_OF_SHOT_NORMAL:
                 self.add('eyes shut at a cut', verdict, worst[1], worst[1], f'eye openness {worst[0]:.2f} of the shot\'s normal',
-                         f'cut at frame {cut}; frame {worst[1]} has his eyes {100 - worst[0] * 100:.0f}% closed', ('strip', cut))
+                         f'cut at frame {cut + self.span_offset}; frame {worst[1] + self.span_offset} has his eyes {100 - worst[0] * 100:.0f}% closed', ('strip', cut))
 
     def flashes_and_black(self):
         for clip in picture_clips(self.edit_list):
@@ -595,8 +599,8 @@ class Cut:
             offset = first - word_onset
             if abs(offset) > tolerance:
                 self.add('highlight early or late', 'fault', min(first, int(word_onset)), max(first, int(word_onset)),
-                         f'lit {abs(offset):.1f} frames {"after" if offset > 0 else "before"} the onset at frame {word_onset:.1f}',
-                         f'"{word}" lights at frame {first}; his voice starts it after a pause at frame {word_onset:.1f}',
+                         f'lit {abs(offset):.1f} frames {"after" if offset > 0 else "before"} the onset at frame {word_onset + self.span_offset:.1f}',
+                         f'"{word}" lights at frame {first + self.span_offset}; his voice starts it after a pause at frame {word_onset + self.span_offset:.1f}',
                          ('onset', (self.time(first), self.time(word_onset))))
         heard = self.heard_words()
         if heard is None:
@@ -619,8 +623,8 @@ class Cut:
             offset = first - word_onset
             if abs(offset) > tolerance:
                 self.add('highlight early or late', 'look', min(first, int(word_onset)), max(first, int(word_onset)),
-                         f'lit {abs(offset):.1f} frames {"after" if offset > 0 else "before"} a rise at frame {word_onset:.1f}, where Resolve hears "{heard[pairs[index]][1]}"',
-                         f'"{word}" lights at frame {first}; read the evidence: is the rise this word\'s start, or a sound inside the word before?',
+                         f'lit {abs(offset):.1f} frames {"after" if offset > 0 else "before"} a rise at frame {word_onset + self.span_offset:.1f}, where Resolve hears "{heard[pairs[index]][1]}"',
+                         f'"{word}" lights at frame {first + self.span_offset}; read the evidence: is the rise this word\'s start, or a sound inside the word before?',
                          ('onset', (self.time(first), self.time(word_onset))))
 
     def caption_edges(self):
@@ -712,7 +716,7 @@ class Cut:
             changes = [after['record'] for before, after in zip(clips, clips[1:]) if {before['file'], after['file']} == {camera, reference}]
             self.add('camera colour mismatch', 'fault', changes[0] if changes else 0, changes[-1] if changes else 0,
                      f'skin red/green {red_step:+.3f}, blue/green {blue_step:+.3f} against {Path(reference).name}',
-                     f'his skin on {Path(camera).name} is a different colour from the reference camera, seen at {len(changes)} camera changes: ' + ', '.join(map(str, changes)),
+                     f'his skin on {Path(camera).name} is a different colour from the reference camera, seen at {len(changes)} camera changes: ' + ', '.join(str(c + self.span_offset) for c in changes),
                      ('pair', changes[0]) if changes else None)
 
     def graphic_text(self):
@@ -792,7 +796,7 @@ class Cut:
 
     def write(self):
         for row in self.rows:
-            row['frame'] += self.span_offset; row['last_frame'] += self.span_offset
+            row['frame'] += self.span_offset; row['last_frame'] += self.span_offset  # numbers in a row's text add it where written
             row['time_s'] = round(self.time(row['frame']), 2)
         self.rows.sort(key=lambda r: (r['frame'], r['class']))
         faults = [r for r in self.rows if r['verdict'] == 'fault']

@@ -11,7 +11,10 @@
 // first frame: a scan of part of the take is a hole the editor cannot see. Run it detached (nohup).
 // frames: ffmpeg -hwaccel videotoolbox -i CAMERA_FILE -map 0:v:0 -vf "fps=5,scale=640:-2" -q:v 4 "$SCRATCH/frames-CAMERA/%05d.jpg"
 // build:  swiftc -O -module-cache-path "$SCRATCH/modulecache" face_touch.swift -o "$SCRATCH/face_touch"
-// run:    "$SCRATCH/face_touch" "$SCRATCH/frames-CAMERA" 5 CAMERA_OFFSET_S > CAMERA.csv   (columns: seconds, touching, points)
+// run:    "$SCRATCH/face_touch" "$SCRATCH/frames-CAMERA" 5 CAMERA_OFFSET_S > CAMERA.csv
+//         (columns: seconds, touching, points, face_x, face_y, face_h: the largest face's centre and height as fractions of the
+//         frame from its top left, empty without a face; added 18 Nov by Claude Opus 5.5 for pipeline/b/ingest.py, which
+//         times the wide camera's picture against the front's by the head's motion)
 //         CAMERA_OFFSET_S is that camera's picture_offset_s in the plan (0 for the front camera), so the times are front-clock seconds.
 import Foundation
 import Vision
@@ -21,7 +24,7 @@ let folder = URL(fileURLWithPath: args[1])
 let framesPerSecond = Double(args[2])!
 let startSeconds = Double(args[3])!
 let files = try FileManager.default.contentsOfDirectory(atPath: folder.path).filter { $0.hasSuffix(".jpg") }.sorted()
-print("seconds,touching,points")
+print("seconds,touching,points,face_x,face_y,face_h")
 for (index, name) in files.enumerated() {
     let handler = VNImageRequestHandler(url: folder.appendingPathComponent(name))
     let faces = VNDetectFaceRectanglesRequest()
@@ -29,7 +32,9 @@ for (index, name) in files.enumerated() {
     hands.maximumHandCount = 2
     try? handler.perform([faces, hands])
     var pointsInFace = 0
+    var where_ = ",,"
     if let face = faces.results?.max(by: { $0.boundingBox.width < $1.boundingBox.width })?.boundingBox {
+        where_ = String(format: "%.5f,%.5f,%.5f", face.midX, 1 - face.midY, face.height)
         let box = face.insetBy(dx: -face.width * 0.15, dy: -face.height * 0.15)
         for hand in hands.results ?? [] {
             for (_, point) in (try? hand.recognizedPoints(.all)) ?? [:] where point.confidence > 0.3 && box.contains(point.location) {
@@ -37,5 +42,5 @@ for (index, name) in files.enumerated() {
             }
         }
     }
-    print(String(format: "%.2f,%d,%d", startSeconds + Double(index) / framesPerSecond, pointsInFace >= 3 ? 1 : 0, pointsInFace))
+    print(String(format: "%.3f,%d,%d,", startSeconds + Double(index) / framesPerSecond, pointsInFace >= 3 ? 1 : 0, pointsInFace) + where_)
 }

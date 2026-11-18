@@ -59,7 +59,8 @@ def windows():
     """Every window Resolve owns, on every Space: {pid, id, layer, onscreen, width, height, title}."""
     if not WINDOWS_TOOL.exists() or WINDOWS_TOOL.stat().st_mtime < WINDOWS_SOURCE.stat().st_mtime:
         WINDOWS_TOOL.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["swiftc", "-O", str(WINDOWS_SOURCE), "-o", str(WINDOWS_TOOL)], check=True, capture_output=True)
+        subprocess.run(["/usr/bin/swiftc", "-O", str(WINDOWS_SOURCE), "-o", str(WINDOWS_TOOL)], check=True, capture_output=True,
+                       env={k: v for k, v in os.environ.items() if k not in ("DEVELOPER_DIR", "SDKROOT", "MACOSX_DEPLOYMENT_TARGET")})
     lines = subprocess.run([str(WINDOWS_TOOL)], capture_output=True, text=True, check=True).stdout.splitlines()
     return [json.loads(line) for line in lines if line.strip()]
 
@@ -164,6 +165,23 @@ def stop(wait=120):
 def timeline_named(project, name):
     return next((project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)
                  if project.GetTimelineByIndex(i).GetName() == name), None)
+
+
+def start_render(project, add_job, tries=6, wait_s=3):
+    """Start the job ADD_JOB() makes (it sets the format and settings and returns AddRenderJob's id) and return its id.
+    After a render made with a loudness preset, Resolve refuses to start the next job: it stays "Ready" however long it
+    is retried, and a new job with the same settings starts at once (reproduced 18 Nov; run 6 lost 90 s on 4 of 17
+    preflights waiting on the refused one). So a refused job is deleted and made again, a few seconds apart."""
+    for attempt in range(tries):
+        job = add_job()
+        if not job:
+            raise RuntimeError("AddRenderJob returned no job")
+        if project.StartRendering([job]):
+            return job
+        status = project.GetRenderJobStatus(job)
+        project.DeleteRenderJob(job)
+        time.sleep(wait_s)
+    raise RuntimeError(f"StartRendering refused {tries} fresh jobs over {tries * wait_s} s; the last one's status: {status}")
 
 
 def finish(result, status=0):

@@ -12,7 +12,7 @@ The writing line is his: "do NOT let the AI do any of your writing (it is bad at
 
 ## What you start from
 
-- **The verbatim transcript,** read start to finish (`tools/transcription.md`). Resolve's transcript is for the first minutes after ingest and hides his stumbles.
+- **The verbatim transcript,** read start to finish (`tools/transcription.md`).
 - **`record.md`,** read whole: what he has said about this video, this tool, its audience and its ask.
 - **The tool itself:** its repository, the release a viewer would install, its README and help, and the binary, run on real data.
 - **The screen recording** with its index (`screen-recording.md`), and `inventory.md`.

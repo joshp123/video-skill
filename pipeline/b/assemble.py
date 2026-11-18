@@ -30,8 +30,9 @@ The plan (paths relative to the plan's folder; times in seconds on the front cam
       "pause_after_s"?: the pause wanted at the join after this piece (joins place splits it between both sides),
       "start_s"?, "end_s"?: an edge set by hand on the lav's clock, given to joins place as start_at or end_at,
       "shots"?: [{"camera", "framing"?, "at"?: a word of the piece (default its start), "n"?, "offset_frames"?}],
-                 a piece without shots continues the camera and framing before it; offset_frames on a shot at the
-                 piece's start moves that picture cut off the sound cut (negative: the picture changes first);
+                 a piece without shots continues the camera and framing before it; offset_frames moves a shot's
+                 picture cut that many frames (negative: earlier), on any shot: at a piece's start it splits the
+                 picture cut from the sound cut;
   }],
   "captions": ["text as shown, / between its two rows", {"text": ..., "hold_s"?: ..., "start_s"?: ...,
               "word_starts_s"?: {"word's index in the caption, from 0": its start on the lav's clock}}, ...]: in order,
@@ -168,6 +169,53 @@ def resolve_anchor(anchor, pieces, fps, duration_frames=None):
     k = hits[anchor.get("n", 0)]
     t = tokens[k]["start"] if anchor.get("edge", "start") == "start" else tokens[k + len(want) - 1]["end"]
     return round((piece["record_s"] + t - piece["start"]) * fps) + anchor.get("offset_frames", 0)
+
+
+def highlight_spans(titles, panels):
+    """A highlight (a title whose template is a highlight) drawn round a panel's pixels must start and end inside one
+    panel's span, or it outlines whatever comes before or after: the next panel, or his face (run 6, frames 1350,
+    1550 and 1910). The look's full-length background on V1 is not a panel."""
+    shown = [p for p in panels if p["track"] > 1]
+    found = []
+    for t in titles:
+        if "highlight" not in t["template"].lower():
+            continue
+        first, last = t["record"], t["record"] + t["frames"]
+        under = [p for p in shown if p["record"] <= first < p["record"] + p["source_out"] - p["source_in"]]
+        if not under:
+            found.append(f"highlight at frames {first} to {last} starts over no panel")
+            continue
+        end = max(p["record"] + p["source_out"] - p["source_in"] for p in under)
+        if last > end:
+            found.append(f"highlight at frames {first} to {last} outlives its panel ({under[0]['file']}, ends {end}) by "
+                         f"{last - end} frames: end it on the panel's own anchor")
+    return found
+
+
+def needs_attention(report):
+    """What in the report needs the model: the exit code is 1 when this is not empty."""
+    lav = report.get("joins") or {}
+    return ([f"edge with no pause: piece {e['piece']} {e['side']}" for e in report["edges"]]
+            + [f"join {j['join']} {'flagged' if j['flag'] else 'borderline'}" for j in lav.get("joins", []) if j["flag"] or j.get("borderline")]
+            + [f"caption: {c}" for c in report["captions"] if "is in no caption" in c]
+            + [f"doubtful word: {d}" for d in report.get("doubtful_words", [])]
+            + [f"unchosen words in piece {u['piece']}: {u['words']!r}" for u in report.get("unchosen_words", [])]
+            + [f"caption width: {w}" for w in report.get("caption_width", [])]
+            + [f"caption refusal: {c}" for c in report.get("caption_refusals", [])]
+            + report.get("graphic_spans", []))
+
+
+def rebase(edit_list, source, target):
+    """The edit list's file paths, relative to the plan's folder SOURCE, made relative to TARGET where it is written."""
+    if source == target:
+        return edit_list
+    move = lambda path: os.path.relpath((source / path).resolve(), target)
+    for camera in edit_list["cameras"].values():
+        camera["file"] = move(camera["file"])
+    edit_list["sound"]["lav"] = move(edit_list["sound"]["lav"])
+    for panel in edit_list["panels"]:
+        panel["file"] = move(panel["file"])
+    return edit_list
 
 
 def assemble(plan_path):
@@ -316,7 +364,12 @@ def assemble(plan_path):
     report["captions"] = unmatched
     import captions as template  # the look's caption template's own limits, checked here so place.py does not refuse later
     lookfile = json.loads((HERE.parents[1] / "looks" / plan["look"] / "look.json").read_text())
-    report["caption_width"] = template.width_warnings(captions, lookfile, plan["format"]["width"], plan["format"]["height"])[0]
+    report["caption_width"], size_px, limit = template.width_warnings(captions, lookfile, plan["format"]["width"], plan["format"]["height"])
+    face = lookfile["fusion"]["faces"][template.TEMPLATE_FACE]
+    sample = "the quick brown fox jumps over a lazy dog "  # ordinary lower-case speech, spaces included
+    per_character = template.row_width_px(sample, face["metrics"], size_px) / len(sample)
+    report["caption_safe_line"] = {"px": limit, "characters_per_row_about": int((limit - 50) / per_character),
+                                   "why": "a row with its pill must fit the safe line; plan the captions' rows to it"}
     report["caption_refusals"] = []
     for c in captions:
         try:
@@ -347,6 +400,7 @@ def assemble(plan_path):
     edit_list = {key: plan[key] for key in ("resolve_project", "fps", "format", "look", "multicam", "cameras", "sound")}
     edit_list.update(duration_frames=duration_frames, segments=segments, panels=panels, titles=titles, audio=audio,
                      captions=captions)
+    report["graphic_spans"] = highlight_spans(titles, panels)
     report["joins_flagged"] = report["joins"].get("flagged")
     report["calibration_span"] = report["joins"].get("calibration_span")  # joins check --audio needs it with --lav
     return edit_list, report
@@ -363,10 +417,14 @@ if __name__ == "__main__":
         if out.exists() and not args.force:
             raise FileExistsError(f"{out} exists; pass --force to replace it")
         edit_list, report = assemble(args.plan.resolve())
-        out.write_text(json.dumps(edit_list, indent=1, ensure_ascii=False) + "\n")
+        out.write_text(json.dumps(rebase(edit_list, args.plan.resolve().parent, out.resolve().parent), indent=1, ensure_ascii=False) + "\n")
         report["edit_list"] = str(out)
         report["duration_s"] = round(edit_list["duration_frames"] / float(edit_list["fps"]), 3)
+        report["needs_the_model"] = needs_attention(report)
         print(json.dumps(report, indent=1, ensure_ascii=False))
+        sys.exit(1 if report["needs_the_model"] else 0)
+    except SystemExit:
+        raise
     except Exception as error:
         print(json.dumps({"error": f"{type(error).__name__}: {error}"}))
         sys.exit(1)

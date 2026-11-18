@@ -107,23 +107,33 @@ def encode(m):
 
 
 
-def run(resolve, directory, target, ceiling):
+AS_MIXED = "B sound as mixed"
+
+
+def as_mixed(resolve, project, directory):
+    """The name of a render preset with loudness normalisation off, written once (render.py --loudness off): the sound
+    as the timeline mixes it, which the join check scores (normalisation sticks to the project once any preset turned
+    it on, so a render without one is still normalised)."""
+    found = [p for p in project.GetRenderPresetList() or [] if p.startswith(AS_MIXED)]
+    return found[0] if found else run(resolve, directory, 0, 0, normalise=False)
+
+
+def run(resolve, directory, target, ceiling, normalise=True):
     project = resolve.GetProjectManager().GetCurrentProject()
     donor = Path(os.environ.get('VIDEO_MEDIA', '/Volumes/Josh Extreme Pro USB4 4TB/Media'))/'Edits/.cache/audio-route-test-2/drt/r2-audio-base.xml/r2 audio base.xml'
     base = donor.read_text()
     blob = re.search(r'<FieldsBlob>([0-9a-f]+)</FieldsBlob>',base)[1]
-    values = dict(RecordNormalizeAudio=('bool',True), RecordAudioNormalizationMethod=('int',1),
+    values = dict(RecordNormalizeAudio=('bool',normalise), RecordAudioNormalizationMethod=('int',1),
         RecordAudioNormalizationMode=('int',3), RecordAudioNormalizationTargetLoudness=('int',target),
         RecordAudioNormalizationTargetLevel=('int',ceiling),
         RecordAudioNormalizationOutputTracksEnableState=('bytes','0000000100000001000000020030000000020000000001'))
     fields = [(k,v) for k,v in decode(blob) if k not in values]+list(values.items())
-    name = f'B loudness {target} LUFS {ceiling} dBTP {uuid.uuid4().hex[:8]}'
+    name = f'B loudness {target} LUFS {ceiling} dBTP {uuid.uuid4().hex[:8]}' if normalise else f'{AS_MIXED} {uuid.uuid4().hex[:8]}'
     text = re.sub(r'<SyRecordInfo DbId="[0-9a-f-]+">',f'<SyRecordInfo DbId="{uuid.uuid4()}">',base.replace(blob,encode(fields)),count=1)
     directory.mkdir(parents=True,exist_ok=True)
     path = directory/(name+'.xml'); path.write_text(text)
     if not resolve.ImportRenderPreset(str(path)) or name not in project.GetRenderPresetList():
         raise RuntimeError(f'ImportRenderPreset failed: {path}')
-    print(name)
     return name
 
 
@@ -133,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('--target',type=int,required=True); parser.add_argument('--ceiling',type=int,required=True)
     args = parser.parse_args()
     import DaVinciResolveScript
-    try: run(DaVinciResolveScript.scriptapp('Resolve'),args.preset_dir.resolve(),args.target,args.ceiling)
+    try: print(run(DaVinciResolveScript.scriptapp('Resolve'),args.preset_dir.resolve(),args.target,args.ceiling))
     except Exception as error:
         print(str(error),file=sys.stderr); sys.stdout.flush(); os._exit(1)
     sys.stdout.flush(); os._exit(0)

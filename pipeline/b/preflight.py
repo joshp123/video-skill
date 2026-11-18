@@ -37,6 +37,7 @@ Tested on codex-switch run 5's builds 10, 12 and 18: every eye, lip and sync fau
 renders, build 18's blink at frame 208 as borderline (0.68 of normal here, 0.58 in the gate), and no other fault row.
 """
 import argparse
+import os
 import ast
 import json
 import statistics
@@ -48,7 +49,6 @@ import look
 import place
 import session
 
-START_RETRY_S = 90  # Resolve refuses StartRendering now and then: once over 60 s (26 Oct), once over 30 s (18 Nov)
 
 HERE = Path(__file__).resolve().parent
 VISION_SOURCE = HERE / "qc_vision.swift"
@@ -155,19 +155,18 @@ def run(list_path, out, window):
                     lay(camera, segment_index, cut - reach, 2 * reach, cursor)
                     strips.append((index, camera, which, cursor, cut - reach, 2 * reach))
                     cursor += 2 * reach + 2
-        if not project.SetCurrentRenderFormatAndCodec("mp4", "H264"):
-            raise RuntimeError("Could not set the render format")
         settings = {"TargetDir": str(out), "CustomName": render_file.stem, "ExportVideo": True, "ExportAudio": False,
                     "ExportSubtitle": False, "SelectAllFrames": True, "FormatWidth": int(data["format"]["width"]),
                     "FormatHeight": int(data["format"]["height"]), "VideoQuality": 20000, "MultiPassEncode": False}
-        if not project.SetRenderSettings(settings):
-            raise RuntimeError("SetRenderSettings refused the preflight render")
-        job = project.AddRenderJob()
+
+        def add_job():
+            if not project.SetCurrentRenderFormatAndCodec("mp4", "H264"):
+                raise RuntimeError("Could not set the render format")
+            if not project.SetRenderSettings(settings):
+                raise RuntimeError("SetRenderSettings refused the preflight render")
+            return project.AddRenderJob()
         rendered = time.monotonic()
-        while not project.StartRendering([job]):
-            if time.monotonic() - rendered > START_RETRY_S:
-                raise RuntimeError(f"StartRendering refused the preflight render for {START_RETRY_S} s")
-            time.sleep(1)
+        job = session.start_render(project, add_job)
         while str((project.GetRenderJobStatus(job) or {}).get("JobStatus", "")).lower() not in ("complete", "failed", "cancelled"):
             time.sleep(0.5)
         status = project.GetRenderJobStatus(job)
@@ -182,7 +181,8 @@ def run(list_path, out, window):
     vision_binary = session.CACHE / "bin/qc_vision"
     if not vision_binary.exists() or vision_binary.stat().st_mtime < VISION_SOURCE.stat().st_mtime:
         vision_binary.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["swiftc", "-O", "-suppress-warnings", "-o", str(vision_binary), str(VISION_SOURCE)], check=True, capture_output=True)
+        subprocess.run(["/usr/bin/swiftc", "-O", "-suppress-warnings", "-o", str(vision_binary), str(VISION_SOURCE)], check=True, capture_output=True,
+                       env={k: v for k, v in os.environ.items() if k not in ("DEVELOPER_DIR", "SDKROOT", "MACOSX_DEPLOYMENT_TARGET")})
     lookfile = json.loads((place.LOOKS / data["look"] / "look.json").read_text())
     height = int(data["format"]["height"])
     band_centre = round(height * (1 - lookfile["subtitles"]["resolveTemplate"]["centreY"]))

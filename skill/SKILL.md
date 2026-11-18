@@ -63,7 +63,7 @@ One agent makes the video. Josh asked for "a coherent workflow against professio
 
 | Stage | Read | Starts from | Hands on |
 | --- | --- | --- | --- |
-| Ingest | `tools/cameras.md`, `tools/transcription.md` | The cards | The project, synced; both transcripts; face-touch scans; `inventory.md`; `record.md` |
+| Ingest | `tools/cameras.md`, `tools/transcription.md` | The cards | The project, synced; the verbatim transcript; face-touch scans; `inventory.md`; `record.md` |
 | Story and demo | `roles/story-and-demo.md` | The transcripts, the tool, the screen recording | The script page Josh decides from; the real demo content |
 | The cut | `roles/editor.md` | His decided script | The plan: pieces, shots, captions, the timing of every graphic |
 | Colour | `roles/colour.md` | The first placed cut | Each camera's grade in the plan; after lock, the wide camera's shallow focus |
@@ -116,11 +116,12 @@ Each cut is two Resolve timelines, as people who finish video for a living work:
 
 ## The tools
 
-All in `pipeline/` (in this repository, and linked as `Media/Edits/pipeline`). `pipeline/README.md` is the reference: what each command takes, returns and cannot do, with times measured on his footage. Read it whole at the start of a video. Every command prints JSON and exits 0 only when nothing needs attention. Run the Resolve commands with `/usr/bin/python3 -B` from `pipeline/b`, giving plans and edit lists as absolute paths; paths inside a plan are relative to the plan's folder. `session.py`, `project.py` and the `b/` commands start Resolve windowless and set its scripting variables themselves; `tidy.py`, `loudness.py` and the `ingest/` scripts connect to a Resolve that is already running (`session.py start`) and need the variables set (`tools/resolve.md`, "Driving it").
+All in `pipeline/` (in this repository, and linked as `Media/Edits/pipeline`). `pipeline/README.md` is the reference: what each command takes, returns and cannot do, with times measured on his footage. Read it whole at the start of a video. Every command prints JSON and exits 0 only when nothing needs attention. Run the Resolve commands with `/usr/bin/python3 -B` from `pipeline/b`, giving plans and edit lists as absolute paths; paths inside a plan are relative to the plan's folder. `session.py`, `project.py` and the `b/` commands start Resolve windowless and set its scripting variables themselves; `tidy.py` and `loudness.py` connect to a Resolve that is already running (`session.py start`) and need the variables set (`tools/resolve.md`, "Driving it").
 
 | Command (`pipeline/b/` unless named) | What it does | Time on codex-switch |
 | --- | --- | --- |
 | `session.py start / stop / status` | Resolve windowless; which project is open; any dialog | start 9 to 40 s |
+| `ingest.py start / status` (in the pipeline devenv) | From the cameras' files or cards to a checked session: copies hashed, the lav on the front camera's clock, the verbatim transcript, both face-touch scans, the plan's header and the project; lists what needs you. `ingest.py header --like PLAN` starts another video from a session already ingested | 5 min 40 s for the 23-minute session; copying from cards is untested |
 | `project.py LIST` | The video's project: colour management, groups, media, the multicam synced by sound, all read back | 21 s, once |
 | `assemble.py PLAN` | The plan to the edit list: finds his words, has `joins place` cut each edge inside a measured pause, force-aligns his words to time the captions, converts everything to frames; reports what needs you | tens of seconds, no Resolve |
 | `cut.py PLAN --timeline NAME` | assemble, preflight (the gate's eye, lip and sync checks before placing; a fault stops the pass there), place, finish, render, join check and gate in one call; one list of what needs you | about 50 s when preflight stops it; 2 min 20 s to 6 min 30 s for a whole pass, depending on the machine's other load |
