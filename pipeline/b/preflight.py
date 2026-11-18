@@ -91,13 +91,19 @@ def caption_rows(captions, fps):
     return up
 
 
-def first_word_frame(captions, fps, after):
-    starts = [round(w["start"] * fps) for c in captions for w in c["words"] if round(w["start"] * fps) >= after]
+def spoken_words(data):
+    """Every word heard, fillers included (the edit list's heard, from assemble.py), else the captions' words. Captions
+    alone made an unchosen "um" silence, so a picture run-on over it was offered as clean (run 6, cut 2)."""
+    return data.get("heard") or [w for c in data.get("captions", []) for w in c["words"]]
+
+
+def first_word_frame(words, fps, after):
+    starts = [round(w["start"] * fps) for w in words if round(w["start"] * fps) >= after]
     return min(starts) if starts else None
 
 
-def last_word_frame(captions, fps, before):
-    ends = [round(w["end"] * fps) for c in captions for w in c["words"] if round(w["end"] * fps) <= before]
+def last_word_frame(words, fps, before):
+    ends = [round(w["end"] * fps) for w in words if round(w["end"] * fps) <= before]
     return max(ends) if ends else None
 
 
@@ -336,7 +342,7 @@ def measure(list_path, out, window):
             row["borderline"] = (f"eyes {100 - 100 * planned[0]:.0f}% closed at frame {planned[1]} on the {planned[2]}, within "
                                  f"{BORDERLINE} of the gate's limit: the render's reading can fall either side")
             borderline.append({"class": "eyes shut at a cut", "frame": planned[1], "cut": cut, "what": row["borderline"]})
-        silent_until = first_word_frame(captions, fps, join) if join is not None else None
+        silent_until = first_word_frame(spoken_words(data), fps, join) if join is not None else None
         if join is not None and cut > join and silent_until is not None and cut - silent_until >= gate["OUT_OF_SYNC_FAULT_FRAMES"]:
             what = (f"the outgoing {out_seg['camera']} runs {cut - silent_until} frames into his next words (from frame "
                     f"{silent_until}): his mouth is the other piece's")

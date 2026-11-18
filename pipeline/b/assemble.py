@@ -259,6 +259,25 @@ def highlight_spans(titles, panels):
     return found
 
 
+NEAR_CUT_FRAMES = 6  # an edge this close to a camera cut, and not on it, reads as a slip (run 6, cut 2: 1 to 6 frames)
+
+
+def edges_near_cuts(segments, panels, titles):
+    """Every panel and title edge 1 to NEAR_CUT_FRAMES frames from a camera cut: a graphic that belongs to the shot change
+    but lands just off it shows a few frames of the wrong picture under or around it."""
+    cuts = sorted(s["record"] for s in segments)[1:]
+    found = []
+    rows = [("panel " + p["file"].split("/")[-1], p["record"], p["record"] + p["source_out"] - p["source_in"]) for p in panels
+            if p.get("track", 1) > 1] + [("title " + t["template"], t["record"], t["record"] + t["frames"]) for t in titles]
+    for name, first, end in rows:
+        for edge, at in (("starts", first), ("ends", end)):
+            near = min(cuts, key=lambda c: abs(c - at), default=None)
+            if near is not None and 0 < abs(near - at) <= NEAR_CUT_FRAMES:
+                found.append(f"{name} {edge} at frame {at}, {abs(near - at)} frames {'before' if at < near else 'after'} the camera "
+                             f"cut at {near}: on the cut, or far enough off it to read as meant")
+    return found
+
+
 def needs_attention(report):
     """What in the report needs the model: the exit code is 1 when this is not empty."""
     lav = report.get("joins") or {}
@@ -269,7 +288,7 @@ def needs_attention(report):
             + [f"unchosen words in piece {u['piece']}: {u['words']!r}" for u in report.get("unchosen_words", [])]
             + [f"caption width: {w}" for w in report.get("caption_width", [])]
             + [f"caption refusal: {c}" for c in report.get("caption_refusals", [])]
-            + report.get("graphic_spans", []))
+            + report.get("graphic_spans", []) + report.get("edges_near_cuts", []))
 
 
 def rebase(edit_list, source, target):
@@ -365,6 +384,14 @@ def assemble(plan_path):
         p.update(record_s=record)
         record += exact["end"] - exact["start"]
         report["pieces"].append({"piece": exact["piece"] - 1, "record_s": round(p["record_s"], 4), "words": exact.get("words")})
+    heard = []  # every word heard in the film, fillers included, on the timeline's clock: what is silence and what is not
+    for k, p in enumerate(pieces):
+        for w in p["heard"]:
+            a = found_by_piece[k].get((w["start"], w["word"]), w)
+            start, end = p["record_s"] + a["start"] - p["start"], p["record_s"] + a["end"] - p["start"]
+            if end > p["record_s"] and start < p["record_s"] + p["end"] - p["start"]:
+                heard.append({"text": w["word"], "start": round(max(start, p["record_s"]), 4),
+                              "end": round(min(end, p["record_s"] + p["end"] - p["start"]), 4), "piece": k})
     duration_frames = math.ceil((record + plan.get("tail_s", 0.0)) * fps)
     crossfade_ms = plan.get("crossfade_ms", 40)
     fade_in, fade_out = plan.get("fade_ms", [10, 20])
@@ -470,9 +497,10 @@ def assemble(plan_path):
     if overlaps:
         raise ValueError("; ".join(overlaps) + " (anchor the first one's end to the next one's start with \"until\")")
     edit_list = {key: plan[key] for key in ("resolve_project", "fps", "format", "look", "multicam", "cameras", "sound")}
-    edit_list.update(duration_frames=duration_frames, segments=segments, panels=panels, titles=titles, audio=audio,
+    edit_list.update(duration_frames=duration_frames, segments=segments, panels=panels, titles=titles, audio=audio, heard=heard,
                      captions=captions)
     report["graphic_spans"] = highlight_spans(titles, panels)
+    report["edges_near_cuts"] = edges_near_cuts(segments, panels, titles)
     report["joins_flagged"] = report["joins"].get("flagged")
     report["calibration_span"] = report["joins"].get("calibration_span")  # joins check --audio needs it with --lav
     return edit_list, report

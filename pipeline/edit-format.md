@@ -19,6 +19,7 @@ One file per video, in the video's folder, holds every editorial decision as row
 | `titles` | V4: the look's Fusion templates as title items. |
 | `audio`, `sound` | A1: the dialogue pieces; A2: the room tone. |
 | `captions` | ST1. |
+| `heard` | Every word heard in the film, fillers included, on the timeline's clock (`assemble.py`): what is speech and what is silence for preflight's run-on and sync rules. Nothing is placed from it. |
 
 ## Rows
 
@@ -27,5 +28,6 @@ One file per video, in the video's folder, holds every editorial decision as row
 - **`titles`:** `{template, inputs, record, frames}`; the track is always V4. `template` names one of the look's Fusion templates; `inputs` are its published inputs, the text's pill ranges included (`[[ ]]` round the words on the pill).
 - **`audio`:** `{file, source_in_s, source_out_s, record_s, fade_in_ms, fade_out_ms, crossfade_ms?}`, in seconds, with optional `pre_roll_s` (the sound starts that much earlier), `patches` (`{source_in_s, source_out_s, fade_ms}`: room tone over a stretch of the piece), `voice_isolation` (0 to 100) and `dialogue_leveler` (true or false). `crossfade_ms` on a row means the join into the next piece is a crossfade of that length, centred on the cut, which plays half its length of source beyond the cut on both sides; without it the join is a butt join with the two clip fades. A piece before a gap has no crossfade.
 - **`sound`:** `{lav, room_tone_s, room_tone_crossfade_ms, room_tone_end_fade_ms}`: the lav file the pieces come from, the room-tone window `[from, to]` in its seconds, the crossfade between loops of the window under a long gap, and the fade at the end.
+- **`heard`:** `{text, start, end, piece}`: a word of a piece's audio as aligned, `[UM]` and the like included, in timeline seconds; `piece` counts from 0.
 - **`captions`:** `{text, start, end, words}`: the caption as it reads, with `\n` at its line break; its start and end in seconds; each word as `{text, start, end}`. `captions.py` makes them whole frames for the look's template.
 

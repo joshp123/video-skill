@@ -92,6 +92,7 @@ def main():
     needs += [f"piece {u['piece']} also holds {u['words']!r} (at {u['at_s']} s on the lav): {u['why']}" for u in report.get("unchosen_words", [])]
     needs += [f"caption row too wide: {w}" for w in report.get("caption_width", [])]
     needs += report.get("graphic_spans", [])
+    needs += report.get("edges_near_cuts", [])
     if report.get("caption_refusals"):
         needs += [f"caption: {c}" for c in report["caption_refusals"]]
         finish(1)
