@@ -38,6 +38,7 @@ A viewer meets it on a phone, in a feed, playing muted. The first frame is the t
 
 - **One promise, kept.** A stranger can say in one sentence what the tool does, what showed them it works, and what to do next. A ramble holds several videos; the short is the one whose promise the footage can prove.
 - **The proof is the tool working on real data,** readable on a phone, with what he names lit as he names it. Nothing is invented; private rows can be hidden. Josh named both ways to fail: "if you copy directly from my screen recording or fake stuff too hard then gg you will have neither."
+- **The tool is what they came to see.** It is on screen early and for most of the running time, large enough to read, with his voice over it. Josh, on a first cut that showed the tool for 27 of its 91 seconds: "we don't really see enough of the product, the screenshots. It's too much of me talking".
 - **The opening earns the rest.** The first frame works as a thumbnail with the sound off.
 - **Nothing flashes past.** Every screen with words stays up long enough to read at phone size.
 - **One design.** Captions, titles, terminal, captures and cards look as if one designer made them, and the two cameras look like one camera from two angles.
@@ -116,7 +117,7 @@ Each cut is two Resolve timelines, as people who finish video for a living work:
 
 ## The tools
 
-All in `pipeline/` (in this repository, and linked as `Media/Edits/pipeline`). `pipeline/README.md` is the reference: what each command takes, returns and cannot do, with times measured on his footage. Read it whole at the start of a video. Every command prints JSON and exits 0 only when nothing needs attention. Run the Resolve commands with `/usr/bin/python3 -B` from `pipeline/b`, giving plans and edit lists as absolute paths; paths inside a plan are relative to the plan's folder. `session.py`, `project.py` and the `b/` commands start Resolve windowless and set its scripting variables themselves; `loudness.py` connects to a Resolve that is already running (`session.py start`) and needs the variables set (`tools/resolve.md`, "Driving it").
+All in `pipeline/` in this skill's repository, `~/code/video-skill` (the skill itself is its `skill/` folder), and linked as `Media/Edits/pipeline`. `pipeline/README.md` is the reference: what each command takes, returns and cannot do, with times measured on his footage. Read it whole at the start of a video. Every command prints JSON and exits 0 only when nothing needs attention. Run the Resolve commands with `/usr/bin/python3 -B` from `pipeline/b`, giving plans and edit lists as absolute paths; paths inside a plan are relative to the plan's folder. `session.py`, `project.py` and the `b/` commands start Resolve windowless and set its scripting variables themselves; `loudness.py` connects to a Resolve that is already running (`session.py start`) and needs the variables set (`tools/resolve.md`, "Driving it").
 
 | Command (`pipeline/b/` unless named) | What it does | Time on codex-switch |
 | --- | --- | --- |
@@ -163,3 +164,5 @@ Josh's standing direction: as much as possible natively in Resolve by script, as
 ## Changing this skill
 
 A note from Josh changes that video. A note about the look (caption size, a colour) changes the look's values, so it is not given twice. A fault you should have caught before he saw it is a gap in a tool or a check, and that is what gets fixed. His words on turning his notes into rules: "a lot of this shit is specific to that editing workflow, that vidoe, adnd that model's failures. we shouldn't over specifiy on prior failures and turn them into 'rules'". So this skill changes only when a mechanism is misdescribed or missing, at the end of a video, with his approval and the evidence. A tool fact enters `tools/` only with its source: tested on this Mac with the date, a manual page, or an exact error. The story behind a practice goes in `history.md`, never in the working text.
+
+The skill is written in `~/code/video-skill/skill/`. The copy agents load as `video` is `~/code/nix/nixos-config/ai/skills/video/` (the same folder as `~/.agents/skills/video`). After a change, copy the files of `skill/` that git tracks over it (the example pairs in `examples/` are untracked and private, and stay out), then commit and push both repositories.
