@@ -192,6 +192,7 @@ def run(list_path, out, window):
                            capture_output=True, text=True, check=True).stdout.splitlines()
     vision = [json.loads(line) for line in lines if line.strip()]
     vision_seconds = time.monotonic() - seen
+    render_file.unlink()  # about 360 MB a pass, read once: run 6 left 6 GB of them on the media drive
     eyes = [openness(f) for f in vision]
     lips = [(f.get("face") or {}).get("lips") for f in vision]
 
@@ -315,7 +316,7 @@ def run(list_path, out, window):
                                         "what": f"the panel's picture jumps at its frame {source_frame} (timeline frame {at}) while the "
                                                 f"highlight from frame {over[0]['record']} is still up: is it still on its target?"})
     return {"faults": faults, "borderline": borderline, "cuts": cuts, "jump_candidates": jumps, "panel_moves": panel_moves,
-            "render": str(render_file), "frames_read": len(vision),
+            "frames_read": len(vision),
             "seconds": {"render": round(render_seconds, 1), "vision": round(vision_seconds, 1), "all": round(time.monotonic() - began, 1)}}
 
 
