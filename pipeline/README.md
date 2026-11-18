@@ -44,7 +44,7 @@ In order, the slow parts alongside:
 
 **On 12 October** (the 23-minute session, 21 GB, load average 3.6 to 5.5): 5 min 40 s from `start` to finished. Probe 0.5 s; hashes of all four files 13.3 s, all matching October's manifest; the lav's offset 13.5 s (36.741996 s; October's 36.737125 s is its start-of-take value, and the five points ran 36.7370 to 36.7468, the same 12 ms drift October measured); padding 1.2 s (the new lav is October's moved by exactly 235 samples, 4.875 ms, at every point checked); room tone 0.5 s (125.1 to 128.1 s, in the pause October chose by hand, 121.24 to 124.24); stills and profiles 6 s (N-Log read from the Nikon); the plan header at 0.02 s; `project.py` 22.5 s (multicam wide at 919 frames, as October's); the transcript 4 min 29 s (3,620 words against October's corrected 3,623: the differences are 26 names the model corrects, such as "codecs" for Codex, and one stretch at 924.5 s that the recogniser dropped after a pause, which October transcribed again and ingest lists as a gap); the face scans 5 min 25 s and 5 min 40 s, alongside.
 
-`ingest.py header --video DIR --slug NAME (--like PLAN | --session DIR) [--date] [--look]` starts another video from a session already ingested: it copies the header keys of an earlier video's plan (which carries what the model corrected: the transcript copy with names fixed, a settled picture offset, the cameras' grades) or of ingest's own header, makes every path relative to the new folder and names the project "DATE SLUG". Then run `project.py` on it. Sessions ingested before `ingest.py` existed work through `--like`.
+`ingest.py header --video DIR --slug NAME (--like PLAN | --session DIR) [--date] [--look]` starts another video from a session already ingested: it copies the header keys of an earlier video's plan (which carries what the model corrected: the transcript copy with names fixed, a settled picture offset, the cameras' grades) or of the session's own `plan-header.json` (ingest writes it into the session folder, its paths relative to that folder), makes every path relative to the new folder and names the project "DATE SLUG". Then run `project.py` on it. A session ingested before `ingest.py` gets its `plan-header.json` once, from a plan that has its facts right: `--like PLAN --session DIR --save-for-session` (the cameras' grades go back to the look's start; a video's own grade is the colour stage's). The 12 October session has one: `Edits/2026-10-12-camera-session/plan-header.json`, from run 7's plan (picture offset 36.777 s, the corrected transcript).
 
 `needs_the_model` always holds: the wide camera's log profile by eye on the stills; each camera's picture against its own sound; the transcript's names; the screen recording's offset and private detail; every flagged face touch; `record.md`. It adds a line for anything a measurement could not settle.
 
@@ -71,7 +71,7 @@ The plan to the edit list (`edit-format.md`). In order:
    the cameras' `picture_offset_s`. Any shot's `offset_frames` moves its picture cut; at a piece's start it splits the
    picture cut from the sound cut (a split edit).
 
-It exits 1 when its report holds anything in `needs_the_model` (the same items listed below; a report with an `error` instead means it made no edit list), and writes the edit list either way. `--out` elsewhere than the plan's folder rewrites the list's file paths for its own folder. The report also gives `caption_safe_line`: the width a caption row with its pill must fit (820 px on signpost-pill, about 15 to 17 characters of ordinary speech, because the band sits below the platform's button column), and `graphic_spans`: every highlight that starts over no panel or outlives the panel it outlines (run 6 left empty outlines over the next panel and over his face; anchor the highlight's end to its panel's own anchor).
+It checks every word anchor (piece, words, occurrence) and every file and panel range the plan names before any audio model runs, and lists all the problems at once, in about a second where run 7 waited 32 s. Every piece and join number in its report counts from 0, as the plan's pieces and `note.py`'s joins do: join k lies between pieces k and k + 1 (the joins tool's own output counts from 1). It exits 1 when its report holds anything in `needs_the_model` (the same items listed below; a report with an `error` instead means it made no edit list), and writes the edit list either way. `--out` elsewhere than the plan's folder rewrites the list's file paths for its own folder. The report also gives `caption_safe_line`: the width a caption row with its pill must fit (820 px on signpost-pill, about 15 to 17 characters of ordinary speech, because the band sits below the platform's button column), and `graphic_spans`: every highlight that starts over no panel or outlives the panel it outlines (run 6 left empty outlines over the next panel and over his face; anchor the highlight's end to its panel's own anchor).
 
 It reports, and decides nothing on: an edge with no pause (with the aligned words around it, and where it moved the
 cut), every join the join check flags, shown words that match no spoken word and spoken words in no caption, each word
@@ -179,9 +179,15 @@ Vision instrument (about 11 s). Then:
   join only shifts that keep the outgoing picture over silence; or "no clean cut within the window", which means the
   edge, the take or the pause must change.
 - **jump candidates**: every cut that keeps the camera, with its framing's scale change (the gate does not measure jump
-  cuts; run 5's 10 to 15% changes read as jump cuts).
+  cuts; run 5's 10 to 15% changes read as jump cuts). A cut where the picture does not change, because an opaque panel
+  covers it or the camera is panned off frame, is listed under **hidden_cuts** instead (run 7's two; under 0.1 grey
+  levels of change at the cut, against 56 to 78 at its visible ones).
 - **panel moves**: a screen-recording panel whose own picture jumps (a scroll, a new screen) while a highlight drawn
   before the jump is still up.
+- **what to look at**: before the picture render is deleted (about 360 MB a pass), every flagged frame is exported to
+  `OUT/flagged/` and one still of each distinct layout (camera, framing, the panels over it) to `OUT/layout/`, at half
+  size, listed as `flagged_frames` and `layouts` and in `cut.py`'s summary. They hold no captions or titles, which this
+  render does not lay. About 8 s on 91 s.
 About 31 s for 19 cuts and 2,300 frames. Tested on run 5's builds 10, 12 and 18 (rebuilt exactly from its plans; no
 plans survive for builds 13 to 17): it raised as faults every eye, lip and sync row their gates raised from full
 renders except build 18's blink at frame 208, which it raised as borderline (0.68 of normal against the gate's 0.58),
@@ -212,7 +218,7 @@ What a timeline holds, in the list's terms: every video item (file or multicam a
 
 ## Other parts
 
-- `b/tidy.py`: deletes superseded cut timelines, checks and unused media, lays the bins out. `--dry-run` first. Give it either a project name or `--current`, not both: with both it stops with a usage error that does not say this.
+- `b/tidy.py`: deletes superseded cut timelines, checks and unused media, lays the bins out. `--dry-run` first. Like the other `b/` commands it sets Resolve's module path itself, starts Resolve windowless if needed and reads and prints UTF-8 (run 7 had to set `PYTHONPATH` and `PYTHONUTF8` by hand). Give it either a project name or `--current`, not both: with both it stops with a usage error that does not say this.
 - `b/loudness.py`: writes the loudness render preset (`--target`, `--ceiling`).
 - `b/make_templates.py`, `b/template_kinds.py`, `b/templates/`, `resolve/build_graphics.py`: the look's Fusion templates (motion design). `make_templates.py` uses `build_graphics.py` as a library; `build_graphics.py`'s own command is the older route and needs the removed cut list.
 - `b/render-graphics.mjs` and `graphics/`: terminal graphics rendered in Remotion. Not exercised in this rebuild. `graphics/prepare.mjs` and `graphics/render-clips.mjs` are the older route and read the older cut list, whose builder was removed; `b/render-graphics.mjs` uses only `graphics/src` and `graphics/terminal-content.mjs`.

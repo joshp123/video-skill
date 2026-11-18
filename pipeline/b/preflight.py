@@ -31,7 +31,11 @@ with a small change reads as a jump cut; the gate does not measure it), and ever
 own picture jumps (a scroll or a new screen) while a highlight drawn before the jump is still up (the highlight may now
 sit on something else; the gate does not measure it). Neither stops a pass.
 
-Prints {faults, borderline, cuts, jump_candidates, panel_moves, seconds}. Exit 1 when there is any fault. What it
+Before the picture render is deleted (about 360 MB a pass), it exports at half size every flagged frame (OUT/flagged/)
+and one still of each distinct layout, by camera, framing and the panels over it (OUT/layout/; no captions or titles,
+which this render does not hold), and sets aside as hidden_cuts the same-camera cuts where the picture does not change
+(under an opaque panel or a camera panned off frame), which are no jump cuts. About 8 s.
+Prints {faults, borderline, cuts, jump_candidates, hidden_cuts, panel_moves, flagged_frames, layouts, seconds}. Exit 1 when there is any fault. What it
 cannot see: titles over his face, and the captions' real rows (it uses the look's band constants, as the gate does).
 Tested on codex-switch run 5's builds 10, 12 and 18: every eye, lip and sync fault row their gates raised on full
 renders, build 18's blink at frame 208 as borderline (0.68 of normal here, 0.58 in the gate), and no other fault row.
@@ -93,6 +97,85 @@ def last_word_frame(captions, fps, before):
 
 
 def run(list_path, out, window):
+    """measure(), then the picture render deleted whatever happened: about 360 MB a pass (run 6 left 6 GB of them)."""
+    try:
+        return measure(list_path, out, window)
+    finally:
+        (out / "preflight-picture.mp4").unlink(missing_ok=True)
+
+
+def frames_of(render_file, numbers, vf, out_pattern=None):
+    """The render's frames NUMBERS (from 0), through the filter VF: written as files to OUT_PATTERN (%d numbered in order),
+    or returned as raw bytes."""
+    if not numbers:
+        return b""
+    pick = "+".join(f"eq(n\\,{n})" for n in sorted(numbers))
+    command = ["ffmpeg", "-v", "error", "-y", "-i", str(render_file), "-vf", f"select={pick},{vf}", "-fps_mode", "passthrough"]
+    command += [str(out_pattern)] if out_pattern else ["-f", "rawvideo", "-"]
+    return subprocess.run(command, capture_output=True, check=True).stdout
+
+
+def exports(render_file, out, data, faults, borderline, jumps):
+    """What an agent needs to look at once the render is gone: every flagged frame, and one still of each distinct layout
+    (camera, framing, the panels over it), at half size. And which same-camera cuts cannot be seen because the picture
+    does not change there (a camera cut under an opaque panel is no jump cut, run 7)."""
+    segments = sorted(data["segments"], key=lambda s: s["record"])
+    end = max(s["record"] + s["frames"] for s in segments)
+    shown = [p for p in data.get("panels", []) if p.get("track", 1) > 1]
+
+    def layout(f):
+        seg = next((s for s in segments if s["record"] <= f < s["record"] + s["frames"]), None)
+        over = tuple(sorted((p["file"], json.dumps(p.get("framing", {}), sort_keys=True)) for p in shown
+                            if p["record"] <= f < p["record"] + p["source_out"] - p["source_in"]))
+        return (seg and seg["camera"], json.dumps((seg or {}).get("framing", {}), sort_keys=True), over)
+    firsts, spans = {}, []
+    for f in range(end):
+        key = layout(f)
+        if spans and spans[-1][0] == key:
+            spans[-1][2] = f
+        else:
+            spans.append([key, f, f])
+    for key, a, b in spans:
+        firsts.setdefault(key, (a + b) // 2)
+    flagged = sorted({r["frame"] for r in faults + borderline if 0 <= r.get("frame", -1) < end})
+    layouts = sorted(firsts.values())
+    around_cuts = sorted({j["cut"] - k for j in jumps if j["cut"] >= 2 for k in (2, 1, 0)})
+    every = sorted(set(flagged) | set(layouts) | set(around_cuts))
+    work = out / "frames-read"
+    for folder in (work, out / "flagged", out / "layout"):
+        if folder.exists():
+            subprocess.run(["trash", str(folder)], check=True)
+        folder.mkdir(parents=True)
+    frames_of(render_file, every, "scale=iw/2:-2", work / "%04d.jpg")  # one decode of the render for all of it
+    still = {n: work / f"{i:04d}.jpg" for i, n in enumerate(every, 1)}
+    result = {"flagged_frames": [], "layouts": []}
+    for n in flagged:
+        target = out / "flagged" / f"flagged-frame-{n}.jpg"
+        still[n].replace(target) if n not in layouts and n not in around_cuts else target.write_bytes(still[n].read_bytes())
+        result["flagged_frames"].append(str(target))
+    for n in layouts:
+        target = out / "layout" / f"layout-frame-{n}.jpg"
+        target.write_bytes(still[n].read_bytes())
+        camera, framing, over = next(k for k, v in firsts.items() if v == n)
+        result["layouts"].append({"frame": n, "still": str(target), "camera": camera, "framing": json.loads(framing),
+                                  "panels": [p for p, _ in over]})
+
+    def grey(n):
+        return subprocess.run(["ffmpeg", "-v", "error", "-i", str(still[n]), "-vf", "scale=54:96,format=gray", "-f", "rawvideo", "-"],
+                              capture_output=True, check=True).stdout
+    picture = {n: grey(n) for n in around_cuts}
+    mean_change = lambda a, b: sum(abs(x - y) for x, y in zip(picture[a], picture[b])) / (54 * 96)
+    for j in jumps:
+        c = j["cut"]
+        if all(n in picture for n in (c - 2, c - 1, c)):
+            j["change_at_cut"] = round(mean_change(c - 1, c), 2)
+            j["change_before"] = round(mean_change(c - 2, c - 1), 2)
+            j["hidden"] = j["change_at_cut"] < max(2.0, 2 * j["change_before"])
+    subprocess.run(["trash", str(work)], check=True)
+    return result
+
+
+def measure(list_path, out, window):
     began = time.monotonic()
     data = json.loads(list_path.read_text())
     folder = list_path.parent
@@ -192,7 +275,6 @@ def run(list_path, out, window):
                            capture_output=True, text=True, check=True).stdout.splitlines()
     vision = [json.loads(line) for line in lines if line.strip()]
     vision_seconds = time.monotonic() - seen
-    render_file.unlink()  # about 360 MB a pass, read once: run 6 left 6 GB of them on the media drive
     eyes = [openness(f) for f in vision]
     lips = [(f.get("face") or {}).get("lips") for f in vision]
 
@@ -315,7 +397,9 @@ def run(list_path, out, window):
                     panel_moves.append({"frame": at, "panel": row["file"], "source_frame": source_frame, "change": round(change, 1),
                                         "what": f"the panel's picture jumps at its frame {source_frame} (timeline frame {at}) while the "
                                                 f"highlight from frame {over[0]['record']} is still up: is it still on its target?"})
-    return {"faults": faults, "borderline": borderline, "cuts": cuts, "jump_candidates": jumps, "panel_moves": panel_moves,
+    looked = exports(render_file, out, data, faults, borderline, jumps)
+    return {"faults": faults, "borderline": borderline, "cuts": cuts, "jump_candidates": [j for j in jumps if not j.get("hidden")],
+            "hidden_cuts": [j for j in jumps if j.get("hidden")], "panel_moves": panel_moves, **looked,
             "frames_read": len(vision),
             "seconds": {"render": round(render_seconds, 1), "vision": round(vision_seconds, 1), "all": round(time.monotonic() - began, 1)}}
 

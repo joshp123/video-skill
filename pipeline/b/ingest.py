@@ -469,6 +469,7 @@ def work(session):
             target = video / "plan.header.json"
             state.need(f"{video / 'plan.json'} already exists, so the header went to {target}: merge its keys by hand")
         target.write_text(json.dumps(plan, indent=1, ensure_ascii=False) + "\n")
+        write_session_header(session, plan, date, target)
         return {"plan": str(target), "header": plan}
     plan = header()
     write_inventory(session, state, files, offset, padded, tone, profile)
@@ -727,17 +728,34 @@ def write_inventory(session, state, files, offset, padded, tone, profile):
 # ---------- a second video from an ingested session ----------
 
 HEADER_KEYS = ("look", "fps", "format", "multicam", "cameras", "sound", "transcript")
+SESSION_HEADER = "plan-header.json"  # the session's facts for any video's plan, paths relative to the session folder
+
+
+def write_session_header(session, header, date, source):
+    """SESSION/plan-header.json: HEADER's keys with its paths, relative to the folder holding SOURCE, made relative to the
+    session folder."""
+    move = lambda path: os.path.relpath((Path(source).parent / path).resolve(), session)
+    keep = {key: json.loads(json.dumps(header[key])) for key in HEADER_KEYS}
+    for camera in keep["cameras"].values():
+        camera["file"] = move(camera["file"])
+    keep["sound"]["lav"], keep["transcript"] = move(keep["sound"]["lav"]), move(keep["transcript"])
+    (session / SESSION_HEADER).write_text(json.dumps({"_about": f"The session's facts for any video's plan header (ingest.py "
+                                                     f"header --session). Paths are relative to this folder. Written "
+                                                     f"{datetime.date.today()} from {source}.", "date": date, **keep},
+                                                    indent=1, ensure_ascii=False) + "\n")
 
 
 def header_like(video, slug, like=None, session=None, date=None, look=None):
     """The plan header for another video from the same session: the header keys of LIKE (an earlier video's plan, which
     holds whatever the model corrected since ingest: the transcript copy with names fixed, a picture offset) or else the
-    header ingest wrote for SESSION, with its paths made relative to VIDEO and its own project name. Nothing editorial."""
+    session's own header, SESSION/plan-header.json (ingest writes it; paths relative to the session folder), with its
+    paths made relative to VIDEO and its own project name. Nothing editorial."""
     if like:
         source, folder = json.loads(Path(like).read_text()), Path(like).absolute().parent
+    elif (session / SESSION_HEADER).exists():
+        source, folder = json.loads((session / SESSION_HEADER).read_text()), session
     else:
-        step = json.loads((session / "ingest" / "state.json").read_text())["steps"]["plan header"]["result"]
-        source, folder = step["header"], Path(step["plan"]).parent
+        raise FileNotFoundError(f"{session / SESSION_HEADER} does not exist: give --like an earlier video's plan from this session")
     header = {key: json.loads(json.dumps(source[key])) for key in HEADER_KEYS}
     move = lambda path: os.path.relpath((folder / path).resolve(), video.absolute())
     for camera in header["cameras"].values():
@@ -748,7 +766,7 @@ def header_like(video, slug, like=None, session=None, date=None, look=None):
         feel = json.loads((REPO / "looks" / look / "look.json").read_text())["colour"]["feel"]
         for camera in header["cameras"].values():
             camera["grade"] = feel
-    date = date or source["resolve_project"][:10]
+    date = date or source.get("date") or source["resolve_project"][:10]
     plan = {"_about": f"Header written by pipeline/b/ingest.py header on {datetime.date.today()} from {like or session}; nothing editorial.",
             "resolve_project": f"{date} {slug}", **header}
     video.mkdir(parents=True, exist_ok=True)
@@ -797,7 +815,9 @@ def main():
     second = sub.add_parser("header", help="the plan header for another video from an ingested session")
     second.add_argument("--video", type=Path, required=True)
     second.add_argument("--slug", required=True)
-    second.add_argument("--like", type=Path, help="an earlier video's plan from the same session (default: ingest's header)")
+    second.add_argument("--like", type=Path, help="an earlier video's plan from the same session (default: the session's plan-header.json)")
+    second.add_argument("--save-for-session", action="store_true",
+                        help="with --like and --session: also save that plan's facts as the session's plan-header.json")
     second.add_argument("--session", type=Path)
     second.add_argument("--date")
     second.add_argument("--look")
@@ -807,6 +827,15 @@ def main():
     if args.command == "header":
         if not args.like and not args.session:
             sys.exit(json.dumps({"error": "give --like PLAN or --session SESSION"}))
+        if args.save_for_session:
+            if not (args.like and args.session):
+                sys.exit(json.dumps({"error": "--save-for-session needs --like PLAN and --session SESSION"}))
+            like = json.loads(args.like.read_text())
+            feel = json.loads((REPO / "looks" / like["look"] / "look.json").read_text())["colour"]["feel"]
+            for camera in like["cameras"].values():  # the session's start; a video's own grade is the colour stage's
+                camera["grade"] = feel
+                camera.pop("why", None)
+            write_session_header(args.session.absolute(), like, args.date or like["resolve_project"][:10], args.like.absolute())
         print(json.dumps(header_like(args.video, args.slug, args.like, args.session and args.session.absolute(), args.date, args.look), indent=1))
         return
     session = args.session.absolute()

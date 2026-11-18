@@ -64,7 +64,9 @@ WINDOW_S = 2.0  # each side of an edge with no pause: the words either side of i
 
 
 def aligned_words(lav, transcript, pieces, work, exact=False, around=()):
-    """words.py: {(transcript start, word): aligned row} and the doubtful rows. EXACT: on each piece's exact audio with
+    """words.py: {(transcript start, word): aligned row} and the doubtful rows; with EXACT, one such pair per piece, in the
+    pieces' order, because a word the transcript puts near a cut sits in both pieces' windows and is heard in at most one
+    (run 7: "log" scored 0.003 in the outgoing piece and 0.991 in the incoming one). EXACT: on each piece's exact audio with
     exactly its words (fillers included), which is what the viewer hears, so a word on the far side of a cut cannot pull
     a kept word off. AROUND: on a window round each of those times, with every transcript word in it, for the report."""
     if exact:
@@ -78,10 +80,14 @@ def aligned_words(lav, transcript, pieces, work, exact=False, around=()):
                            str(out)], capture_output=True, text=True, env=env)
     if done.returncode != 0:
         raise RuntimeError(f"words.py failed: {done.stderr.strip()[-2000:]}")
+    keyed = [({(w["transcript_start"], w["word"]): w for w in window["words"]},
+              {(w["transcript_start"], w["word"]): w for w in window["doubtful"]}) for window in json.loads(out.read_text())]
+    if exact:
+        return [f for f, _ in keyed], [d for _, d in keyed]
     found, doubtful = {}, {}
-    for window in json.loads(out.read_text()):
-        found.update({(w["transcript_start"], w["word"]): w for w in window["words"]})
-        doubtful.update({(w["transcript_start"], w["word"]): w for w in window["doubtful"]})
+    for f, d in keyed:
+        found.update(f)
+        doubtful.update(d)
     return found, doubtful
 
 
@@ -171,6 +177,67 @@ def resolve_anchor(anchor, pieces, fps, duration_frames=None):
     return round((piece["record_s"] + t - piece["start"]) * fps) + anchor.get("offset_frames", 0)
 
 
+def from_zero(check):
+    """The joins tool counts joins and pieces from 1; the plan, the edit list's audio rows and note.py count from 0.
+    Join k (from 0) lies between pieces k and k + 1, the same join note.py's {"join": k} rolls."""
+    check = json.loads(json.dumps(check))
+    for j in check.get("joins", []):
+        j["join"] -= 1
+        if "between" in j:
+            j["between"] = [b - 1 for b in j["between"]]
+    check["flagged"] = [f - 1 for f in check.get("flagged", [])]
+    return check
+
+
+def check_plan(plan, folder, pieces):
+    """Every word anchor and every file the plan names, checked before the audio models run (about 30 s), so a bad anchor
+    or a missing file is learnt in a second (run 7's pass 2). All problems are listed at once."""
+    problems = []
+    for what, path in ([(f"camera {k}", c["file"]) for k, c in plan["cameras"].items()]
+                       + [("sound.lav", plan["sound"]["lav"]), ("transcript", plan["transcript"])]):
+        if not (folder / path).exists():
+            problems.append(f"{what}: no file {path}")
+
+    def anchor_ok(anchor, where):
+        if not isinstance(anchor, dict) or anchor.get("end") or "frame" in anchor:
+            return
+        k = anchor.get("piece")
+        if not isinstance(k, int) or not 0 <= k < len(pieces):
+            problems.append(f"{where}: piece {k} does not exist (pieces are numbered from 0 to {len(pieces) - 1})")
+            return
+        tokens, want = pieces[k]["tokens"], [norm(t) for t in str(anchor.get("word", "")).split()]
+        hits = [i for i in range(len(tokens) - len(want) + 1) if want and [norm(tokens[i + j]["word"]) for j in range(len(want))] == want]
+        if len(hits) <= anchor.get("n", 0):
+            said = " ".join(w["word"] for w in tokens)
+            problems.append(f"{where}: {anchor.get('word')!r} occurs {len(hits)} times in piece {k}, needed occurrence "
+                            f"n={anchor.get('n', 0)} (from 0); piece {k} says: {said[:160]}")
+    for k, p in enumerate(plan["pieces"]):
+        for i, shot in enumerate(p.get("shots", [])):
+            if "at" in shot:
+                anchor_ok({"piece": k, "word": shot["at"], "n": shot.get("n", 0)}, f"piece {k} shot {i}")
+            if shot.get("camera") not in plan["cameras"]:
+                problems.append(f"piece {k} shot {i}: camera {shot.get('camera')!r} is not in cameras")
+    for kind in ("titles", "panels"):
+        for i, row in enumerate(plan.get(kind, [])):
+            for key in ("at", "until"):
+                if key in row:
+                    anchor_ok(row[key], f"{kind}[{i}].{key}")
+    for i, row in enumerate(plan.get("panels", [])):
+        path = folder / row["file"]
+        if not path.exists():
+            problems.append(f"panels[{i}]: no file {row['file']}")
+            continue
+        probe = json.loads(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=nb_frames",
+                                           "-of", "json", str(path)], capture_output=True, text=True).stdout or "{}")
+        frames = int((probe.get("streams") or [{}])[0].get("nb_frames", 0) or 0)  # from the header: no decode
+        if frames and not 0 <= row["source_in"] < frames:
+            problems.append(f"panels[{i}]: source_in {row['source_in']} is outside {row['file']} (frames 0 to {frames - 1})")
+        elif frames and "frames" in row and row["source_in"] + row["frames"] > frames:
+            problems.append(f"panels[{i}]: source_in {row['source_in']} + frames {row['frames']} runs past {row['file']}'s {frames} frames")
+    if problems:
+        raise ValueError("the plan has problems, found before any audio was measured: " + "; ".join(problems))
+
+
 def highlight_spans(titles, panels):
     """A highlight (a title whose template is a highlight) drawn round a panel's pixels must start and end inside one
     panel's span, or it outlines whatever comes before or after: the next panel, or his face (run 6, frames 1350,
@@ -233,18 +300,19 @@ def assemble(plan_path):
         kept = [w for _, w in tokens[first:last + size]]
         heard = everything[tokens[first][0]:tokens[last + size - 1][0] + 1]
         pieces.append(dict(p, approx_start=kept[0]["start"], approx_end=kept[-1]["end"], tokens=kept, heard=heard))
+    check_plan(plan, folder, pieces)
     work = folder / "build" / "assemble"
     work.mkdir(parents=True, exist_ok=True)
     placed = joins_place(plan, folder, pieces, lav, transcript, work)
-    report["joins"] = placed["check"]
-    report["edges"] = [{"piece": exact["piece"], "side": side, **exact[side]} for exact in placed["pieces"]
+    report["joins"] = from_zero(placed["check"])
+    report["edges"] = [{"piece": exact["piece"] - 1, "side": side, **exact[side]} for exact in placed["pieces"]
                        for side in ("start_edge", "end_edge") if exact[side].get("status") not in ("pause", "given")]
     if report["edges"]:
         context, _ = aligned_words(lav, transcript, pieces, work, around=[e["at"] for e in report["edges"]])
         ordered = sorted(context.values(), key=lambda w: w["start"])
         for e in report["edges"]:
             e["aligned_words_around"] = [(w["word"], w["start"], w["end"]) for w in ordered if abs(w["start"] - e["at"]) < 1.0]
-            piece = pieces[e["piece"] - 1]
+            piece = pieces[e["piece"]]
             edge_word = piece["tokens"][-1 if e["side"] == "end_edge" else 0]
             k = next((i for i, w in enumerate(ordered) if (w["transcript_start"], w["word"]) == (edge_word["start"], edge_word["word"])), None)
             j = None if k is None else (k + 1 if e["side"] == "end_edge" else k - 1)
@@ -258,7 +326,7 @@ def assemble(plan_path):
                 e["why_moved"] = f"the cut was inside a word; moved to the middle of the {1000 * (gap[1] - gap[0]):.0f} ms between the aligned words"
     if any("moved_to" in e for e in report["edges"]):  # place again, the moved cuts given as start_at/end_at
         placed = joins_place(plan, folder, pieces, lav, transcript, work)
-        report["joins"] = placed["check"]
+        report["joins"] = from_zero(placed["check"])
     for k, (p, exact) in enumerate(zip(pieces, placed["pieces"])):
         p.update(start=exact["start"], end=exact["end"])
         # every word heard in the piece's audio, not only the chosen ones: joins place can reach past them for a pause
@@ -266,14 +334,17 @@ def assemble(plan_path):
         inside = [w for w in everything if p["start"] - 0.02 <= w["start"] and w["end"] <= p["end"] + 0.02]
         p["heard"] = sorted({(w["start"], w["word"]): w for w in inside + p["tokens"]}.values(), key=lambda w: w["start"])
         p["stray"] = [w for w in p["heard"] if (w["start"], w["word"]) not in chosen]
-    found, doubtful = aligned_words(lav, transcript, pieces, work, exact=True)
+    found_by_piece, doubtful_by_piece = aligned_words(lav, transcript, pieces, work, exact=True)
     for k, p in enumerate(pieces):
+        found = found_by_piece[k]
         # The transcript runs early in connected speech, so a word after the piece's last chosen word can look inside it
         # when it is not: such a word counts only if the confidence aligner hears it there. A word before the first chosen
         # word, and a filler ([UM]), always count (run 5's "Yeah." scored 0.15 and was there).
         first_chosen = p["tokens"][0]["transcript_start"] if "transcript_start" in p["tokens"][0] else p["tokens"][0]["start"]
         heard_stray = [w for w in p["stray"] if w["word"].startswith("[") or w["start"] < first_chosen
                        or found.get((w["start"], w["word"]), {}).get("score", 0) >= STRAY_HEARD_SCORE]
+        heard_stray = [w for w in heard_stray  # aligned outside the piece's audio: not in what the viewer hears
+                       if p["start"] - 0.02 <= found.get((w["start"], w["word"]), w)["start"] <= p["end"] + 0.02]
         if heard_stray:
             report["unchosen_words"].append({"piece": k, "words": " ".join(w["word"] for w in heard_stray),
                                              "at_s": [round(found.get((w["start"], w["word"]), w)["start"], 2) for w in heard_stray],
@@ -281,6 +352,7 @@ def assemble(plan_path):
                                                     "caption them) or set the edge (start_s, end_s) to leave them out"})
     report["doubtful_words"] = []
     for k, p in enumerate(pieces):
+        found, doubtful = found_by_piece[k], doubtful_by_piece[k]
         keys = [(w["start"], w["word"]) for w in p["tokens"]]
         report["doubtful_words"] += [{"piece": k, **doubtful[key]} for key in keys if key in doubtful]
         missing = [w["word"] for w, key in zip(p["tokens"], keys) if key not in found]
@@ -292,7 +364,7 @@ def assemble(plan_path):
     for p, exact in zip(pieces, placed["pieces"]):
         p.update(record_s=record)
         record += exact["end"] - exact["start"]
-        report["pieces"].append({"piece": exact["piece"], "record_s": round(p["record_s"], 4), "words": exact.get("words")})
+        report["pieces"].append({"piece": exact["piece"] - 1, "record_s": round(p["record_s"], 4), "words": exact.get("words")})
     duration_frames = math.ceil((record + plan.get("tail_s", 0.0)) * fps)
     crossfade_ms = plan.get("crossfade_ms", 40)
     fade_in, fade_out = plan.get("fade_ms", [10, 20])

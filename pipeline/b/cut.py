@@ -10,6 +10,7 @@ Runs, in order, stopping at the first that fails: assemble.py (the edit list bes
 (timeline NAME), finish.py ("NAME finish"), render.py (versions-check/NAME.mp4 in the plan's folder, captions burnt in),
 render.py --preset sound --loudness off (the finish timeline's sound as mixed, before loudness normalisation, about
 3 s), `joins check` on that sound at every join, and qc.py (every class but joins, which the join check replaces).
+Every piece and join number counts from 0, as in the plan and note.py (join k lies between pieces k and k + 1).
 Prints one summary: each stage's seconds; every join's score on the lav and in the mix, side by side (the mix check is
 given the lav and the lav check's calibration_span, so both use one threshold); and what needs the model:
 edges with no pause, joins flagged or borderline, speech level steps over 6 dB, a caption the template would page,
@@ -108,7 +109,9 @@ def main():
               "(a small change reads as a jump cut)" for j in checked_faces["jump_candidates"]]
     needs += [f"look before placing: {m['what']}" for m in checked_faces.get("panel_moves", [])]
     summary["preflight"] = {"faults": len(checked_faces["faults"]), "borderline": len(checked_faces["borderline"]),
-                            "jump_candidates": checked_faces["jump_candidates"], "output": str(work / "preflight.json")}
+                            "jump_candidates": checked_faces["jump_candidates"], "output": str(work / "preflight.json"),
+                            "flagged_frames": checked_faces.get("flagged_frames", []),
+                            "layout_stills": [l["still"] for l in checked_faces.get("layouts", [])]}
     if checked_faces["faults"] and not args.render_anyway:
         needs.append("stopped before place and render: fix the faults above in the plan, or run again with --render-anyway")
         finish(1)
@@ -149,10 +152,10 @@ def main():
         checked = json.loads((work / "joins-check.json").read_text())
         summary["joins"] = {"model": checked.get("model", {}).get("sha256"), "threshold_lav": lav_check["threshold"],
                             "threshold_mixed": checked["threshold"], "calibration_span": report["calibration_span"],
-                            "each": [{"join": r["join"], "at_s": r["at"], "lav": l["score"], "mixed": r["score"],
+                            "each": [{"join": l["join"], "at_s": r["at"], "lav": l["score"], "mixed": r["score"],
                                       "flag_lav": l["flag"], "flag_mixed": r["flag"], "level_step_db": r.get("level_step_db")}
                                      for l, r in zip(lav_check["joins"], checked["joins"])]}
-        needs += [f"mixed join {r['join']} at {r['at']} s {'borderline' if r.get('borderline') else 'flagged'} "
+        needs += [f"mixed join {l['join']} at {r['at']} s {'borderline' if r.get('borderline') else 'flagged'} "
                   f"(score {r['score']}; on the lav {l['score']})"
                   + ("" if l["flag"] else ": the lav check passes it, so the timeline's mix (fades, crossfade, room tone, "
                      "gain) changed it; listen, re-place it, or keep it with your reason")
