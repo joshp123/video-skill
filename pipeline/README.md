@@ -179,9 +179,11 @@ Vision instrument (about 11 s). Then:
   join only shifts that keep the outgoing picture over silence; or "no clean cut within the window", which means the
   edge, the take or the pause must change.
 - **jump candidates**: every cut that keeps the camera, with its framing's scale change (the gate does not measure jump
-  cuts; run 5's 10 to 15% changes read as jump cuts). A cut where the picture does not change, because an opaque panel
-  covers it or the camera is panned off frame, is listed under **hidden_cuts** instead (run 7's two; under 0.1 grey
-  levels of change at the cut, against 56 to 78 at its visible ones).
+  cuts; run 5's 10 to 15% changes read as jump cuts). A cut where the picture does not change is listed under **hidden_cuts**
+  instead: an opaque panel covers what moved, the camera is panned off frame, or a panel covers his face and his still
+  body shows the same framing either side. Mean change at the cut under 2 grey levels, or under twice the frame-to-frame
+  change just before it: run 7's two read 0.04 and 0.09, the rebuild plan's two 0.57 and 1.43 (looked at: nothing
+  visible moves), against 4.9 to 78 at visible jump cuts.
 - **panel moves**: a screen-recording panel whose own picture jumps (a scroll, a new screen) while a highlight drawn
   before the jump is still up.
 - **what to look at**: before the picture render is deleted (about 360 MB a pass), every flagged frame is exported to

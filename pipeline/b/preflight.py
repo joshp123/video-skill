@@ -34,7 +34,8 @@ sit on something else; the gate does not measure it). Neither stops a pass.
 Before the picture render is deleted (about 360 MB a pass), it exports at half size every flagged frame (OUT/flagged/)
 and one still of each distinct layout, by camera, framing and the panels over it (OUT/layout/; no captions or titles,
 which this render does not hold), and sets aside as hidden_cuts the same-camera cuts where the picture does not change
-(under an opaque panel or a camera panned off frame), which are no jump cuts. About 8 s.
+(an opaque panel over what moved, a camera panned off frame, a still body under a panel over his face), which are no
+jump cuts. About 8 s.
 Prints {faults, borderline, cuts, jump_candidates, hidden_cuts, panel_moves, flagged_frames, layouts, seconds}. Exit 1 when there is any fault. What it
 cannot see: titles over his face, and the captions' real rows (it uses the look's band constants, as the gate does).
 Tested on codex-switch run 5's builds 10, 12 and 18: every eye, lip and sync fault row their gates raised on full
