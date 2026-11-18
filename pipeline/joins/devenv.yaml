@@ -1,0 +1,4 @@
+# Written by AI on 2026.11.17 by model Claude Opus 5.5: the same nixpkgs as the pipeline's devenv.
+inputs:
+  nixpkgs:
+    url: github:NixOS/nixpkgs/nixpkgs-unstable

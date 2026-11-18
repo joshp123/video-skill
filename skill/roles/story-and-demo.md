@@ -1,4 +1,4 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5 as a brief to the role: its outcome, finding a video in a ramble, the page Josh decides from, the proof on screen, and the hand-over. The dated evidence behind it is in history.md. -->
+<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5 as a brief to the role: its outcome, finding a video in a ramble, the page Josh decides from, the proof on screen, and the hand-over. Updated by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: one agent plays the role, the length comes from assemble.py, the cut waits for his choice. The dated evidence behind it is in history.md. -->
 
 # Story and demo
 
@@ -6,7 +6,7 @@
 
 One page that shows Josh the video his recording contains, line by line in the order a viewer hears it, in his words only, with the real content the viewer sees at each line and a measured length, so he can decide what is in at one sitting. And the content itself: the tool's real output, captured so it reads on a phone, ready for the editor and the motion designer.
 
-The story and the proof are found together, because the page must name real output: before anyone writes a line, someone has used the tool, read its README, run it on real data and found what would surprise a stranger. This role comes first after ingest because everything downstream inherits its choices. A page he cannot read costs a round; a story that does not hold costs every round after it.
+The story and the proof are found together, because the page must name real output: before anyone writes a line, someone has used the tool, read its README, run it on real data and found what would surprise a stranger. This stage comes first after ingest because everything downstream inherits its choices. A page he cannot read costs a round; a story that does not hold costs every round after it. And the script is the one creative decision models are not yet good enough to make for him: "the agents made bad scripts before ... It needs a human". So the page is built to make his decision quick, and the cut he watches waits for it.
 
 The writing line is his: "do NOT let the AI do any of your writing (it is bad at it)", and the AI "can give me ideas but it shouldn't write copy". You find, arrange and propose; you never write words that go out under his name, and you never weaken his (SKILL.md, "What is his, and what is yours").
 
@@ -31,11 +31,11 @@ Expect false starts, asides to the editor ("you can cut here"), the same point m
 - **Arrange by the viewer's questions:** what is this, why should I care, does it really work, how do I get it. Nothing may refer to something the viewer has not yet heard or seen.
 - **Join in his voice.** Prefer one long clean run to a line built from fragments, usually his last complete take. At every join, read the words either side together, as a viewer hears them.
 - **Repair a broken join from the raw take first.** When two lines placed side by side do not follow, he has often said the link himself a few seconds further on in the same passage. Only after that search, propose a reorder, words on screen or a re-record.
-- **Measure the length from placed lines,** never by adding times by hand: write the lines as audio pieces in a draft edit list, place it, and read the length back. A hand total mixes start and end times, and Josh notices at once.
+- **Measure the length from the cut edges,** never by adding times by hand: write the lines as pieces of a draft `plan.json` and run `pipeline/b/assemble.py` on it, which cuts every edge in its measured pause and reports the length (`duration_s`) without Resolve. Each row's start time is its piece's `record_s` in the same report. A hand total mixes start and end times, and Josh notices at once. Its report also names every edge with no pause next to it: a line that cannot be cut cleanly is better found now than after he has chosen it.
 
 When he read from a script, the story is his. For each line choose the take: a run that carries two or three lines cleanly over the best attempt at each stitched together, his eyes on the lens for front-camera lines, his spoken words over the script's.
 
-A gap (a point he never made clearly, an ask he never said) is found now, while the cameras may still be set up. It reaches him through the director as the point and his own nearest words, never as a line for him to read.
+A gap (a point he never made clearly, an ask he never said) is found now, while the cameras may still be set up. It reaches him on the page as the point and his own nearest words, never as a line for him to read.
 
 ## The page
 
@@ -44,8 +44,8 @@ His standard: "do you get how the script needs to read to a fucking human? this 
 ```markdown
 # <video>: script, version N
 
-72 s, measured from the placed lines. <What changed since the last page, or "First version.">
-Cut now: <the version the editor cuts, in one line>
+72 s, measured from the cut edges. <What changed since the last page, or "First version.">
+I recommend: <the version to cut, in one line>
 
 Decisions for you:
 1. <a question only he can answer, answerable in a word, with your recommendation>
@@ -71,6 +71,7 @@ Weak: prose with bracketed screen notes, options described in words, and source 
 - **An option that changes the story is a complete second page,** never a list of moves.
 - **Promise only what the pipeline can draw today.**
 - **Before he sees it,** read it aloud as a stranger would hear it. Then have a fresh model, given only the page, say what the video is about and where it lost the thread. Fix the writing of the page, never his claims.
+- **Send it the moment it is right,** not when everything else is ready: while he reads it, the demo content, the colour match and the look on this recording's frames carry on (SKILL.md, "The stages").
 
 ## His words and his notes on the page
 
@@ -99,7 +100,7 @@ Breadth and depth together: Josh asked to "showcase the full breadth/depth of th
 Make the run match the video:
 
 - **The version a viewer installs.** Check the copy on the Mac against the release: a development checkout can be ahead of it.
-- **Output that depends on today** runs as of the recording day. When the tool cannot reproduce that state, tell the director, show the most authentic real output you can, and leave his claim as he made it.
+- **Output that depends on today** runs as of the recording day. When the tool cannot reproduce that state, say so on the page, show the most authentic real output you can, and leave his claim as he made it.
 - **A narrower real command** when it shows his point on one screen.
 - **A few real lines held still and large** when he talks about one line of a long output.
 - **A tool with no help** is read in its source before you run a subcommand, because `--help` on a subcommand can run it.
@@ -108,12 +109,12 @@ Make the run match the video:
 
 **Real pixels in a vertical frame:**
 
-- White captions dissolve over a light app window, so say which content is light where the caption band falls; the editor then puts it in a panel above him.
+- White captions dissolve over a light app window, so say which content is light where the caption band falls; the cut then puts it in a panel above him.
 - What he names sits above the caption band and left of the platforms' button column (the look's `fusion.safeArea`).
 - Check both margins of a small window for private desktop detail over the whole time it is used.
 
-A bug you find in the tool goes to the director as a separate task; the video shows the tool as it is.
+A bug you find in the tool is noted for Josh as a separate matter; the video shows the tool as it is.
 
 ## Hand over
 
-To the director, the page. To the editor and the motion designer, `graphics/content/`: each piece of content, and `content.md` saying for each how it was made (command, version, date run as, column count), which line it proves, the exact text or regions available to light, what it shows of his life, and every row hidden and why. Write `scratch/story-and-demo/state.md` as you go (SKILL.md, "The roles, and why in this order").
+The page, as `versions/script-vN.md` with its line in `versions/README.md`. For the cut and the graphics, `graphics/content/`: each piece of content, and `content.md` saying for each how it was made (command, version, date run as, column count), which line it proves, the exact text or regions available to light, what it shows of his life, and every row hidden and why. Every slot for words on screen goes into `words.md` (SKILL.md, "What is his, and what is yours"): his own nearest lines and your proposals under `Proposed:`, his settled words under `Final:` once he settles them. When he decides, his decision is the script: keep his reply beside the page, and change nothing on it he did not ask for.

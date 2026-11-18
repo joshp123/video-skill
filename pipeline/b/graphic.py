@@ -5,10 +5,7 @@ Written by AI on 2026-10-25 by Claude Opus 5.5. Rewritten on 2026-10-26 by Claud
 stream H's proven route: a graphic is a title item on V4 with the template's composition and its inputs set on the
 item; there is no timeline per graphic.
 
-  graphic.py EDIT_LIST TITLE_INDEX --over TIMELINE --out PNG [--frame N]
-      Look at one `titles` row of the list over a built timeline: a scratch duplicate of TIMELINE gets the title on a
-      track of its own above the others, one frame is rendered (the title's middle unless --frame, in timeline frames),
-      and the duplicate is deleted. Prints the frame's path as JSON.
+A library for place.py and note.py; it has no command of its own.
 
 A title row is {template, inputs, record, frames}. `template` names pipeline/b/templates/<look>/<template>.setting; each
 input is set on the template's published control of that name. A text input whose template control is a character
@@ -16,13 +13,8 @@ style (the title's Title) takes [[ ]] around the words the look highlights (the 
 and a newline where a line must break; Text+ wraps the rest. Points are [x, y] in Fusion's units (0 to 1, y up); a
 photo path is relative to the edit list. Nothing here lays anything out: the template and Text+ do.
 
-Placing (place_titles): `InsertFusionTitleIntoTimeline` inserts at the playhead between the marks, as a ripple insert
-on every unlocked track, on the track of the clip appended last. So every other track is locked, one frame is
-appended on the titles' track after the last title, the titles are inserted in record order, and the frame is
-deleted. The titles' track must hold nothing else.
+Placing (place_titles): each title is inserted past the timeline's end and moved onto its track (17 Nov, 21.2).
 """
-import argparse
-import json
 import os
 import re
 import shutil
@@ -34,7 +26,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.append("/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/Modules")
 sys.path.insert(0, str(HERE))
 STYLE_ENABLED = 2000  # Fusion's character-style property for "shading element on", indexed by element - 1
-STAGING = HERE.parents[1] / ".cache/pipeline-b/graphic"
+import session  # noqa: E402
+STAGING = session.CACHE / "pipeline-b/graphic"
 FUSION_OWN_CONTROLS = {"Comments", "CommentsNest", "HideInputs"}  # on every tool, macros included; never a template's input
 
 
@@ -155,91 +148,43 @@ def fusion_tool_name(template):
     return template.replace(" ", "")
 
 
+def timecode(frame, fps):
+    """A non-drop-frame timecode for an absolute frame."""
+    seconds, frames = divmod(frame, fps)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours % 24:02}:{minutes:02}:{seconds:02}:{frames:02}"
+
+
 def place_titles(resolve, project, timeline, track, titles, templates, base):
-    """Insert every title row on video TRACK (empty) of TIMELINE, the current timeline, with its inputs set."""
-    import frame as frame_route
-    pool, start, fps = project.GetMediaPool(), timeline.GetStartFrame(), float(timeline.GetSetting("timelineFrameRate"))
+    """Insert every title row on video TRACK (empty) of TIMELINE, the current timeline, with its inputs set.
+    `InsertFusionTitleIntoTimeline` inserts at the playhead between the marks, as a ripple insert; at the timeline's end
+    there is nothing to ripple. So each title is inserted past the end, exactly its length (the marks), and moved onto
+    TRACK at its record frame with SetPosition (tested 17 Nov on 21.2: exact lengths, nothing else moved)."""
+    start, fps = timeline.GetStartFrame(), float(timeline.GetSettings()["timelineFrameRate"])
     while timeline.GetTrackCount("video") < track:
         timeline.AddTrack("video")
     if timeline.GetItemListInTrack("video", track):
         raise ValueError(f"V{track} must be empty for the titles")
-    others = [(kind, index) for kind in ("video", "audio", "subtitle") for index in range(1, timeline.GetTrackCount(kind) + 1)
-              if (kind, index) != ("video", track)]
-    holder_media = next(item.GetMediaPoolItem() for index in range(1, track)
-                        for item in timeline.GetItemListInTrack("video", index) or [] if item.GetMediaPoolItem())
-    end = max(row["record"] + row["frames"] for row in titles)
     resolve.OpenPage("edit")
-    for kind, index in others:
-        if not timeline.SetTrackLock(kind, index, True):
-            raise RuntimeError(f"Could not lock {kind} track {index}")
     placed = []
-    try:
-        holder = (pool.AppendToTimeline([{"mediaPoolItem": holder_media, "startFrame": 0, "endFrame": 1, "mediaType": 1,
-                                          "trackIndex": track, "recordFrame": start + end + 1}]) or [None])[0]
-        if holder is None:
-            raise RuntimeError("Could not append the frame that takes the titles to their track")
-        for row in sorted(titles, key=lambda row: row["record"]):
-            where = f"title at {row['record']}"
-            if not timeline.SetMarkInOut(row["record"], row["record"] + row["frames"] - 1) or not timeline.SetCurrentTimecode(
-                    frame_route.timecode(start + row["record"], round(fps), False)):
-                raise RuntimeError(f"Could not set the marks for the {where}")
-            item = timeline.InsertFusionTitleIntoTimeline("Text+")
-            if (item is None or item.GetTrackTypeAndIndex() != ["video", track] or item.GetStart() - start != row["record"]
-                    or item.GetDuration() != row["frames"]):
-                raise RuntimeError(f"InsertFusionTitleIntoTimeline did not place the {where} on V{track}")
-            template = templates / f"{row['template']}.setting"
-            comp = item.ImportFusionComp(str(template)) if template.is_file() else None
-            if comp is None or item.GetFusionCompCount() != 1:
-                raise RuntimeError(f"Could not load {template} as the {where}'s only composition")
-            apply_inputs(comp, row["inputs"], row["frames"], base)
-            placed.append(item)
+    for row in sorted(titles, key=lambda row: row["record"]):
+        where = f"title at {row['record']}"
+        end = timeline.GetEndFrame()
+        if (not timeline.SetMarkInOut(end - start, end - start + row["frames"] - 1)
+                or not timeline.SetCurrentTimecode(timecode(end, round(fps)))):
+            raise RuntimeError(f"Could not set the marks for the {where}")
+        item = timeline.InsertFusionTitleIntoTimeline("Text+")
         timeline.ClearMarkInOut("all")
-        if not timeline.DeleteClips([holder], False):
-            raise RuntimeError("Could not delete the frame that took the titles to their track")
-    finally:
-        for kind, index in others:
-            timeline.SetTrackLock(kind, index, False)
+        if item is None or item.GetDuration() != row["frames"]:
+            raise RuntimeError(f"InsertFusionTitleIntoTimeline did not make the {where} {row['frames']} frames long")
+        if (not item.SetPosition({"trackIndex": track, "startFrame": start + row["record"]})
+                or item.GetTrackTypeAndIndex() != ["video", track] or item.GetStart() - start != row["record"]):
+            raise RuntimeError(f"Could not move the {where} onto V{track}")
+        template = templates / f"{row['template']}.setting"
+        comp = item.ImportFusionComp(str(template)) if template.is_file() else None
+        if comp is None or item.GetFusionCompCount() != 1:
+            raise RuntimeError(f"Could not load {template} as the {where}'s only composition")
+        apply_inputs(comp, row["inputs"], row["frames"], base)
+        placed.append(item)
     return placed
-
-
-def look_at(edit_list, index, over, out, frame=None):
-    import DaVinciResolveScript
-    import frame as frame_route
-    resolve = DaVinciResolveScript.scriptapp("Resolve")
-    project = resolve.GetProjectManager().GetCurrentProject()
-    data = json.loads(edit_list.read_text())
-    row = data["titles"][index]
-    timelines = {project.GetTimelineByIndex(i).GetName(): project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)}
-    if over not in timelines:
-        raise ValueError(f"No timeline {over!r}")
-    scratch_name = f"{over} graphic check"
-    if scratch_name in timelines:
-        raise FileExistsError(f"A timeline is already named {scratch_name!r}")
-    scratch = timelines[over].DuplicateTimeline(scratch_name)
-    try:
-        project.SetCurrentTimeline(scratch)
-        track = scratch.GetTrackCount("video") + 1
-        scratch.AddTrack("video")
-        place_titles(resolve, project, scratch, track, [row], HERE / "templates" / data["look"], edit_list.parent)
-        looked = frame_route.export_frame(scratch_name, row["record"] + row["frames"] // 2 if frame is None else frame, out)
-    finally:
-        project.GetMediaPool().DeleteTimelines([scratch])
-    return {"frame": looked["output"], "frame_number": looked["frame"], "route": looked["route"]}
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("edit_list", type=Path)
-    parser.add_argument("title_index", type=int)
-    parser.add_argument("--over", required=True)
-    parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--frame", type=int)
-    args = parser.parse_args()
-    exit_code = 0
-    try:
-        print(json.dumps(look_at(args.edit_list.resolve(), args.title_index, args.over, args.out.absolute(), args.frame), indent=1))
-    except Exception as error:
-        print(json.dumps({"error": f"{type(error).__name__}: {error}"}))
-        exit_code = 1
-    sys.stdout.flush()
-    os._exit(exit_code)

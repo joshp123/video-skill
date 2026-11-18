@@ -1,0 +1,143 @@
+"""From the plan to a checked render in one call: assemble, place, finish, render, join check, gate.
+
+Written by AI on 2026-11-17 by Claude Opus 5.5, for the rebuild.
+
+cut.py PLAN.json --timeline NAME [--loudness PRESET] [--preset phone]
+
+Runs, in order, stopping at the first that fails: assemble.py (the edit list beside the plan, replaced), place.py
+(timeline NAME), finish.py ("NAME finish"), render.py (versions-check/NAME.mp4 in the plan's folder, captions burnt in),
+`joins check` on the render's sound at every join, and qc.py (every class but joins, which the join check replaces).
+Prints one summary: each stage's seconds; every join's score on the lav and in the render, side by side (the render
+check is given the lav and the lav check's calibration_span, so both use one threshold); and what needs the model:
+edges with no pause, joins flagged or borderline, speech level steps over 6 dB, a caption the template would page,
+doubtful word times, place or finish differences, the gate's fault rows (report and evidence under build/qc/NAME/). Every stage's own output is in
+build/cut/NAME/. Exit 0 only when no stage failed and no row needs the model.
+"""
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+JOINS = HERE.parent / "joins" / "joins"
+LEVEL_STEP_WORTH_A_LOOK_DB = 6  # joins/README.md: ordinary speech steps 3 to 5 dB between sentences
+QC_CHECKS = ["eyes", "flashes", "sync", "loudness", "captions", "highlights", "caption-edges", "colour", "text"]
+
+
+def numpy_python():
+    """The pipeline devenv's Python (numpy), which qc.py needs."""
+    found = subprocess.run(["devenv", "shell", "--", "python3", "-c", "import sys, numpy; print(sys.executable)"],
+                           cwd=HERE.parent, capture_output=True, text=True)
+    return found.stdout.strip().splitlines()[-1]
+
+
+def stage(name, command, out, summary):
+    began = time.monotonic()
+    done = subprocess.run(command, capture_output=True, text=True, cwd=HERE, env={**os.environ, "PYTHONUTF8": "1"})
+    out.write_text(done.stdout + ("\n--- stderr ---\n" + done.stderr if done.stderr.strip() else ""))
+    summary["stages"].append({"stage": name, "exit": done.returncode, "seconds": round(time.monotonic() - began, 1), "output": str(out)})
+    return done
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("plan", type=Path)
+    parser.add_argument("--timeline", required=True)
+    parser.add_argument("--loudness")
+    parser.add_argument("--preset", default="phone")
+    args = parser.parse_args()
+    plan = args.plan.resolve()
+    folder = plan.parent
+    edit_list = folder / "edit-list.json"
+    work = folder / "build" / "cut" / args.timeline
+    work.mkdir(parents=True, exist_ok=True)
+    render_file = folder / "versions-check" / f"{args.timeline}.mp4"
+    py = ["/usr/bin/python3", "-B"]
+    summary, needs = {"timeline": args.timeline, "stages": []}, []
+    began = time.monotonic()
+
+    def finish(status):
+        summary["seconds"] = round(time.monotonic() - began, 1)
+        summary["needs_the_model"] = needs
+        print(json.dumps(summary, indent=1, ensure_ascii=False))
+        sys.exit(status)
+
+    done = stage("assemble", py + ["assemble.py", str(plan), "--out", str(edit_list), "--force"], work / "assemble.json", summary)
+    if done.returncode:
+        needs.append(json.loads(done.stdout or "{}").get("error", done.stderr[-500:]))
+        finish(1)
+    report = json.loads(done.stdout)
+    needs += [f"no pause at piece {e['piece']} {e['side']}: " + (f"cut moved from {e['at']} to {e['moved_to']} s ({e['why_moved']})"
+              if "moved_to" in e else f"cut at {e['at']} s; nearest pauses {e.get('nearest_pauses')}") for e in report["edges"]]
+    lav_check = report["joins"]
+    needs += [f"join {j['join']} flagged on the lav (score {j['score']} over {lav_check['threshold']}; likely {j['likely']}, a hint)"
+              for j in lav_check["joins"] if j["flag"]]
+    needs += [f"join {j['join']} borderline on the lav, treat it as flagged (score {j['score']}, threshold {lav_check['threshold']})"
+              for j in lav_check["joins"] if j.get("borderline") and not j["flag"]]
+    needs += [f"join {j['join']}: speech level steps {j['level_step_db']} dB (a gain match is your call)"
+              for j in lav_check["joins"] if abs(j.get("level_step_db", 0)) > LEVEL_STEP_WORTH_A_LOOK_DB]
+    needs += [f"caption words: {c}" for c in report["captions"] if "is in no caption" in c]
+    needs += [f"doubtful word time: piece {d.get('piece')} {d}" for d in report.get("doubtful_words", [])]
+    if report.get("caption_refusals"):
+        needs += [f"caption: {c}" for c in report["caption_refusals"]]
+        finish(1)
+    for name, command in (("place", py + ["place.py", str(edit_list), "--timeline", args.timeline]),
+                          ("finish", py + ["finish.py", str(edit_list), "--timeline", args.timeline])):
+        done = stage(name, command, work / f"{name}.json", summary)
+        result = json.loads(done.stdout or "{}")
+        if done.returncode:
+            needs.append(f"{name}: {result.get('error') or result.get('differences', [])[:5]}")
+            finish(1)
+    render = py + ["render.py", str(edit_list), "--timeline", f"{args.timeline} finish", "--out", str(render_file), "--preset", args.preset]
+    if args.loudness:
+        render += ["--loudness", args.loudness]
+    if render_file.exists():
+        subprocess.run(["trash", str(render_file)], check=True)
+    done = stage("render", render, work / "render.json", summary)
+    if done.returncode:
+        needs.append(f"render: {json.loads(done.stdout or '{}').get('error')}")
+        finish(1)
+    joins_at = [round(row["record_s"], 4) for row in json.loads(edit_list.read_text())["audio"][1:]]
+    (work / "join-times.json").write_text(json.dumps(joins_at))
+    lav = (folder / json.loads(edit_list.read_text())["sound"]["lav"]).resolve()
+    if not report.get("calibration_span"):
+        needs.append("joins place reported no calibration_span, so the render check would use another threshold")
+        finish(1)
+    done = stage("joins check", [str(JOINS), "check", "--audio", str(render_file), "--joins", str(work / "join-times.json"),
+                                 "--lav", str(lav), "--span", report["calibration_span"], "--out", str(work / "joins-check.json")],
+                 work / "joins-check.log", summary)
+    if done.returncode == 0:
+        checked = json.loads((work / "joins-check.json").read_text())
+        summary["joins"] = {"model": checked.get("model", {}).get("sha256"), "threshold_lav": lav_check["threshold"],
+                            "threshold_render": checked["threshold"], "calibration_span": report["calibration_span"],
+                            "each": [{"join": r["join"], "at_render_s": r["at"], "lav": l["score"], "render": r["score"],
+                                      "flag_lav": l["flag"], "flag_render": r["flag"], "level_step_db": r.get("level_step_db")}
+                                     for l, r in zip(lav_check["joins"], checked["joins"])]}
+        needs += [f"rendered join {r['join']} at {r['at']} s {'borderline' if r.get('borderline') else 'flagged'} "
+                  f"(score {r['score']}; on the lav {l['score']})"
+                  + ("" if l["flag"] else ": the lav check passes it, so the render's loudness normalisation moved it "
+                     "(pipeline/README.md, render.py); re-place it, or keep it with your reason")
+                  for l, r in zip(lav_check["joins"], checked["joins"]) if r["flag"] or r.get("borderline")]
+    else:
+        needs.append("joins check failed: see its log")
+    qc_out = folder / "build" / "qc" / args.timeline
+    python = numpy_python()
+    done = stage("gate", [python, "qc.py", str(render_file), "--edit-list", str(edit_list), "--out", str(qc_out), "--only", *QC_CHECKS],
+                 work / "gate.log", summary)
+    report_md = qc_out / "report.md"
+    if report_md.exists():
+        rows = [line for line in report_md.read_text().splitlines() if "| fault |" in line]
+        needs += sorted(set(re.sub(r"\s+", " ", row) for row in rows))
+        summary["gate_report"] = str(report_md)
+    else:
+        needs.append("gate failed: see its log")
+    summary["render"] = str(render_file)
+    finish(int(bool(needs)))
+
+
+if __name__ == "__main__":
+    main()

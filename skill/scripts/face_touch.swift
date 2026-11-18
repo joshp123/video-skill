@@ -12,7 +12,7 @@
 // frames: ffmpeg -hwaccel videotoolbox -i CAMERA_FILE -map 0:v:0 -vf "fps=5,scale=640:-2" -q:v 4 "$SCRATCH/frames-CAMERA/%05d.jpg"
 // build:  swiftc -O -module-cache-path "$SCRATCH/modulecache" face_touch.swift -o "$SCRATCH/face_touch"
 // run:    "$SCRATCH/face_touch" "$SCRATCH/frames-CAMERA" 5 CAMERA_OFFSET_S > CAMERA.csv   (columns: seconds, touching, points)
-//         CAMERA_OFFSET_S is that camera's offset_s (0 for the front camera), so the times are front-clock seconds.
+//         CAMERA_OFFSET_S is that camera's picture_offset_s in the plan (0 for the front camera), so the times are front-clock seconds.
 import Foundation
 import Vision
 

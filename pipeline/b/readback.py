@@ -9,8 +9,7 @@ readback.py NAME [--folder DIR]
 - video: every item on every video track, in track and record order. A clip names its `file`; a nested timeline (a
   template graphic) names its `timeline`. `source_in` is in source frames; a retimed clip (`speed_percent` not 100)
   keeps the list's meaning, `source_out` = `source_in` + its frames on the timeline.
-- grade: not readable. No API call reads a CDL, and Resolve's EDL export with CDL carries one video track, a different
-  one from call to call on the same timeline (V1, V2 or V3, 26 Oct), so it cannot be trusted. Named in `reading_gaps`.
+- grade: each clip's first node's CDL (`GetCDL`, readable since 21.2), as the list's `grade`.
 - audio: `clips`, every clip on every audio track, in seconds on the timeline's clock (sub-frame), with its fades in
   seconds; `crossfades`, every audio transition, its track, start and length in seconds and its type.
 - captions: from the timeline's own .drt export: text, start, end and each word's start and end, in seconds.
@@ -29,7 +28,8 @@ import multicam
 
 FRAMING = ('ZoomX', 'ZoomY', 'Pan', 'Tilt', 'CropLeft', 'CropRight', 'CropTop', 'CropBottom')
 RETIME_NAMES = {0: 'project', 1: 'nearest', 2: 'frame blend', 3: 'optical'}
-CACHE = Path(__file__).resolve().parents[2] / '.cache/pipeline-b/readback'
+import session  # noqa: E402
+CACHE = session.CACHE / 'pipeline-b/readback'
 
 
 def timeline_named(project, name):
@@ -58,7 +58,7 @@ def read(resolve, project, name, folder=None):
               'tracks': {f'{kind} {index}': timeline.GetTrackName(kind, index) for kind in ('video', 'audio', 'subtitle')
                          for index in range(1, timeline.GetTrackCount(kind) + 1)},
               'video': [], 'audio': {'clips': [], 'crossfades': []}, 'captions': [],
-              'reading_gaps': ['CDL grades are not readable (no API call; the EDL export is unreliable); node tools are read instead.']}
+              'reading_gaps': []}
     for track in range(1, timeline.GetTrackCount('video') + 1):
         item_angles = multicam.item_angles(entries, track, start, name)
         for item in timeline.GetItemListInTrack('video', track) or []:
@@ -84,6 +84,10 @@ def read(resolve, project, name, folder=None):
             row['group'] = group.GetName() if group else None
             graph = item.GetNodeGraph()
             row['node_tools'] = [graph.GetToolsInNode(i) for i in range(1, graph.GetNumNodes() + 1)] if graph else []
+            cdl = item.GetCDL(1)  # readable since 21.2 (smoke tests, 17 Nov)
+            if cdl:
+                row['grade'] = {key.lower(): [float(v) for v in cdl[key].split()] for key in ('Slope', 'Offset', 'Power')}
+                row['grade']['saturation'] = float(cdl['Saturation'])
             result['video'].append(row)
     for track in range(1, timeline.GetTrackCount('audio') + 1):
         for item in timeline.GetItemListInTrack('audio', track) or []:

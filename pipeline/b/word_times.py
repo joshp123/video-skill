@@ -7,7 +7,7 @@ word_times.py NAME [--media FILE]. Without --media, Resolve renders the timeline
 in a .mov, into .cache/pipeline-b/word-times/), imports it into the Generated bin and transcribes it, so the times are
 those of the sound the viewer hears, on the timeline's clock. --media FILE transcribes a mix starting at frame zero.
 Resolve's times locate words; they ran up to 0.7 s out on run 3 and dropped words, so a word's onset is settled on
-the level trace (envelope.py), not here.
+the level trace, not here.
 Since 2026-10-27 (Claude Opus 5.5, hill-climb stream L): Resolve refuses StartRendering now and then and accepts it seconds
 later (run 4, story and editor), so the start is retried for up to 30 s, and the job is deleted on every way out.
 """
@@ -20,7 +20,8 @@ import time
 import uuid
 import DaVinciResolveScript
 
-RENDERS = Path(__file__).resolve().parents[2] / ".cache/pipeline-b/word-times"
+import session  # noqa: E402
+RENDERS = session.CACHE / "pipeline-b/word-times"
 START_RENDERING_RETRY_SECONDS = 30
 
 

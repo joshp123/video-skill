@@ -11,28 +11,37 @@ The API reads the angle back: an item's name is "<multicam> - <the angle's clip 
 import importlib.util
 import os
 import re
+import sys
+import time
 import zipfile
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('add_captions', Path(__file__).resolve().parents[1] / 'resolve/add_captions.py')
 add_captions = importlib.util.module_from_spec(spec)  # the item, setting and track-name snapshots its round trip checks with
 spec.loader.exec_module(add_captions)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'subtitles'))
+from write_caption_track import decode_blob, encode_blob  # 21.2 zstd-compresses an item's FieldsBlob (17 Nov)
 
 ANGLE_IN_ITEM = re.compile(rb'\x1a\x08(Camera \d)')
 CLIP = re.compile(r'<Sm2TiVideoClip .*?</Sm2TiVideoClip>', re.S)
 TRACK = re.compile(r'<Sm2TiTrack\b.*?</Sm2TiTrack>', re.S)
-CACHE = Path(__file__).resolve().parents[2] / '.cache/pipeline-b/multicam'
+import session  # noqa: E402
+CACHE = session.CACHE / 'pipeline-b/multicam'
 
 
 def make(resolve, pool, camera_media, name):
     """One multicam of the camera clips, synced by their own sound. The lav stays out: as an angle it is black."""
-    made = pool.CreateMulticamClip(list(camera_media), {
+    settings = {
         'name': name, 'startTimecode': '00:00:00:00', 'frameRate': float(camera_media[0].GetClipProperty('FPS')),
         'angleSyncMode': resolve.MULTICAM_ANGLE_SYNC_AUDIO, 'multicamAudioMode': resolve.MULTICAM_AUDIO_SOURCE,
-        'angleNameMode': resolve.MULTICAM_ANGLE_NAME_CLIP, 'useFullClipExtents': True, 'createBinForSourceClips': False})
-    if not made:
-        raise RuntimeError(f'CreateMulticamClip failed for {name!r}')
-    return made[0]
+        'angleNameMode': resolve.MULTICAM_ANGLE_NAME_CLIP, 'useFullClipExtents': True, 'createBinForSourceClips': False}
+    made = pool.CreateMulticamClip(list(camera_media), settings)
+    for _ in range(3):  # it returned nothing once in a project made seconds before, and worked when run again (18 Nov)
+        if made:
+            return made[0]
+        time.sleep(5)
+        made = pool.CreateMulticamClip(list(camera_media), settings)
+    raise RuntimeError(f'CreateMulticamClip failed for {name!r}')
 
 
 def drt_entries(path):
@@ -105,16 +114,16 @@ def record_of(clip_xml, timeline_start):
 
 
 def item_angle(clip_xml):
-    found = ANGLE_IN_ITEM.search(bytes.fromhex(re.search(r'<FieldsBlob>([0-9a-f]*)</FieldsBlob>', clip_xml)[1]))
+    found = ANGLE_IN_ITEM.search(decode_blob(re.search(r'<FieldsBlob>([0-9a-f]*)</FieldsBlob>', clip_xml)[1]))
     return found[1].decode() if found else None
 
 
 def with_angle(clip_xml, angle):
     blob_hex = re.search(r'<FieldsBlob>([0-9a-f]*)</FieldsBlob>', clip_xml)[1]
-    new, count = ANGLE_IN_ITEM.subn(b'\x1a\x08' + angle.encode(), bytes.fromhex(blob_hex))
+    new, count = ANGLE_IN_ITEM.subn(b'\x1a\x08' + angle.encode(), decode_blob(blob_hex))
     if count != 1 or len(angle) != 8:
         raise ValueError(f'Cannot set angle {angle!r}')
-    return clip_xml.replace(blob_hex, new.hex(), 1)
+    return clip_xml.replace(blob_hex, encode_blob(new), 1)
 
 
 def item_angles(entries, track, timeline_start, timeline_name=None):

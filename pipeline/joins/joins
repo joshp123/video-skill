@@ -1,0 +1,9 @@
+#!/bin/sh
+# Written by AI on 2026.11.17 by model Claude Opus 5.5. Runs joins.py in this folder's environment.
+# First time: `cd pipeline/joins && devenv shell -- true` builds the environment (a few minutes).
+here="$(cd "$(dirname "$0")" && pwd)"
+py="$here/.devenv/state/venv/bin/python"
+[ -x "$py" ] || { echo "joins: no environment yet; run: cd '$here' && devenv shell -- true" >&2; exit 1; }
+export HF_HOME="${HF_HOME_JOINS:-$HOME/.cache/join-check/hf}" TORCH_HOME="$HOME/.cache/join-check/torch" HF_HUB_OFFLINE="${HF_HUB_OFFLINE:-1}"
+command -v ffmpeg >/dev/null || export PATH="$HOME/.nix-profile/bin:$PATH"
+exec "$py" "$here/joins.py" "$@"

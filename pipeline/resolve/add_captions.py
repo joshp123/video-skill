@@ -39,7 +39,8 @@ def timeline_named(project, name):
 
 
 FRAMING_KEYS = ("ZoomX", "ZoomY", "Pan", "Tilt", "CropLeft", "CropRight", "CropTop", "CropBottom")
-SETTING_KEYS = ("useCustomSettings", "timelineFrameRate", "timelineResolutionWidth", "timelineResolutionHeight", "useInverseDRT",
+# Not useCustomSettings: on 21.2 an API-made timeline lacks the key and its imported copy reads "1" (17 Nov).
+SETTING_KEYS = ("timelineFrameRate", "timelineResolutionWidth", "timelineResolutionHeight", "useInverseDRT",
                 "colorScienceMode", "colorSpaceTimeline", "colorSpaceOutput")
 
 

@@ -1,178 +1,160 @@
-<!-- Resolve, graphics and caption fault fixes written by AI on 2026-10-22 by GPT-6. -->
-<!-- Cut, dialogue and word-timing faults updated by AI on 2026-10-22 by GPT-6 Astra. -->
-<!-- Written by AI on 2026-10-21 by Claude Fable 5.1; run order updated 22 Oct by GPT-6.1 Sol for the native swaps and by Claude Fable 5.1 after the end-to-end run. -->
+<!-- Written by AI on 2026.11.17 by model claude opus 5.5, for the rebuild on DaVinci Resolve Studio 21.2. Every time below was measured on Josh's MacBook (M4 Pro) on 17 and 18 Nov 2026, on the codex-switch material (two 3840 by 2160 cameras at 25 fps, the lav, a 95 s vertical short). The evidence is private/research/2026-11-17/rebuild-tooling.md. -->
 
-# The shared pipeline
+# The pipeline
 
-The repeatable, mechanical steps between a video's edit data and its finished file. Every decision lives in the video's `edit/edit.json` (the format: `edit-format.md`); these steps execute it and write generated files under the video's `build/`, or explicit output paths for scratch runs. A change of mind is written into the data and applied to the timeline in place where Resolve's scripting allows; the timeline is rebuilt only when the structure changes (`edit-format.md`, first paragraph). Nothing here knows one video: anything the steps need about a recording, a camera, a project or a look comes from the edit data or the look module.
+Commands that turn the model's decisions into a finished cut in DaVinci Resolve, and check it. The model decides every editorial value; these commands find, place, measure, render and read back, and decide nothing.
 
-The Python environment is `pipeline/devenv.nix` (Python 3.12 with numpy, and ffmpeg): from `pipeline`, `devenv shell -- sh -c 'cd .. && python pipeline/cut/build_cutlist.py EDIT'`, or enter `devenv shell` there and come back to `Media/Edits` for the commands below. Leave `TMPDIR` alone when running `devenv`: a temp folder on the SSD, whose path has spaces, breaks its launcher. `EDIT` is the video's folder, for example `2026-10-30-slug`. The order below is the order the steps read each other: cut list, dialogue, word timing, graphics, captions, timeline, renders. Run Resolve scripts with `/usr/bin/python3`, even when the devenv’s binaries are first on `PATH`. Every Resolve script takes `resolve` from its namespace when run through the MCP, and otherwise connects itself through Resolve's external scripting (the three variables in step 6).
+The flow for a video, after ingest:
 
-Praat through `parselmouth` is unavailable in this environment: `python312Packages.praat-parselmouth` 0.4.7 compiled on 22 Oct, but its bundled `test_LPC.praat` crashed with exit 133 during the Nix build. The dependency was left out.
+1. `project.py` makes the video's Resolve project (once).
+2. The model writes one plan for the whole video: which of his words are kept, in what order, the cameras, the captions, the titles and panels (the format is in `b/assemble.py`'s help).
+3. `cut.py` takes the plan to a checked render in one call: it runs `assemble.py`, `place.py`, `finish.py`, `render.py`, the join check and the gate, and prints what needs the model.
+4. The model reads that, looks where it must (`look.py`), changes the plan, and runs `cut.py` again.
+5. A note on a cut that exists, from Josh or the crew, goes on with `note.py`, in place, in seconds.
 
-## 1. The cut list
+Every command prints JSON and exits 0 only when nothing needs attention. Run the Resolve commands with `/usr/bin/python3 -B` from `pipeline/b` (they set Resolve's scripting variables themselves); `qc.py` needs the pipeline devenv's Python (`cd pipeline && devenv shell -- python3 ...`; `cut.py` finds it itself). Paths in an edit list or a plan are relative to its own folder. Caches, scratch timelines' files and renders go on the media drive, under `Media/Edits/.cache/` and the video's folder (`session.CACHE`); nothing goes on the internal disk.
 
-```sh
-python pipeline/cut/build_cutlist.py EDIT --output build/cutlist.json
-```
+## Resolve runs windowless: `b/session.py`
 
-Writes the `--output` path (default `EDIT/build/cutlist.json`) and refuses to overwrite it. Pass that path as `--cutlist` to dialogue and word timing; downstream graphics and timeline steps currently read `build/cutlist.json`. `--previous` names an earlier aligned cut list (default `EDIT/build/cutlist.json`): when `audio_clips` are unchanged, the rebuild carries matching words’ aligned times and scores forward. The cut fingerprint excludes camera grades, framing and mixer-only fields; it hashes cut inputs, not the raw edit file. The native and Remotion graphics checks still compare the raw file; those checks must adopt this fingerprint before using the new cut lists (faults 90 and 107, owned by the separate graphics pass).
-
-The output contains: every picture clip (camera, source and record frames, framing, punch-in), every audio segment at exact sample times, every kept word with its times, every graphic with its anchors resolved to frames, and a report. Read the report before anything else: `unresolved_anchors` (the script exits with status 2), `boundary_warnings` (no silence, a rise over 10 dB in the 30 ms after an out-point, or no final 80 ms silence), `pause_shortfalls` (only pauses requiring added film frames), `pause_warnings` (a pause edge over 6 dB above the measured room), `picture_shortfalls` (the source ran out under the ending), `removed_pauses`, `removed_words`, `jump_cuts`, `face_touches`, `graphic_snaps`. `built_as_written` is true only when nothing in it needs a decision. With no `media.face_touch` key it prints `no face-touch scans in media`. Compare each run’s edge words and words beside a gap over 0.45 s with Resolve’s transcript; measure on the lav and `retime` any disagreement over 0.3 s. The builder checks the dialogue named by the existing `build/dialogue-report.json`, or `--dialogue PATH`, against the new sample count; `dialogue_length_mismatch` says to rebuild dialogue before alignment, graphics or a timeline.
-
-## 2. The dialogue
+Every Resolve command calls `session.connect(project)`. If Resolve is not running it starts it with `-nogui` from the shell: no window opens and nothing takes the foreground (tested 17 Nov on this MacBook). Scripting answers 9 to 40 s after launch. `connect` then opens the project the edit list names.
 
 ```sh
-python pipeline/audio/build_dialogue.py EDIT --cutlist build/cutlist.json --output build/dialogue-vN.wav
+/usr/bin/python3 -B session.py start | stop | status
 ```
 
-Cuts the lav at the cut list's samples, lays room tone from `media.lav.room_tone_s` under every gap, applies the `dialogue_patches` and `dialogue_inserts`, cleans, and levels to -14 LUFS with true peak at most -1 dBTP. Writes the file named by `--output` (default `build/dialogue.wav`), the intermediate files under `audio/` beside the output, and `dialogue-report.json` beside it (loudness, true peak, the level either side of every cut). Give each version its own file: a timeline Josh has seen keeps its own sound. `--cutlist` defaults to `build/cutlist.json`. The report checks the selected room tone in 5 ms windows after high-passing at 1 and 4 kHz; `room_tone_checks[].suspect_windows` lists windows over 6 dB above each band’s own median. A low full-band floor alone does not establish clean tone. Inspect joins with the shared tool:
+`stop` saves and quits (5 to 40 s; it repeats `Quit()` every 20 s, because Resolve sometimes ignores the first). `status` says whether Resolve runs windowless, which project is open, and lists any dialog.
+
+**Dialogs.** A windowless Resolve still raises modal dialogs, and they land on Josh's screen or on another desktop Space. `SaveProject()` while the unnamed "Untitled Project" is current (right after launch, or after `CloseProject`) opens a "Save Current Project" dialog and the call never returns (proven on the Mac mini, 17 Nov; it happened three times on this MacBook before it was found). So the tooling never saves the unnamed project (`session.save` refuses it), never closes a project, and after every launch, project load, save, render and quit lists every Resolve window on every Space (`b/resolve_windows.swift`) and stops with the window's title if one is a dialog. If a command stops with "Resolve shows a dialog", nothing else may call Resolve until the dialog is cancelled and the call that raised it is known. Window titles need the terminal to hold Screen Recording permission; without it, the window's layer still gives the dialog away.
+
+Resolve's "Align audio edits to frame boundaries" preference must be off (it is): with it on, the sub-frame sound calls return True and round to whole frames. `sound.py` refuses to place sound while it is on.
+
+## `b/project.py EDIT_LIST`
+
+Makes the project the list names: colour management (DaVinci YRGB Color Managed, DaVinci Wide Gamut / Intermediate, Rec.709 Gamma 2.4 out, inverse DRT on, scale to crop), the list's resolution and frame rate, project media, render cache and gallery on the media drive, one colour group per camera, the cameras and the lav in a Source bin with each camera's input colour space (`log` in the list's `cameras`), and the cameras' multicam synced by their sound. Every setting is read back. Prints the multicam's angles. 21 s. An existing project of that name is opened and completed; one that holds timelines is refused. It reads only the keys a plan shares with an edit list (`resolve_project`, `fps`, `format`, `multicam`, `cameras`, `sound`), so it takes a plan as well (run on codex-switch's plan on 18 Nov: same project, same multicam offsets). `CreateMulticamClip` once returned nothing in a project made seconds before and worked when run again, so it is tried four times, 5 s apart.
+
+## `b/assemble.py PLAN.json [--out EDIT_LIST] [--force]`
+
+The plan to the edit list (`edit-format.md`). In order:
+
+1. Finds each piece's first and last words in the word-timed transcript (`to_near_s` when the last words occur twice).
+2. `joins/joins place` cuts each piece inside the measured pause next to them, from the transcript's times (accurate at
+   pauses, where a piece's edges belong), and scores every join.
+3. Where `joins place` finds no pause, the words either side of the cut are aligned in context (`b/words.py`, below).
+   If the cut falls inside a word and the aligned words leave a gap of 30 ms or more, the cut moves to the middle of
+   that gap, and `joins place` runs again with the moved cut given as `start_at` or `end_at`, scoring every join again.
+   An edge the plan sets (`start_s`, `end_s`) goes to `joins place` the same way, as a cut used as given.
+   The report carries the lav check's `calibration_span`, the stretch of the lav its threshold came from.
+4. Each piece is aligned on its exact audio, with exactly its words (`b/words.py`). These times set every caption
+   word, every word anchor of a shot, title or panel, and nothing else.
+5. Lays the pieces end to end, converts every anchor to timeline frames, and computes each segment's source frame from
+   the cameras' `picture_offset_s`. A shot at a piece's start can move its picture cut off the sound cut
+   (`offset_frames`, a split edit).
+
+It reports, and decides nothing on: an edge with no pause (with the aligned words around it, and where it moved the
+cut), every join the join check flags, shown words that match no spoken word and spoken words in no caption, each word
+the aligner doubts, the three shortest segments, and every caption the look's template would page (a lit word starting
+more than 25 frames after the one before: split the caption there). It refuses titles or panels that overlap on a
+track. 25 to 80 s for 15 pieces on a quiet machine (most of it two aligners and the join model loading); up to 6 min
+while another job loads the machine.
+
+Limits: a shown word that matches no spoken word ("$600" for "six hundred dollars") is lit for all the words it stands
+for, so a long one can make the template page its caption; the report says so and the model splits the caption.
+`word_starts_s` on a caption still overrides a word's start by hand.
+
+## `b/words.py` (called by `assemble.py`)
+
+Forced alignment of the transcript's words to the lav. The verbatim transcript's word times run early in connected
+speech (by 120 to 490 ms, median 193 ms, on nine words October's editor measured by hand on codex-switch) though they
+are good after a pause. So:
+
+- **times**: torchaudio's MMS forced aligner (`MMS_FA`), the transcript's fillers ([UM]) given to it as sound that is no word;
+- **after a pause**: the aligner marks a word 35 to 50 ms late, so a word that follows a pause starts at the gate's own
+  kind of onset (a 10 dB rise within 80 ms out of a 30 ms dip, reaching speech, after 100 ms of pause; levels set from
+  the window's loud speech, because the lav is quieter than the delivery) nearest the aligned start, from 300 ms before
+  to 150 ms after;
+- **confidence**: wav2vec2 large LV-60k aligns the same words; a word whose mean letter probability is under 0.15, or
+  whose two aligned starts differ by more than 0.1 s where no onset settled it, is reported as doubtful with both
+  times. Doubtful words are listed, never silently trusted.
+
+Measured on codex-switch (342 kept words): against the nine hand-measured words, median error 24 ms (transcript 193 ms),
+6 within a frame (transcript 1), worst 64 ms (transcript 493 ms). Against 23 onsets after a pause: median 5 ms
+(transcript 23 ms, the aligner alone 52 ms). A render from the plan with no hand word fixes passed the gate's lit-word
+check with no fault (the same plan on the transcript's times had one word 3.5 frames late). Four words came out doubtful
+(very low confidence: "log", "whole", "multiple"; the two aligners 140 ms apart: "of"); on that render none of them
+failed the gate.
+
+It runs in `pipeline/joins/`'s environment, which has torch, torchaudio and both models offline under
+`~/.cache/join-check/torch` (no download, nothing new installed); about 3 s to load the models and under a second a
+piece after that. What it gets wrong: in connected speech nothing settles a word's start, so the aligner's error stands
+(up to 64 ms here); a word that is mumbled, swallowed or said twice where the transcript has it once is placed
+somewhere anyway (the doubtful list is where to look); a breath before a word can count as an onset if it is loud enough.
+
+## `b/look.py`
 
 ```sh
-python pipeline/audio/joins.py EDIT build/dialogue-vN.wav --cutlist build/cutlist.json --output build/joins-vN
+look.py EDIT_LIST --cuts --out DIR                              # before placing
+look.py EDIT_LIST --timeline NAME --at FRAME [FRAME ...] --out DIR    # after placing
 ```
 
-Each PNG shows the source either side of the cut and the built join, with a waveform, spectral trace and marked in/out edges. `--join N` selects one join (from 1).
+`--cuts`: every segment's first and last frame on both cameras, graded and framed as the finish timeline will show them, on labelled contact sheets of six segments (a cell "3W* 1284" is segment 3 on the wide camera, the list's choice, at timeline frame 1284). For picking each camera and seeing a blink or a hand across the whole video at once. 92 frames in 16 s (one-frame clips on a scratch timeline, `Timeline.ExportThumbnails`, scratch deleted).
 
-## 3. The word timing
+`--at`: each frame at full size (PNG) and at phone width (390 by 693 JPEG), from `Timeline.ExportFrame`: about 45 ms a frame once warm, the playhead does not move. ExportFrame does not draw the caption track: render a still (`render.py --preset still`) to see captions.
 
-```sh
-/usr/bin/python3 -X utf8 -B pipeline/resolve/align_words.py EDIT build/dialogue-vN.wav --cutlist build/cutlist.json      # with Resolve's scripting environment set (step 6), the project open
-```
+## `b/place.py EDIT_LIST --timeline NAME`
 
-Resolve transcribes the finished dialogue (`TranscribeAudio`, from the Edit page; it imports the file into the `Generated` bin if absent). It writes each kept word’s aligned seconds and frames and its score into the output cut list; without `--output` it updates the input cut list. `--output` writes a separate aligned copy and refuses an existing output; `--report` defaults to `alignment-report.json` beside it. A dropped first or last word uses its transcript times, scored 0 and reported. A dropped interior word is interpolated between neighbours; if they leave no positive interval, it uses transcript times, also scored 0. Zero-length Resolve words are rejected as partners, replaced from the transcript and reported; a final nonpositive interval stops the step. Starts over 0.4 s from transcript time are scored 0 and listed under `pairings_over_400ms`; every edge over 0.2 s is also reported. Read that report before using the timing.
+Builds the cut timeline exactly as the list says, in a new timeline (an existing name is refused), and reads it back:
 
-After alignment the step re-resolves graphic edges and cues on aligned frames, snaps edges to picture cuts again and recalculates holds and film length. If the dialogue’s sample count differs from the cut before transcription, it stops with a dialogue-rebuild instruction. If aligned edges change the film length, it writes the aligned cut list and exits with status 2, reporting the required dialogue rebuild before graphics or a timeline. Everything anchored to speech reads the aligned frames. A cut-list rebuild preserves them when `audio_clips` are unchanged; changed audio requires dialogue and timing again. For isolated transcription, `--bin-name NAME` selects the import bin and `--transcribe-project NAME` explicitly selects the required open project without switching projects; both default to the normal video setup.
+- V1 and V3, the `panels`; V2, the `segments` as items of the cameras' multicam, each with its framing;
+- V4, the `titles`: each inserted past the timeline's end at exactly its length and moved into place (`InsertFusionTitleIntoTimeline`, then `SetPosition`), the look's Fusion template loaded and its inputs set;
+- A1 and A2, the sound (`b/sound.py`): every edge exact to the sample through the sub-frame calls (`SetLeftOffset`, `SetRightOffset`, `SetPosition` with `subframePrecision`), every fade set and read back, each crossfade added at whole frames as Resolve's "Cross Fade +3 dB" (constant power,
+  as the join check simulates a join; Resolve's "Cross Fade 0 dB" is linear, and with it the render's join scores rose
+  above the lav check's by up to 0.25, 18 Nov);
+- one round trip through the timeline's file (`b/timeline_file.py`) for what no call sets: each segment's angle, each crossfade's sub-frame start and length, and the captions with each word's time on the subtitle track in the look's template. It puts back what the import drops (audio fades, voice isolation, track names), checks that every other item kept its place, length, source and framing, reads the rewritten parts back, and only then replaces the timeline.
 
-## 4. The graphics
+Then it reads the whole timeline back (`b/readback.py`) and lists every difference from the list: exit 0 only with none. On any failure the half-built timeline is deleted. 9 to 15 s for 23 segments, 10 titles, 18 sound clips with 15 crossfades and 66 captions (October needed minutes, and 19 under load).
 
-Two routes. The terminal kinds (`terminal`, the agent box, `keyline`) render in Remotion as transparent clips:
+## `b/finish.py EDIT_LIST --timeline NAME`
 
-```sh
-cd pipeline/graphics
-devenv shell -- node render-clips.mjs ../../EDIT --out=build/graphics-vN     # --only=ID for one graphic
-devenv shell -- node render-clips.mjs ../../EDIT --only=ID --stills --frame=FILM_FRAME
-```
+Makes "NAME finish", the timeline that is rendered: a duplicate with the multicam flattened to plain clips, each clip in its camera's colour group with its camera's CDL grade and its framing set again (flattening resets framing). An older finish timeline of that name is kept, renamed with the date. Reads back and compares, grades included (`GetCDL` reads a grade since 21.2). 1.2 to 4.3 s.
 
-Builds the render data from the cut list and the look, then renders each terminal graphic as its own ProRes 4444 clip with transparency into the output folder, with `manifest.json` (each clip's first film frame and length) and `render-data.json` beside them. It refuses to overwrite a clip or a manifest, so each version renders into its own folder. Stills go to `EDIT/build/stills/`. The bundle is reused from `Media/Edits/.cache/remotion-bundle/`. The tool's output is captured first, at the panel's column count, so the tool wraps its own lines:
+## `b/render.py EDIT_LIST --timeline NAME --out FILE [--preset phone|post|master|still] [--range IN OUT] [--no-captions] [--loudness PRESET]`
 
-```sh
-python3 pipeline/graphics/capture-terminal.py --columns N --output ../../EDIT/graphics/content/NAME.txt -- COMMAND ARGS
-```
+Renders a finish timeline and waits. `phone` (H.264 sized to 28 MB, the file Josh watches), `post` (8 Mbit/s for X), `master` (ProRes 422 HQ, 24-bit PCM), `still` (one 16-bit PNG of a one-frame range; Resolve adds the frame number to the name). Captions are burnt in unless `--no-captions`. `--loudness` loads a render preset that normalises loudness (`b/loudness.py` writes one; "B loudness -12 LUFS -1 dBTP 282076f8" in this Resolve gives -14.5 LUFS, -1.2 dBTP). Refuses an existing file and a timeline that still holds a multicam. **The normalisation sticks to the project:** a render without `--loudness`, or after loading a stock preset such as "H.264 Master", still came out normalised to -14.5 LUFS (18 Nov), and no preset in the tooling switches it off (the 18 Nov control built a scratch one from October's audio-only donor, rendered sound only, and deleted it). The preset's mode ("Optimize") is not one fixed gain: against the lav joined exactly as the list says, the render's gain moved by 1 to 5 dB across cuts, and the same render without normalisation matched the joined lav to -93 dB or better. A 95 s phone render took 56 to 97 s; a still 1.2 s. **A render blocks every other Resolve call until it ends**, so nothing else may drive Resolve meanwhile.
 
-The other kinds (`photo-grid`, `photo-panel`, a title, `closing`) are built in Resolve as Fusion compositions, each in its own small timeline, from the cut list, the look (`looks/<name>/look.json`), the photo lists and `words.md` (with Resolve's external scripting environment set, the project open):
+## The checks
 
-```sh
-/usr/bin/python3 -B pipeline/resolve/build_graphics.py EDIT --output build/graphics-native-vN/manifest.json  # optional --timeline-prefix PREFIX names new timelines and their bin
-/usr/bin/python3 -B pipeline/resolve/change_graphic_words.py EDIT ID # re-reads words.md and re-applies the title band from the cut list; rebuild the cut list after changing the band in edit.json
-```
+- `joins/joins check --audio FILE --joins TIMES.json --lav LAV --span SPAN` scores every join in the rendered sound (`joins/README.md`): with the lav and the lav check's `calibration_span`, so both checks use one threshold, and with the exact join times (each piece's `record_s`). 13 to 38 s for 14 joins (the lav check inside `assemble.py`'s `joins place` adds 20 to 50 s the first time for a stretch, to fit its threshold, then is cached). On codex-switch with constant-power crossfades, 11 of 14 joins scored within 0.05 of the lav check; the render's normalisation raised two clean joins by 0.07 and 0.12, which put one (0.594 against a threshold of 0.569) over the flag as `borderline`.
+- `b/qc.py CUT.mp4 --edit-list EDIT_LIST --out DIR [--only CHECK ...]` is the gate for everything else: eyes shut at a cut, flashes, lips against sound, loudness, captions read back from the picture, lit words against his voice, caption edges, the cameras' colour against the reference camera, text too small at phone width. Fault rows fail it; look rows are for the model. 11 to 47 s for 95 s. Its sound-join class is gone: the join check replaces it.
 
-Writes the `--output` manifest (default `build/graphics-native/manifest.json`; relative to EDIT or absolute), refusing to overwrite it before changing Resolve (each graphic's timeline name, first film frame, length, and which words.md line each slot used: final, proposed or placeholder). A title line wider than its margins is refused; closing parts warn with their text when they exceed margins or cross the look's button safe area, and ` / ` forces a break in any closing part. A photo grid uses no more columns than photos. The builder reads back the created timeline names and checks that the project saved before publishing its manifest. A build of all of where-was-i's five took about 7 s; a word change about 2 s with a one-frame render (tested 22 Oct).
+## `b/cut.py PLAN.json --timeline NAME [--loudness PRESET]`
 
-Run `node pipeline/graphics/scan-flashes.mjs FILE.mov` on a Resolve render directly; its timecode track needs no remux.
+All of the above in one call: assemble, place, finish, render (to the video's `versions-check/NAME.mp4`), join check, gate. Stops at the first stage that fails. Prints each stage's seconds, every join's score on the lav beside its score in the render (`joins`), and one list, `needs_the_model`: edges with no pause (and where a cut moved), joins flagged or borderline on the lav, joins flagged in the render (saying when the lav check passes them), speech level steps over 6 dB, captions the template would page, doubtful word times, place or finish differences, and the gate's fault rows with their evidence. Each stage's own output is in `build/cut/NAME/`. 2 min 50 s to 3 min 30 s on codex-switch while the machine was quiet or lightly loaded (3 min 11 s on 18 Nov with the final join model, at load average 22 to 28: assemble 63 s, place 13 s, finish 2 s, render 55 s, join check 13 s, gate 42 s); 11 min at load average 18 to 39.
 
-## 5. The captions
+## `b/note.py EDIT_LIST --from CUT --to NEW CHANGES.json`
 
-```sh
-python3 pipeline/subtitles/build_captions.py EDIT --output build/captions-vN.json
-```
+Applies notes in place on a duplicate of a cut timeline (CUT, which Josh may have changed himself, is left alone), writes the same changes into the edit list (the old list is kept as `edit-list.before-NEW.json`), and reads NEW back against the new list, so anything else that moved shows as a difference. Then run `finish.py` on NEW. Changes:
 
-Writes each line's `subtitles` (the model's phrases, as written in the edit data: one phrase per caption, broken where his phrasing breaks) to `--output` (default `build/captions.json`, refuses overwrite), timed on Resolve's word timings in the cut list (step 3): each caption's start and end in seconds from the timeline's first frame, and each displayed word's start and end, so Resolve can light the word being spoken. A phrase initially holds five frames after its last word, stops when the next phrase starts, and stops at the first picture cut after a sentence ends. Caption edges within two frames of a visible camera or graphic change snap to it; one- and two-frame blanks close. Captions hold for at least 0.7 s by extending into a blank or joining a neighbour; a one-word remainder joins its neighbour. The first word lights at the caption start, the last for at least three frames; each light lasts until the next starts (the last until the caption ends), and word starts are at most one second apart so Resolve does not split the caption into pages. Width warnings name the caption and row and include pill padding from `look.json` (`subtitles.activeWord.padding`; otherwise 36 px per side). Rows must fit the look's safe area, 820 px centred at this 1080 px width; warnings require the editor to rephrase or choose a smaller type size in the look. No caption shows while a graphic with `hides_subtitles` is up. A displayed word gets the time of the spoken word under the same characters, so a spelling that shows one spoken word as two ("it's" as "this is") splits that word's time between them. The professional-practice audit of 22 Oct is why the phrasing is the model's and not Resolve's: Resolve's own line breaks end a caption mid-phrase in 24 of 54 cases.
+| Change | How | Time here (whole command) |
+| --- | --- | --- |
+| `{"title": i, "inputs": {...}}` | set on the title's Fusion composition | 0.16 s (2.5 s) |
+| `{"segment": i, "camera": NAME, "framing": {...}}` | the angle through the timeline file, framing by `SetProperties`; the list's `source_in` follows | 2.2 s (3.4 s) |
+| `{"join": i, "move_s": s}` | a roll of the sound join by the sub-frame calls, both sides in sync; the crossfade put back (trimming an edge removes it) and placed through the file | 1.9 s (3.2 s) |
+| `{"caption": i, "text", "start", "end", "words"}` | the caption track rewritten from the list through the file | 3.1 s (4.3 s) |
 
-Graded clips across the caption step are checked by node count only; that check does not compare grade values or masks.
+Several changes in one file share one file round trip. Not covered: adding or removing words (re-plan and `cut.py`), a change Josh made by hand in Resolve (read it with `readback.py NAME` and bring the list in line), and per-shot Color page work after lock (no tool now; `copy_grades.py` was removed with the old flow, git has it).
 
-The captions go onto the timeline after it is built (step 6), by file, with no interface step:
+## `b/readback.py NAME`
 
-```python
-ns = {"resolve": resolve, "EDIT_FOLDER": "/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/EDIT", "TIMELINE_NAME": "cut vN"}
-exec(open("/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/pipeline/resolve/add_captions.py").read(), ns)
-result = ns["result"]
-```
+What a timeline holds, in the list's terms: every video item (file or multicam angle, place, source frame, framing, speed, colour group, CDL grade, node tools), every audio clip and crossfade to the sub-frame, every caption with its words' times (from the timeline's file). Changes nothing.
 
-Resolve's scripting cannot create or edit a caption (21.1: `SetName` on a caption returns False and nothing inserts a subtitle file), but it exports and imports timelines as `.drt` files, and that file carries the subtitle track whole: each caption's text, frames and per-word times, and the Fusion template that styles the track. So `add_captions.py` exports the timeline to `build/caption-tracks/<timeline>/exported.drt`, `pipeline/subtitles/write_caption_track.py` writes the look's styled track (`looks/<look>/resolve/caption-track.drt`, exported once from Resolve after the template was dropped on a track) holding `captions.json` into that file, and the script imports the file back as the timeline, named as before, with the original deleted once the checks pass: every caption's text and frames read back, and every video and audio item keeps its name, place, length, media pool item and grade node count. `OUTPUT_NAME` keeps both timelines under different names, for a note on a timeline Josh has seen (apply it to a duplicate). Tested 22 Oct in a scratch timeline: where-was-i's 66 captions and 261 words went on in 0.9 s, the camera clip stayed on the same media pool item with nothing duplicated, and rendered frames showed the look's pill on the word being spoken (`.cache/captions-native/`). Word times are written as whole frames because Resolve never writes anything finer, and an odd half-frame value made the template's highlight stick and spill words onto a second page (same test). Untested so far: a clip's own grade and masks across the export and import (the check counts each clip's nodes), and timelines at other frame rates than 25.
+## Other parts
 
-## 6. The timeline
+- `b/tidy.py`: deletes superseded cut timelines, checks and unused media, lays the bins out. `--dry-run` first.
+- `b/loudness.py`: writes the loudness render preset (`--target`, `--ceiling`).
+- `b/make_templates.py`, `b/template_kinds.py`, `b/templates/`, `resolve/build_graphics.py`: the look's Fusion templates (motion design). `make_templates.py` uses `build_graphics.py` as a library; `build_graphics.py`'s own command is the older route and needs the removed cut list.
+- `b/render-graphics.mjs` and `graphics/`: terminal graphics rendered in Remotion. Not exercised in this rebuild. `graphics/prepare.mjs` and `graphics/render-clips.mjs` are the older route and read the older cut list, whose builder was removed; `b/render-graphics.mjs` uses only `graphics/src` and `graphics/terminal-content.mjs`.
+- `b/word_times.py`: Resolve's transcription of a timeline's sound, for `qc.py --heard-words`. Not exercised in this rebuild.
+- `ingest/`: clone a card (`clone.py`), transcribe (`transcribe.py`), measure a camera's offset (`sync.py`). Not exercised in this rebuild; each still starts (`--help`). `sync.py --write` writes `offset_s` into the older `edit/edit.json` format; an edit list or plan takes the offset as the camera's `picture_offset_s`, written by hand.
+- `resolve/add_captions.py` and `subtitles/write_caption_track.py`: the caption-track file format and the item snapshots `timeline_file.py` uses.
 
-With the video's project open in Resolve (`resolve_project` in the edit data), either through the Resolve MCP's `run_script_unsafe`, which defines `resolve`, or from a shell through Resolve's own external scripting (tested 21 and 22 Oct; it needs Resolve running with a project open, and it worked all night while the MCP's script runner returned nothing):
-
-```sh
-RESOLVE_SCRIPT_API="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting" \
-RESOLVE_SCRIPT_LIB="/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so" \
-PYTHONPATH="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/Modules" \
-/usr/bin/python3 -B -c 'import DaVinciResolveScript as d; resolve = d.scriptapp("Resolve"); ...the lines below...'
-```
-
-Use `/usr/bin/python3 -B` for every Resolve script and `PYTHONUTF8=1` when the shell locale is ASCII. Successful standalone scripts flush stdout and exit without running the crashing Fusion destructor; execution inside MCP returns the result normally.
-
-Then:
-
-```python
-ns = {"resolve": resolve,
-      "EDIT_FOLDER": "/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/EDIT",
-      "TIMELINE_NAME": "cut vN", "GRAPHICS_DIR": "build/graphics-vN", "DIALOGUE_FILE": "build/dialogue-vN.wav",
-      "NATIVE_MANIFEST": "build/graphics-native/manifest.json"}
-exec(open("/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/pipeline/resolve/build_finish_timeline.py").read(), ns)
-result = ns["result"]
-```
-
-Makes a new timeline, and only a new one: an existing name is refused, so a timeline Josh has seen is never changed. It finds each camera's file in the media pool (importing it into a `Cameras` bin if absent) and sets its input colour space from `media.cameras.<name>.log`; gives the timeline its own colour settings, copied from the project, with the inverse DRT on so the Rec.709 graphics come through exactly; places the cameras on V1 as the cut list says, framed from `media.cameras.<name>.framing` or, under a panel layout, from that layout's `framings`, and assigns each clip to its camera's colour group (`colour_group`, each distinct missing group created once before the timeline); places each graphic on the lowest free video track above the cameras, in cut-list order (a rendered terminal clip from `GRAPHICS_DIR`, a built Fusion timeline from the native manifest, or both for a title over a terminal), so overlapping graphics stack; and puts the dialogue on A1. `CAMERAS_ONLY: True` (CLI `--cameras-only`) places cameras and dialogue without requiring graphic manifests, retaining panel framing for a framing check. `result` lists every placed clip with its track, record frame, length, source frame, framing and group: compare it with the cut list before trusting the timeline.
-
-## 6b. The camera grade
-
-```python
-ns = {"resolve": resolve, "EDIT_FOLDER": "/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/EDIT", "TIMELINE_NAME": "cut vN"}
-exec(open("/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/pipeline/resolve/grade_cameras.py").read(), ns)
-result = ns["result"]
-```
-
-Each camera's grade is primaries in the edit data, `media.cameras.<name>.grade`: an ASC CDL (slope, offset, power per channel, and saturation), no LUT. The colourist decides the values on real frames of both cameras at the same moment and writes them into the data; the timeline builder reads them directly from `edit/edit.json`, even when the cut list predates the grade, and applies them to every clip of the camera on each build (step 6), and this script applies them to an existing timeline when the values change, in about a second, so a change of grade needs no rebuild. Resolve's scripting cannot grade a colour group (its `ApplyGradeFromDRX` returns False on a group's graph; only a LUT can be set there) and cannot add nodes, so the grade sits on each clip's one node, which is also where professional colourists balance shots (the Darren Mostyn corpus: the input transform in the group, the balance in Clip). Tested 22 Oct on a scratch timeline with both cameras: both graded, the nodes read back as Primary Balance and Saturation, a second run with new values replaced the first, rendered frames changed as set (`.cache/captions-native/gc-strip.png`). Clip-level effects (CineFocus, Magic Mask) still need the Color page.
-
-## 7. The master
-
-```python
-ns = {"resolve": resolve, "PROJECT_NAME": "the Resolve project name",
-      "TIMELINE_NAME": "cut vN", "PRESET": "master", "SUBTITLES": True,
-      "OUTPUT_FILE": "/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/EDIT/build/cut-vN-master.mov"}
-exec(open("/Volumes/Josh Extreme Pro USB4 4TB/Media/Edits/pipeline/resolve/render_timeline.py").read(), ns)
-job = ns["result"]          # then poll: ns = {"resolve": resolve, "PROJECT_NAME": ns["PROJECT_NAME"], "JOB_ID": job}; exec(...); ns["result"]
-```
-
-The master explicitly sets 48 kHz, 24-bit linear PCM (`lpcm`) audio. Renders a `.mov` of the whole timeline at its own resolution, with the enabled subtitle track burnt in when `SUBTITLES` is true; `RANGE: (in, out)` renders a range in timeline-relative frames, both ends included. It starts the job and returns its id; a second call with `JOB_ID` returns the job's status and, on completion, reads its settings, clears that timeline's in/out marks and deletes only that job. Refuses to overwrite. `PRESET: "still"` with a one-frame inclusive `RANGE` writes one lossless 16-bit RGB PNG (Resolve appends its frame number to the requested `.png` stem), with no audio; check the returned job settings for the filename.
-
-## 8. The phone file
-
-Use the same render step with `PRESET: "phone"` and an `.mp4` output. Resolve renders H.264 High with multi-pass encoding, network optimisation, AAC and Rec.709 tags. The video bitrate is calculated from a 28 MB budget and the timeline's duration, allowing for Resolve's fixed 320 kbit/s AAC. Measure the finished file with `ffprobe` and `ffmpeg -af ebur128=peak=true`; the budget is an encoder target, not an exact file size.
-
-Use `PRESET: "post"` with an `.mp4` path for the file to post: H.264 High, multi-pass, 8 Mbit/s video at 1080×1920, AAC at 48 kHz and Rec.709 tags. The fixed 8 Mbit/s target is within [X Media Studio's 5–8 Mbit/s guidance](https://help.x.com/en/using-x/media-studio-faqs) and X's 6–10 Mbit/s 1080p ad range; it gives fades more bitrate than the 28 MB review copy.
-
-## Ingest
-
-With Resolve's external scripting environment set, pass the required project name as the first argument (or `PROJECT_NAME` in the script namespace). Scripts with `EDIT_FOLDER` read `resolve_project` from `edit/edit.json`. The video's project comes first. `create_project.py` makes it current, closing the open project:
-
-```sh
-/usr/bin/python3 -B pipeline/resolve/create_project.py PROJECT_NAME EDIT   # creates the project named in the edit data if absent: colour management (DaVinci YRGB Color Managed, DaVinci WG/Intermediate, Rec.709 Gamma 2.4 out, DaVinci DRTs, inverse DRT on), the edit data's resolution and frame rate, scale-to-crop, one colour group per camera, SSD cache at `Media/Resolve Cache` set and read back, playback frame rate read after media import and required to match the timeline frame rate, the cameras and the lav imported into a Source bin with their input colour spaces set and read back; refuses a project that already has timelines (tested 22 Oct, 10 of 10 settings)
-/usr/bin/python3 pipeline/ingest/clone.py PROJECT_NAME SOURCE_FOLDER DESTINATION_FOLDER
-/usr/bin/python3 pipeline/ingest/transcribe.py PROJECT_NAME MEDIA_FILE OUT_PREFIX --offset OFFSET_SECONDS
-/usr/bin/python3 pipeline/ingest/sync.py PROJECT_NAME FIRST_CAMERA SECOND_CAMERA
-# To record a measured offset:
-/usr/bin/python3 pipeline/ingest/sync.py PROJECT_NAME FIRST_CAMERA SECOND_CAMERA --write EDIT/edit/edit.json --name cameras.wide
-```
-
-Clone preserves the folder name and verifies with SHA-256. Transcription writes word-timed JSON and timed text. Sync creates a scratch timeline, aligns by waveform, reads the offset, and deletes that timeline. Without `--write`, it only prints the result.
-
-## Applying a note without a rebuild
-
-The timeline that exists is the edit. A note is applied in place wherever the scripting allows, on a duplicate of the timeline Josh saw (`Timeline.DuplicateTimeline` keeps grades, masks and captions; Resolve's live save stores every change within a second), and the same change is written into the edit data so a rebuild reproduces it. A change to the structure (words added, lines reordered, a shot recut) is a rebuild: steps 1 to 6 again, then the grade copy and the caption pass.
-
-```sh
-/usr/bin/python3 -B pipeline/resolve/remove_range.py EDIT TIMELINE IN_FRAME OUT_FRAME    # a whole line out
-/usr/bin/python3 -B pipeline/resolve/replace_media.py EDIT TIMELINE OLD_FILE NEW_FILE    # a new dialogue file of the same timing, or a re-rendered terminal clip
-/usr/bin/python3 -B pipeline/resolve/change_graphic_words.py EDIT ID                     # a Fusion graphic's words from words.md and its title band from the cut list
-/usr/bin/python3 -B pipeline/resolve/copy_grades.py EDIT FROM_TIMELINE TO_TIMELINE       # after a rebuild
-```
-
-`remove_range.py` takes timeline-relative frames with an exclusive out frame, refuses without changing anything if any video, audio or subtitle item crosses either edge (so a line under a graphic that also covers its neighbours needs a rebuild), and otherwise ripple-deletes the enclosed items and sets one-frame fades on the two A1 pieces meeting at the join, reading both back; the model takes the same words out of `lines`. `replace_media.py` imports the new file as its own media pool item and, on the named timeline only, deletes each use of the old file without ripple and appends the new one at the same record frame, source start and length, then checks the item count and every record range; other timelines keep the old media. `copy_grades.py` matches each video item on the target by media file, source start frame and length, copies the source item's grade (nodes, masks, LUTs) and lists the unmatched items, which are new shots or recuts for the Color page. Tested 22 Oct on the first video (`.cache/native-swaps/`): a removed line moved every later item on every track by exactly its length with the clip-level grade intact; the media swap left 85 items at their frames and other timelines untouched; the grade copy matched 30 of 30 clips.
-
-## Where things go
-
-Everything under the video's `build/` is generated and may be rebuilt; `versions/` holds what Josh saw and is never overwritten. Scratch and caches go under `Media/Edits/.cache/`, never on the internal disk. Its dated test folders (`custom-code-review`, `verify-claims`, `native-swaps`, `native-graphics`, `native-graphics-test`, `face-touch-test`, `caption-steps`, `resolve-proof`) are the evidence the video skill cites for what was tested on 21 and 22 Oct 2026: they stay; the rest may be rebuilt. Use `trash`, never `rm`.
+Removed on 17 Nov 2026 because the flow no longer calls them (git keeps them): the older format's cut list, dialogue and word-alignment steps (`cut/`, `audio/`, `resolve/align_words.py`, `subtitles/build_captions.py`), the older timeline, grade and project builders (`resolve/build_finish_timeline.py`, `grade_cameras.py`, `create_project.py`), `resolve/render_timeline.py` (now `b/render.py`), the older in-place scripts (`resolve/remove_range.py`, `replace_media.py`, `change_graphic_words.py`, `copy_grades.py`), and `b/envelope.py`, `b/splice.py`, `b/frame.py`, `b/align.py`.

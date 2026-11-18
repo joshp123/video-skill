@@ -7,7 +7,8 @@ finish.py EDIT_LIST --timeline CUT_NAME
 The cut timeline is for editing: the cameras are one multicam on V2, ungraded. Its finish timeline, "CUT_NAME finish",
 is remade from it by this script before every render. An older one of that name is kept, renamed "CUT_NAME finish
 <date time>", since the colourist's Color page work after lock lives on it; copy its grades across with
-pipeline/resolve/copy_grades.py when that work is to carry over, and tidy.py keeps it with its cut.
+TimelineItem.CopyGrades when that work is to carry over (the copy_grades.py script that did it was removed on 17 Nov;
+git has it), and tidy.py keeps it with its cut.
 1. the cut timeline duplicated (DuplicateTimeline keeps every track, title, crossfade and caption);
 2. every multicam item on V2 flattened to a plain clip of its active angle (FlattenMulticam, copy grade);
 3. each of those clips, by its record frame, given the colour group and CDL grade of the camera it shows (the list's
@@ -21,25 +22,23 @@ Exit 0 only when there is no difference.
 import argparse
 import datetime
 import json
-import os
 from pathlib import Path
-import sys
+import time
 
 import place
 import readback
+import session
 
 
 def finish_name(cut_name):
     return f'{cut_name} finish'
 
 
-def run(resolve, filename, cut_name):
+def run(filename, cut_name):
     data = json.loads(filename.read_text())
     folder = filename.parent
-    manager = resolve.GetProjectManager()
-    project = manager.GetCurrentProject()
-    if data.get('resolve_project', project.GetName()) != project.GetName():
-        raise ValueError('Open project differs from the edit list')
+    began = time.monotonic()
+    resolve, project = session.connect(data['resolve_project'])
     cut = readback.timeline_named(project, cut_name)
     if cut is None:
         raise ValueError(f'No timeline {cut_name!r}')
@@ -54,6 +53,17 @@ def run(resolve, filename, cut_name):
     if finished is None:
         raise RuntimeError('DuplicateTimeline failed')
     project.SetCurrentTimeline(finished)
+    try:
+        return grade(resolve, project, data, folder, finished, name, kept_as, began)
+    except Exception:
+        project.GetMediaPool().DeleteTimelines([finished])
+        if older:
+            older.SetName(name)
+        raise
+
+
+def grade(resolve, project, data, folder, finished, name, kept_as, began):
+    """Flatten, group, grade and frame the duplicate; run() deletes it on any failure."""
     start = finished.GetStartFrame()
     segments = {row['record']: row for row in data.get('segments', [])}
     for item in finished.GetItemListInTrack('video', place.CAMERAS_TRACK) or []:
@@ -76,10 +86,9 @@ def run(resolve, filename, cut_name):
                 **{key: row[key] for key in ('speed_percent', 'retime') if key in row}}
         place.apply_look(resolve, project, flattened[record], look, row['frames'], groups, f'segment at {record}')
     place.name_tracks(finished)
-    if not manager.SaveProject():
-        raise RuntimeError('SaveProject failed')
+    session.save(resolve)
     return {'timeline': name, 'older_kept_as': kept_as, 'segments_flattened': len(segments),
-            **place.compare(resolve, project, name, data, folder, finished=True)}
+            **place.compare(resolve, project, name, data, folder, finished=True), 'seconds': round(time.monotonic() - began, 1)}
 
 
 if __name__ == '__main__':
@@ -87,13 +96,4 @@ if __name__ == '__main__':
     parser.add_argument('edit_list', type=Path)
     parser.add_argument('--timeline', required=True)
     args = parser.parse_args()
-    import DaVinciResolveScript
-    try:
-        result = run(DaVinciResolveScript.scriptapp('Resolve'), args.edit_list.resolve(), args.timeline)
-        print(json.dumps(result, indent=1, ensure_ascii=False))
-        status = int(bool(result['differences']))
-    except Exception as error:
-        print(json.dumps({'error': str(error)}))
-        status = 1
-    sys.stdout.flush()
-    os._exit(status)
+    session.main(lambda: run(args.edit_list.resolve(), args.timeline))

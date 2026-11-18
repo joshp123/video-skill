@@ -1,48 +1,46 @@
 """Build a new Resolve timeline from an edit list, in one command, and compare it with the list read back.
 
-Written by AI on 2026-10-25 by GPT-6.1 Sol. Rewritten on 2026-10-26 by Claude Opus 5.5 (stream B of the hill-climb):
-one command for the whole build, every field read back, a true exit code. Rewritten again on 2026-10-26 by Claude Opus
-5.5 (stream I of the hill-climb) for the layout of layout-design.md: the cameras as one multicam on V2, titles as
-title items on V4, the dialogue on one track with crossfades, named tracks.
+Written by AI on 2026-10-25 by GPT-6.1 Sol; rewritten on 2026-10-26 by Claude Opus 5.5 (hill-climb streams B and I).
+Rebuilt on 2026-11-17 by Claude Opus 5.5 for Resolve 21.2: one round trip through the timeline's file instead of three,
+titles placed without locking tracks, sound edges by the sub-frame calls, Resolve started windowless (session.py).
 
 place.py EDIT_LIST --timeline NAME [--look-track FILE]
 
-In this order, in the open project, on a timeline NAME that must not exist yet (pipeline/edit-format.md has the rows):
+In the list's project (opened, and Resolve started windowless, if need be), on a new timeline NAME (an existing name is
+refused), in this order (pipeline/edit-format.md has the rows):
 1. V1 and V3, the `panels`: plain clips with their framing, colour group, grade and speed;
-2. V2, the `segments`: the list's `multicam` cut into items, each at its camera's source frame plus that angle's offset
-   inside the multicam, with its framing and speed (no grade: the cut timeline is for editing; finish.py grades the
-   flattened duplicate); then each item's angle is set through the timeline's .drt (multicam.py);
-3. V4, the `titles`: the look's Fusion templates as title items with their inputs (graphic.py);
-4. A1 and A2, the `audio` rows and `sound` block, laid by sound.py: the dialogue with its crossfades, the room tone;
-5. ST1, the `captions`: captions.py makes them whole frames into build/captions.json beside the list, and
-   add_captions.py puts them on the subtitle track with the look's caption track (or --look-track FILE);
-6. the tracks named (TRACK_NAMES), save, read the timeline back (readback.py) and compare it with the list.
+2. V2, the `segments`: items of the list's `multicam`, each at its camera's source frame plus that angle's offset inside
+   the multicam, with its framing and speed (no grade: finish.py grades the flattened duplicate);
+3. V4, the `titles`: each inserted past the timeline's end at its length, moved into place, its template loaded and its
+   inputs set (graphic.py);
+4. A1 and A2, the `audio` rows and `sound` block (sound.py): every edge and fade exact by the sub-frame calls, each
+   crossfade added at whole frames;
+5. one round trip through the timeline's file (timeline_file.py): each segment's angle, each crossfade's sub-frame start
+   and length, and the `captions` (made whole frames by captions.py into build/captions.json) on the subtitle track in
+   the look's caption template (or --look-track FILE);
+6. the tracks named, the project saved, the timeline read back (readback.py) and compared with the list.
 
-The comparison covers every field the list gives except `why` and a grade: a panel's file, place, frames, source,
-framing (unset keys are Resolve's defaults), group, speed and retime; a segment's camera file, place, frames, source
-frame of that camera, framing, speed and retime (no colour group); a title's template and every input its row gives, pill ranges
-included; every audio clip and crossfade as sound.py lays them; every caption and word; the track names. Numbers agree
-within 1e-6. A panel's grade cannot be read back (readback.py says why): SetCDL must return True, and grades are
-listed under reading_gaps. Exit 0 only when there is no difference.
+The comparison covers every field the list gives except `why`: a panel's file, place, frames, source, framing (unset
+keys are Resolve's defaults), group, speed and retime; a segment's camera file, place, frames, source frame, framing,
+speed and retime; a title's template and every input its row gives, pill ranges included; every audio clip and
+crossfade; every caption and word; the track names. Numbers agree within 1e-6. Exit 0 only when there is no
+difference. On any failure the half-built timeline is deleted.
 """
 import argparse
-import importlib.util
 import json
-import os
 from pathlib import Path
-import sys
+import time
 
 import captions as caption_frames
 import graphic
 import multicam
 import readback
+import session
 import sound
+import timeline_file
 
 PIPELINE = Path(__file__).resolve().parents[1]
 LOOKS = PIPELINE.parent / 'looks'
-spec = importlib.util.spec_from_file_location('add_captions', PIPELINE / 'resolve/add_captions.py')
-add_captions = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(add_captions)
 
 DEFAULT_FRAMING = {'ZoomX': 1.0, 'ZoomY': 1.0, 'Pan': 0.0, 'Tilt': 0.0,
                    'CropLeft': 0.0, 'CropRight': 0.0, 'CropTop': 0.0, 'CropBottom': 0.0}
@@ -89,7 +87,8 @@ def expected_video(data, folder, finished=False):
     segments = []
     for row in data.get('segments', []):
         camera, path = cameras[row['camera']], str((folder / cameras[row['camera']]['file']).resolve())
-        where = {'file': path, 'group': camera['group']} if finished else {'camera_file': path, 'group': None}
+        where = ({'file': path, 'group': camera['group'], 'grade': camera['grade']}
+                 if finished else {'camera_file': path, 'group': None})
         segments.append({'track': CAMERAS_TRACK, **where, **picture(row, row['frames'])})
     titles = [{'track': TITLES_TRACK, 'record': row['record'], 'frames': row['frames'],
                'template': graphic.fusion_tool_name(row['template']), 'inputs': row['inputs']} for row in data.get('titles', [])]
@@ -217,13 +216,11 @@ def expected_tracks(data):
     return {f'{kind} {index}': name for (kind, index), name in TRACK_NAMES.items() if kind != 'subtitle' or data.get('captions')}
 
 
-def run(resolve, filename, name, look_track=None):
+def run(filename, name, look_track=None):
     data = json.loads(filename.read_text())
     folder = filename.parent
-    manager = resolve.GetProjectManager()
-    project = manager.GetCurrentProject()
-    if data.get('resolve_project', project.GetName()) != project.GetName():
-        raise ValueError('Open project differs from the edit list')
+    began = time.monotonic()
+    resolve, project = session.connect(data["resolve_project"])
     if project.IsRenderingInProgress():
         raise RuntimeError('Resolve is rendering; place after the render completes')
     if readback.timeline_named(project, name):
@@ -235,13 +232,24 @@ def run(resolve, filename, name, look_track=None):
     if timeline is None:
         raise RuntimeError('CreateEmptyTimeline failed')
     project.SetCurrentTimeline(timeline)
+    try:
+        return build(resolve, project, timeline, filename, data, folder, name, settings, look_track, began)
+    except Exception:
+        made = readback.timeline_named(project, name)
+        if made:
+            project.GetMediaPool().DeleteTimelines([made])
+        raise
+
+
+def build(resolve, project, timeline, filename, data, folder, name, settings, look_track, began):
+    """Everything on the new, empty TIMELINE, in track order; run() deletes it on any failure."""
     inherited = ['colorScienceMode', 'isAutoColorManage', 'rcmPresetMode', 'colorSpaceTimeline',
                  'colorSpaceOutput', 'inputDRT', 'outputDRT', 'disableFusionToneMapping', 'timelineInputResMismatchBehavior']
-    wanted = {'useCustomSettings': '1', **{key: settings[key] for key in inherited}, 'useInverseDRT': '1'}
+    wanted = {'useCustomSettings': '1', **{key: settings[key] for key in inherited if key in settings}, 'useInverseDRT': '1'}
     for prefix in ('timelineResolution', 'timelineOutputResolution'):
         wanted.update({prefix+'Width': str(data['format']['width']), prefix+'Height': str(data['format']['height'])})
     for key, value in wanted.items():
-        if not timeline.SetSettings({key: str(value)}) or str(timeline.GetSetting(key)) != str(value):
+        if not timeline.SetSettings({key: str(value)}) or str(timeline.GetSettings().get(key)) != str(value):
             raise RuntimeError(f'Could not set {key}={value}')
     angle_at_record = place_picture(resolve, project, timeline, data, folder)
     while timeline.GetTrackCount('video') < TITLES_TRACK:
@@ -249,27 +257,30 @@ def run(resolve, filename, name, look_track=None):
     while timeline.GetTrackCount('audio') < sound.ROOM_TONE_TRACK:
         timeline.AddTrack('audio', 'stereo')
     name_tracks(timeline)
-    if angle_at_record:
-        timeline = multicam.set_angles(resolve, project, timeline, CAMERAS_TRACK, angle_at_record,
-                                       folder / 'build' / 'place' / name.replace('/', '_'))
+    seconds = {'picture': time.monotonic() - began}
     result = {'timeline': name, 'panels': len(data.get('panels', [])), 'segments': len(angle_at_record)}
     if data.get('titles'):
         result['titles'] = len(graphic.place_titles(resolve, project, timeline, TITLES_TRACK, data['titles'],
                                                     graphic.HERE / 'templates' / data['look'], folder))
-    if data.get('audio'):
-        report = sound.run(resolve, filename, name)
-        result['sound'] = {'clips': len(report['clips']), 'crossfades': len(report['crossfades']),
-                           'fade_mismatches': report['fade_mismatches'], 'report': report['folder']}
+    seconds['titles'] = time.monotonic() - began - sum(seconds.values())
+    laid = sound.lay(resolve, project, timeline, data, folder) if data.get('audio') else {'clips': 0, 'crossfades': []}
+    result['sound'] = {'clips': laid['clips'], 'crossfades': len(laid['crossfades'])}
+    seconds['sound'] = time.monotonic() - began - sum(seconds.values())
+    captions = None
     if data.get('captions'):
         caption_file = folder / 'build' / 'captions.json'
         result['captions_py'] = caption_frames.build(filename, caption_file)
-        look_track = Path(look_track) if look_track else LOOKS / data['look'] / 'resolve' / 'caption-track.drt'
-        result['captions'] = add_captions.put_captions(resolve, name, json.loads(caption_file.read_text()), look_track,
-                                                       folder / 'build' / 'caption-tracks')
-    name_tracks(readback.timeline_named(project, name))
-    if not manager.SaveProject():
-        raise RuntimeError('SaveProject failed')
+        captions = json.loads(caption_file.read_text())
+    look_track = Path(look_track) if look_track else LOOKS / data['look'] / 'resolve' / 'caption-track.drt'
+    timeline, result['file_pass'] = timeline_file.rewrite(
+        resolve, project, timeline, folder / 'build' / 'place' / name.replace('/', '_'), angles=angle_at_record,
+        crossfades=laid['crossfades'], captions=captions, look_track=look_track)
+    seconds['file_pass'] = time.monotonic() - began - sum(seconds.values())
+    name_tracks(timeline)
+    session.save(resolve)
     result.update(compare(resolve, project, name, data, folder))
+    seconds['readback'] = time.monotonic() - began - sum(seconds.values())
+    result['seconds'] = {key: round(value, 1) for key, value in seconds.items()}
     return result
 
 
@@ -291,13 +302,4 @@ if __name__ == '__main__':
     parser.add_argument('--timeline', required=True)
     parser.add_argument('--look-track', type=Path)
     args = parser.parse_args()
-    import DaVinciResolveScript
-    try:
-        result = run(DaVinciResolveScript.scriptapp('Resolve'), args.edit_list.resolve(), args.timeline, args.look_track)
-        print(json.dumps(result, indent=1, ensure_ascii=False))
-        status = int(bool(result['differences']))
-    except Exception as error:
-        print(json.dumps({'error': str(error)}))
-        status = 1
-    sys.stdout.flush()
-    os._exit(status)
+    session.main(lambda: run(args.edit_list.resolve(), args.timeline, args.look_track))

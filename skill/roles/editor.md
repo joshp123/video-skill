@@ -1,21 +1,21 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5 as a brief to the role: its outcome, the craft with its reasons, the raw material, how the tools work, what proves the cut right, and the hand-over. The dated evidence behind it is in history.md. -->
+<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5 as a brief to the role: its outcome, the craft with its reasons, the raw material, how the tools work, what proves the cut right. Rewritten by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: the craft kept, the instruments replaced by the plan, cut.py, the join placer and checker, and look.py. The dated evidence behind it is in history.md. -->
 
 # Editor
 
 ## Your outcome
 
-Josh decided what the video says on the script page: his lines, in the order a viewer hears them. You make that play as if he said it once, well, to two cameras. Nobody sees or hears a cut. Every line is on the camera that serves it. The proof on screen lands on the word that names it. His speech is captioned so the video works muted. All of it lives in the edit list's `segments`, `audio`, `sound` and `captions`, plus the spotting of every graphic, and is placed as the cut timeline.
+Josh decided what the video says on the script page: his lines, in the order a viewer hears them. You make that play as if he said it once, well, to two cameras. Nobody sees or hears a cut. Every line is on the camera that serves it. The proof on screen lands on the word that names it. His speech is captioned so the video works muted. All of it lives in one plan, `plan.json`, which `cut.py` turns into a placed, finished, rendered and checked cut in about three minutes.
 
 Most of what Josh calls a fault is made or prevented here: a cut on a blink, a clipped consonant, a highlight a few frames late, a caption over his mouth, a hard sound join. None of those is taste, and if one reaches him the editing failed. What is taste stays his: which lines, their order, the look, the words on cards.
 
-You come after the story role and before colour, motion and finishing, as a professional editor works after the paper edit and before the grade and the online. The order follows cost. Choosing which take plays and where a cut falls is cheap: the timeline is rebuilt from the list in seconds, so you can change your mind freely until Josh locks. Grading shot by shot, masking and finishing are expensive and are done once, on a cut that will not move. Everything after you inherits your choices: the colourist grades the shots you chose, the motion designer builds graphics to your spotting, finishing renders your timeline.
+You come after the story and before colour, motion and finishing, as a professional editor works after the paper edit and before the grade and the online. The order follows cost. Choosing which take plays and where a cut falls is cheap: the timeline is rebuilt from the plan in minutes, so you can change your mind freely until Josh locks. Grading shot by shot, masking and finishing are expensive and are done once, on a cut that will not move. Everything after you inherits your choices: the grade is judged on the shots you chose, the graphics are built to your spotting, the render is your timeline.
 
 ## What you start from
 
 - **The decided script page,** the newest `versions/script-vN.md` he agreed: his lines in viewing order, the real screen content under each, the caption tidy-ups he agreed, and what he left out.
-- **The lav,** the only dialogue, padded onto the front camera's clock (`inventory.md` names the file; the list's `sound.lav` points at it, so a lav second and a front-camera second are the same number). It is the rawest truth about where a word starts and ends; every transcript is an estimate of it.
-- **The verbatim transcript** in the session's `transcript/`, which keeps every um, restart and cut-off word, so it shows you each attempt at a line. Resolve's transcript marks ums and pauses alike as `(...)` and hides restarts: read with it, choose takes from the verbatim one. Word times in both only locate a word, and can be tenths of a second out.
-- **Both cameras,** as the project's multicam and as files, with each angle's offset in `inventory.md`.
+- **The lav,** the only dialogue, padded onto the front camera's clock (`inventory.md` names the file; the plan's `sound.lav` points at it, so a lav second and a front-camera second are the same number). It is the rawest truth about where a word starts and ends; every transcript is an estimate of it.
+- **The verbatim transcript** in the session's `transcript/`, which keeps every um, restart and cut-off word, so it shows you each attempt at a line. The plan's `transcript` points at it, and `assemble.py` finds your pieces in it by their words. Resolve's transcript marks ums and pauses alike as `(...)` and hides restarts: read with it, choose takes from the verbatim one. Word times in both only locate a word, and can be tenths of a second out.
+- **Both cameras,** as the project's multicam and as files, with each camera's `picture_offset_s` in the plan's `cameras`.
 - **The face-touch scans** of both cameras.
 - **The demo content,** `graphics/content/` and its `content.md`: what each piece shows, which line it proves, and the exact text in it that can be lit.
 - **Words on screen,** `words.md`: Josh's settled lines under `Final:`, proposals under `Proposed:`.
@@ -31,15 +31,15 @@ His standard: "my order in the vid was all over the place so we should make sure
 - **Keep his last complete take of a line** unless an earlier one is cleaner. He restarts because an attempt went wrong, so the last full run is usually the one he meant.
 - **Never build one line from two attempts** when one clean run exists. Two attempts differ in energy, pitch, pace and distance from the lav, and a listener hears the seam even when the trace looks clean.
 - **A take he rejects aloud goes** ("no", "again", "let me redo that"), with the words he rejects it in. A restart on its own rejects nothing: the earlier attempt may hold the better line.
-- **Read the words either side of every cut together,** as a viewer hears them. Inside a sentence, the sentence stays whole; between sentences, the second follows from the first. A join that does not read as one thought goes back to the story role, never to Josh as a fragment.
-- **Pace is his own speech, tidied.** Take out dead air, false starts, ums and repeated words where his meaning stands. Keep the pauses that carry meaning and the breath before a new thought. Dropping a word, a pause or a breath to keep a cut clean is editing, and yours to do; list each one in your hand-over.
+- **Read the words either side of every cut together,** as a viewer hears them. Inside a sentence, the sentence stays whole; between sentences, the second follows from the first. A join that does not read as one thought goes back to the story: look for his own link in the raw take (`roles/story-and-demo.md`, "Finding the video in a ramble"), and never send it to Josh as a fragment.
+- **Pace is his own speech, tidied.** Take out dead air, false starts, ums and repeated words where his meaning stands. Keep the pauses that carry meaning and the breath before a new thought. Dropping a word, a pause or a breath to keep a cut clean is editing, and yours to do; note each one for the message that goes with the cut.
 
 ### Nobody hears a cut
 
 A listener tracks several things at once. A cut is invisible when every one of them carries on across it.
 
 - **The room.** A gap never drops to digital silence or to a different noise. Room tone from the same recording fills every gap, from a window with no click, breath or rustle in it. A tick in that window repeats under every pause in the film, and a full-band level can hide it under hum, so check the window high-passed too (`tools/audio.md`).
-- **How a word ends.** A voiced ending decays; a final consonant has a release after its closure. A transcript's end time usually falls before both. Cut there and the word sounds sliced though every trace looks tidy. Find the word's last sound on the level and fade over its own decay.
+- **How a word ends.** A voiced ending decays; a final consonant has a release after its closure. A transcript's end time usually falls before both. Cut there and the word sounds sliced though every trace looks tidy. So the edge goes in the pause after the decay, found from the level, never at the transcript's end time: `joins place` does exactly that, and a weak tail is the case its check catches least.
 - **How a word begins.** A cut inside a plosive's closure (the silence before the burst of "p", "t" or "k") is safe; a cut after the burst clips it. In connected speech there may be no silent point between two words.
 
   Weak: the cut after "Bell" in "Bell, which" falls at the transcript's end of "Bell", and the viewer hears "Belw-". Strong: the cut goes before the transition into "which" begins, or room tone covers the scrap, or the line plays through to a real pause.
@@ -47,13 +47,13 @@ A listener tracks several things at once. A cut is invisible when every one of t
 - **Pitch and pause.** Before judging a join, look at how he ends a finished sentence in this take on a pitch track. Speakers differ, and the textbook falling ending can be wrong for him. An end that sounds unfinished, joined to a new sentence, sounds like an interruption. Match the pauses he makes in this take; one fixed pause length makes him sound like someone else.
 - **Energy.** Two stretches spoken with different energy, or at a different distance from the lav, sound like two recordings when they meet. Choose takes that sit together.
 
-Each join is a butt join, with each piece's own fades, or a crossfade. A crossfade is centred on the cut and plays half its length of source beyond the cut on both sides, so sound you cut out can come back under it: an edge cut tight against a click or a breath brings the click or the breath back. The right fade is the decay you measured at that word, and no fade length carries over to the next join.
+Every join in the plan is a crossfade of the plan's `crossfade_ms`, centred on the cut. A crossfade plays half its length of source beyond the cut on both sides, so sound you cut out can come back under it: an edge cut tight against a click or a breath brings the click or the breath back. That is why `joins place` keeps every edge far enough inside its pause for half the crossfade to fall on room tone. Professional dialogue editors use 5 to 10 ms inside one take and 20 to 40 ms between takes; 40 ms, one frame at 25 fps, is the default and served codex-switch.
 
-No model here has yet been shown to hear whether a join sounds natural: the free listening routes tested on 29 Oct could not tell a clean join from a bad one (`history.md`, "Listening"). Until the director's brief names a listening route, judge joins as a dialogue editor would with no ears: from the level, the spectrogram, the pitch and his mouth on the picture. Name for the director the few joins whose risk you could not settle, and say plainly that nobody listened to the rest. When Josh has listened to a join and heard nothing wrong, it is done.
+Nobody here can listen, so the tools do the two things a dialogue editor's ears do that can be measured. `joins place` puts every edge in a measured pause next to the words you chose, which rules out a chopped end, a clipped start, a scrap of a removed word and a cut inside connected speech by construction. `joins check` then scores every join with a check trained on thousands of clean and broken joins: on his own voice, at its default setting, it caught 93% of faults and flagged 2.8% of clean joins. A flagged join comes back to you, never to Josh: move the edge into the pause, choose another edge word or another take, or keep it with a reason. What the check is weakest at is yours to prevent by choosing takes: a level jump between two takes (it does not flag these; each join reports `level_step_db` for you to judge), a change of room sound (74% of jumps of 6 dB or more caught), a weak consonant tail cut into the room floor, and anything about pitch, breath or meaning, which nothing here measures (`tools/audio.md`, "What the join check misses"). When Josh has listened to a join and heard nothing wrong, it is done.
 
 ### Every line is on the camera that serves it
 
-The front camera is eye contact: the promise, a claim, the ask. The wide camera shows gesture and him looking at his screen, and covers removed time. A punch-in on one camera is a deliberate cut inside one angle, to land a line or hide a jump. A graphic over him is for a line about what the tool shows. His words: "the cam moments syncing should reqiure some smart judgement (how much cam1 how much cam2)". Alternating by position is no reason. Write each segment's reason in its `why`, and state the balance in your hand-over: seconds on each camera and on the tool. An angle is the one choice Josh can change himself, in one click in Resolve's viewer, so make every one you could defend.
+The front camera is eye contact: the promise, a claim, the ask. The wide camera shows gesture and him looking at his screen, and covers removed time. A punch-in on one camera is a deliberate cut inside one angle, to land a line or hide a jump. A graphic over him is for a line about what the tool shows. His words: "the cam moments syncing should reqiure some smart judgement (how much cam1 how much cam2)". Alternating by position is no reason. Write each shot's reason in its `why`, and know the balance: seconds on each camera and on the tool. An angle is the one choice Josh can change himself, in one click in Resolve's viewer, so make every one you could defend.
 
 A jump cut is never bare. When the same camera continues across removed time with his face on screen, his head jumps. Cover it: change camera, punch in, or put the tool on screen over the join.
 
@@ -63,7 +63,7 @@ Resolve's Multicam SmartSwitch chooses angles by itself, by who is speaking and 
 
 A viewer studies the first and last frame of every shot, and every frame where his face first appears, including the frame a graphic leaves and reveals him. On each of those frames his eyes are open (a glance down at his screen is fine), no hand is at his face, his mouth is not caught mid-grimace, and there is no blur from a head turn.
 
-When the picture cut lands on a blink but the sound cut is right, move only the picture a few frames: a split edit. When every frame either camera has at that moment shows shut eyes, choose between a cutaway, letting the outgoing shot run on, another take, or dropping a word, a pause or a breath. That is your call while his meaning stands. Make it; it is never a question for Josh.
+When the picture cut lands on a blink but the sound cut is right, move only the picture a few frames: a split edit (a shot's `offset_frames` in the plan; negative brings the picture in first). Watch the frames either side of a split, because his mouth then moves to the outgoing line's words over the incoming sound, and the gate's sync check catches a split too wide. When every frame either camera has at that moment shows shut eyes, choose between a cutaway, letting the outgoing shot run on, another take, or dropping a word, a pause or a breath. That is your call while his meaning stands. Make it; it is never a question for Josh.
 
 His standard: "cut all the moments where i touch my face etc (as a pro director would do)". Both cameras film the same moment, so a touch on one camera is a touch on both. Cut round it, or cover it with the tool on screen.
 
@@ -78,7 +78,7 @@ The first frame is the thumbnail and must work with the sound off: his eyes on t
 - **The captions sit in one band for the whole video,** because Resolve's caption template takes one position per subtitle track. Every layout keeps that band clear, over something dark enough for white type. A light app window behind the band defeats the captions, so light app footage goes in a panel above him. With a panel above him, the panel ends high enough that his eyes and mouth fit under it with the look's clearance above the band. Check that on one real frame of each layout before you place the cut.
 - **What a viewer must read never sits under the platforms' top bar or in their button column.** Crop stills and screen captures so no app label sits there, and check the crop over the whole time it is on screen.
 
-If the band forces a layout you would not choose, tell the director: the band's height is part of the look, and the look is Josh's.
+If the band forces a layout you would not choose, say so to Josh with the cut: the band's height is part of the look, and the look is his.
 
 ### The proof lands on his word
 
@@ -96,7 +96,7 @@ For each graphic, decide:
 
 You phrase and time every caption. Resolve's own captioning (`CreateSubtitlesFromAudio`) breaks lines by a count of characters, not by phrase. So the phrasing is yours, while the subtitle track, the template and its word highlight are Resolve's.
 
-- **Phrasing.** One caption per phrase as it reads, broken where his phrasing breaks, never mid-phrase: no article left at the end of a row, no verb split from its object, no one-word orphan. One or two rows, each inside the safe line with the pill counted; the look's type size decides how many of his characters fit. Names spelt as the tool's README spells them. Numbers as professional subtitles write them: one to ten in words, larger in figures. A phrase wider than two rows cannot avoid a mid-phrase break at the look's type size. Give it to the director, because the fix (smaller type, or accept the break) is a look decision for Josh.
+- **Phrasing.** One caption per phrase as it reads, broken where his phrasing breaks, never mid-phrase: no article left at the end of a row, no verb split from its object, no one-word orphan. One or two rows, each inside the safe line with the pill counted; the look's type size decides how many of his characters fit. Names spelt as the tool's README spells them. Numbers as professional subtitles write them: one to ten in words, larger in figures. A phrase wider than two rows cannot avoid a mid-phrase break at the look's type size. It goes to Josh with the cut, because the fix (smaller type, or accept the break) is a look decision, and his.
 - **His words, with only his tidy-ups.** A caption shows the words he says on the placed sound, plus the grammar tidy-ups he agreed on the page ("it's a command line tool" shown as "this is a command line tool" is his own example). A tidied word takes the time of the word it replaces. A word the sound cut leaves out comes out of the caption too.
 - **Timing.** A word lights on the frame his voice starts it in the placed sound, and stays lit until the next word starts. In his look the pill walks the eye through his speech, so it must be exact: more than 3 frames early or late is a fault, and a viewer sees it. A word too short to light on its own joins the next on the pill.
 - **Length.** A caption is never shorter than its words take to say, and never runs over into the next thought. One up for under about half a second joins a neighbour when the joined phrase still fits the safe line; when it does not, it stays.
@@ -104,94 +104,102 @@ You phrase and time every caption. Resolve's own captioning (`CreateSubtitlesFro
 
 ## How the tools work
 
-### The edit list is the cut
+### The plan is the cut
 
-`edit-list.json` holds every editorial value in the timeline's own terms (`pipeline/edit-format.md` has every field). You own its `segments`, `audio`, `sound` and `captions`, and the timing of every graphic. The colourist owns each camera's grade and group in `cameras`; the motion designer owns how each title and panel looks. Each row carries a few words of `why` for the next reader; code never reads it.
+`plan.json` holds every editorial decision for the whole video, in his words rather than in frames. Its format is at the top of `pipeline/b/assemble.py`. The parts that are yours:
 
-`place.py LIST --timeline NAME` builds the whole cut timeline from the list in one command, reads it back and prints every difference from the list. It exits 0 only when there is none, so the timeline is exactly what you wrote. It refuses a name that already exists, so every placement is a new timeline and nothing Josh has seen is touched. Placing takes seconds, which is what makes editing by list cheap: decide the whole cut, write it, place it, look; then change the list and place again under a new name.
+- **`pieces`:** each kept stretch of his speech, in playing order, by its first and last words (`from`, `to`) and roughly where he says them (`near_s`, and `to_near_s` when the last words occur more than once in the piece). `pause_after_s` is the pause you want at the join after it, split between both sides. A piece is one clean run of his voice: the more of a line one piece carries, the fewer joins a listener can hear.
+- **`shots`** inside each piece: `camera`, `framing` (`ZoomX`, `ZoomY`, `Pan`, `Tilt`), `at` (the word the shot starts on; the piece's start by default) and `offset_frames` for a split edit at a piece's start. A piece without shots continues the camera before it.
+- **`captions`:** every caption in order, as it reads, with ` / ` at its row break. Together they show the kept words of every piece. `hold_s`, `start_s` and `word_starts_s` move a caption's end, its start, or one lit word you have measured off its voice.
+- **`titles` and `panels`:** each graphic, anchored to his words (`{"piece", "word", "edge"}`) rather than to frames, so it stays on its word when the cut changes.
+- **The film's ends:** `lead_in_s` before his first word, `tail_s` after his last, `fade_ms` in and out, `crossfade_ms` at every join, `caption_hold_s`.
+
+A skeleton, with the header that ingest wrote (`tools/cameras.md`) shortened:
+
+```json
+{
+ "resolve_project": "2026-11-20 tool-name", "look": "2026-10-16-signpost-pill", "fps": 25,
+ "format": {"width": 1080, "height": 1920}, "multicam": "cameras",
+ "cameras": {"front": {"file": "...", "log": "Nikon N-Log", "group": "front", "grade": {...}, "picture_offset_s": 0, "reference": true},
+             "wide": {"file": "...", "log": "DJI D-Gamut/D-Log", "group": "wide", "grade": {...}, "picture_offset_s": 12.48}},
+ "sound": {"lav": "...", "room_tone_s": [60.2, 63.2], "room_tone_crossfade_ms": 200, "room_tone_end_fade_ms": 300},
+ "transcript": "...", "crossfade_ms": 40, "fade_ms": [10, 20], "lead_in_s": 0.5, "tail_s": 4, "caption_hold_s": 0.3,
+ "pieces": [
+  {"from": "So I built", "to": "every morning.", "near_s": 95.4, "pause_after_s": 0.5,
+   "shots": [{"camera": "front", "framing": {"ZoomX": 1.2, "ZoomY": 1.2, "Pan": 40, "Tilt": 150}},
+             {"camera": "wide", "framing": {...}, "at": "every"}], "why": "..."}
+ ],
+ "captions": ["So I built / a tool that", {"text": "runs every / morning.", "hold_s": 0.5}],
+ "titles": [{"template": "Signpost Title", "inputs": {"Title": "[[Tool Name]]"}, "at": {"piece": 0, "word": "tool"}, "frames": 72}],
+ "panels": [{"file": "build/look-background.mov", "source_in": 0, "track": 1, "at": {"frame": 0}, "until": {"end": true}}]
+}
+```
+
+The first panel is the look's background on V1 for the whole film: make it once per video at the look's `background` colour (`ffmpeg -f lavfi -i "color=c=0x171717:s=1080x1920:r=25" -t SECONDS -c:v prores_ks -profile:v 3 build/look-background.mov`, at least as long as the film). Every choice carries a few words of `why`; code never reads it. The cameras' grades in `cameras` belong to the colour stage, and how each title and panel looks to the motion stage; the rest is the cut's.
+
+### From plan to checked cut
+
+`assemble.py` finds every piece's words in the transcript, has `pipeline/joins/joins place` cut each edge inside the measured pause next to them, lays the pieces end to end, converts every shot, title and panel anchor to timeline frames, gives each caption word the time of the spoken word it matches, and computes each segment's source frame from the cameras' offsets. It writes `edit-list.json` and reports: an edge with no pause next to it, every join the check flags, caption words that match no spoken word and spoken words in no caption, words the aligner doubts, a caption the template would split, the three shortest segments. Run it alone (no Resolve; `--force` to replace the edit list it wrote last time) while you are still choosing; `cut.py` runs it first.
+
+`cut.py plan.json --timeline "cut N build M" --loudness PRESET` then places the cut timeline, makes its finish timeline, renders it to `versions-check/`, checks every join again in the rendered sound, and runs the gate. Its summary lists what needs you: the assemble report's edges and flagged joins, any place or finish difference, the rendered joins the check flags, and the gate's fault rows. The gate's "look" rows are only in its `report.md`, with their evidence, in `build/qc/<timeline>/`; read them too. Each stage's own output is in `build/cut/<timeline>/`. A failed stage stops it and says why.
+
+### Sound edges
+
+`joins place` finds the room floor around each edge and cuts in the pause next to your words, keeping about 0.15 s of the pause on each side unless you set `pause_after_s`. For each edge it reports how far the transcript's time was out and, when the nearest pause lies beyond a sound you may not want (an um, a breath), the words in between and the quietest point near your estimate. An edge reported as "no pause next to this word" means the word runs straight into the next: `assemble.py` then aligns the words either side, and if the cut fell inside a word it moves the edge to the middle of the gap between the aligned words and says so (`moved_to`, `why_moved`). Cutting there is still a cut inside connected speech, which a listener can hear. Three answers to a bad edge, in order: choose another edge word or another take; set the edge by hand at the point you have chosen (`start_s` or `end_s` on the piece, on the lav's clock), which `joins place` uses as given before scoring every join again; or keep it, with your reason.
+
+Every piece lies on A1 with its edges exact to the sample: Resolve rounds a placed clip to whole frames, so `place.py` sets each edge with the sub-frame calls and puts each crossfade's sub-frame geometry in through the timeline's file (`tools/audio.md`). Room tone from the plan's `sound.room_tone_s` window fills every gap on A2.
 
 ### Picture: segments of the multicam
 
-V2 holds the cameras' multicam clip, cut into segments. A segment is `{camera, source_in, record, frames, framing}`. `source_in` is a frame of that camera's own file; `place.py` adds the angle's offset inside the multicam, so the same moment has a different `source_in` on each camera. Convert between them with the offsets in `inventory.md` (front-camera time = a file's own time + its offset). `framing` (`ZoomX`, `ZoomY`, `Pan`, `Tilt`) is the shot's whole framing on that camera; `Pan` and `Tilt` are not pixels (`tools/resolve.md` gives the units).
+V2 holds the cameras' multicam clip, cut into segments: one at every piece's start and at every shot inside a piece. `assemble.py` computes each segment's source frame from the moment it shows and the camera's `picture_offset_s`, so a shot switched to the other camera shows the same moment. `framing` is the shot's whole framing on that camera; `Pan` and `Tilt` are not pixels (`tools/resolve.md` gives the units), and the two cameras need different values for the same kind of shot, so a switch changes the framing too. The cut timeline carries no grade; `finish.py` makes the graded finish timeline from it.
 
-A camera switch changes `camera`, the `source_in` for the same moment, and the `framing` for the same kind of shot on the new camera; the record frame stays. The cut timeline carries no grade. `finish.py` makes the graded finish timeline from it, and a switched segment takes its new camera's grade there. When Josh changes the cut timeline himself, the list does not know. Read the timeline (`readback.py`) and translate his change into the list by hand: for an angle switch, the segment's `camera` from the item's `camera_file`, with its `source_in` as read, which is already that camera's own frame (SKILL.md, "A change made in Resolve comes back into the list by hand"). Resolve keeps the old camera's framing on a switched segment, so reframe it for the new camera. Until the list holds his change, `finish.py` would put back the list's framing over his and refuse the switch.
+### Captions and word times
 
-### Sound: one dialogue track, edges to the sample
+The verbatim transcript's word times are close after a pause and run early inside connected speech, by up to 490 ms (median 193 ms) on nine words measured by hand on codex-switch. So `assemble.py` does not time captions from the transcript: once the pieces are cut, it has `pipeline/b/words.py` force-align each piece's words on exactly that piece's audio (torchaudio's MMS aligner; median error 24 ms on those nine words), puts a word that follows a pause on the nearest onset of his voice as the gate measures one, and gives each shown caption word, and each word a shot, title or panel is anchored to, the aligned time of the spoken word it matches. Shown words that match nothing ("50,000" for "fifty thousand") share the time of the spoken words between their neighbours. A word the aligner doubts (a second aligner disagrees, or its confidence is low) is listed in the report as `doubtful_words`, with both times: look at it on the spectrogram before you trust it, and move it with the caption's `word_starts_s` if it is off. `place.py` writes the captions onto the subtitle track through the timeline's file in the look's template, each word on whole frames.
 
-Every `audio` row is a piece of the lav: `source_in_s`, `source_out_s`, `record_s`, `fade_in_ms`, `fade_out_ms`, and `crossfade_ms` when the join into the next piece is a crossfade (the next piece then starts exactly where this one ends). All pieces go on A1 in order. Room tone from the `sound` block's window fills every gap on A2, under the pieces' fades.
-
-Write edges in seconds, to whatever precision the sound needs. Resolve rounds a placed audio source point to a whole frame, up to 20 ms at 25 fps and enough to clip a consonant. So `sound.py`, which `place.py` runs, places the pieces at whole frames, then writes every exact edge, fade and crossfade into the timeline's file, imports it back and checks each one. Voice Isolation and the Dialogue Leveler go on a piece when its row asks. The mechanics and their limits are in `tools/audio.md`.
-
-### Measuring the lav
-
-`envelope.py LAV --from S --to S --quiet-dbfs L --near T` prints the RMS level of the louder channel every 5 ms over the span, the runs below the level you give, and the quiet step nearest a time you give. Measure this recording's floor first and choose the quiet level from it: a different room puts silence at a different level, and a level carried over from another recording puts edges inside words.
-
-One call over the gap between two words shows where the outgoing word's sound dies, where the incoming one rises and how much quiet lies between: that is the measurement for one join. Ask over the gap, not over the whole line, because every 5 ms step is a line of output. Where the level is ambiguous, draw the spectrogram of a second either side (`tools/audio.md`, "Seeing a join"): it shows a release, a breath, a click or a scrap of the next word that a level cannot.
-
-### Word times on the placed sound
-
-Captions and highlights are timed to the sound the viewer hears, on the timeline's clock, never to the source transcript, because placing moved every word.
-
-- **`word_times.py NAME`** has Resolve render the timeline's mixed sound into the cache, transcribe it, and print every heard word with its time and the path of the sound file. It hears what is really there, a word you did not expect included, but its times can be tenths of a second out and it drops words.
-- **`align.py SOUND LIST OUT.json`** places the words you already know (the list's captions) on that sound file. The Montreal Forced Aligner gives each word's start and end; a second aligner (wav2vec2) gives a confidence and a cross-check. A word with low confidence, or on the cross-check's doubtful list, was not said as written there (a filler dropped from the caption pulls the next word early; a misspelt name has no sound to match), so judge its start on the spectrogram. Spoken numbers need their spoken form (`--spoken`). On synthesised speech 89% of its starts in connected speech fell within 40 ms, one frame at 25 fps; it is not yet proven on his voice, so treat its doubtful list as the places to look, and the gate's highlight check as the judge.
-
-Take the times again after any re-place that moves his words.
+The gate measures the first lit word after every pause against the onset of his voice and fails it beyond 3 frames; inside connected speech it cannot tell a word's start from a closure inside a word, so the aligner is the instrument there (`tools/faults.md`, "Highlight late or early"). A word starting more than 25 frames after the one before would start a new caption page in the template; `assemble.py` reports it (`caption_refusals`), and the fix is in the phrasing: split the caption there.
 
 ### Frames
 
-Judge the picture on full-size frames, never on a contact sheet. A contact sheet only finds where to look in a long file: it shrinks away the very things you are judging, an eyelid, a fingertip at a cheek, a letter at a panel's edge. Josh: "its too compressed and you miss the full story".
+Judge on full-size frames (SKILL.md, "Invariants"): a contact sheet shrinks away an eyelid, a fingertip at a cheek, a letter at a panel's edge.
 
-Two sources answer two different questions:
-
-- **The camera files,** by source frame, show what each camera saw: eyes, hands, mouth, a head turn, both cameras at the same moment. They need no Resolve, so take every frame a decision needs in one command (`tools/checking.md`).
-- **`frame.py NAME FRAME OUT.png`** exports a settled still from Resolve's viewer and shows what the timeline shows: framing, layout, the caption band against his face, a graphic over him. It gives one frame per call and holds the Resolve lock while it works, so keep it for those questions.
+- **`look.py LIST --cuts --out DIR`,** before or after placing: every segment's first and last frame on both cameras, graded and framed as the finish timeline will show them, on labelled sheets. Use it to find the cuts worth opening: a blink, a hand, a camera that would serve better.
+- **`look.py LIST --timeline NAME --at F ... --out DIR`:** any frames of a placed timeline at full size and at phone width, about 45 ms each, without rendering. What the timeline shows: framing, layout, the graded picture, a graphic over him. It does not draw the caption track: to see captions, render a still (`render.py --preset still --range F F`).
+- **The camera files,** by source frame, show what each camera saw at any moment, with no Resolve at all (`tools/checking.md`, "Frames from the camera files").
 
 The face-touch scans list candidate moments on each camera: frames where Apple's Vision finds several confident points of a hand inside his face's box. They miss some touches (a scratch behind the ear) and flag some gestures near the neck. Open every flag inside a kept segment, on both cameras, and read the two scans together.
-
-### Captions onto the track
-
-`captions.py LIST` turns your captions into what Resolve's caption template needs: whole frames, each word lit until the next. `place.py` then puts them on the subtitle track through the timeline's file, in the look's template. Neither changes a decision of yours. `captions.py` refuses a caption with a word starting more than 25 frames after the one before, and names the word to split before: the template would start a new page there, and the caption's words would never show together. It warns when a row with its pill is wider than the safe line. A refusal or a warning is yours to fix in the phrasing.
 
 ### Graphics
 
 Spot each graphic in the file it will be built from:
 
-- **a title, card, photo or the closing page** as its `titles` row: the look's template, its record frame and length, and its words from `words.md`;
-- **a terminal, an agent's box or a key-line card** as its entry in the video's render spec, `graphics/spec.json` (`tools/remotion.md`): its id, kind, record frame, length and layout, the content piece it shows, and the frame of every cue (each highlight, the start of typing, a scroll).
+- **a title, card, photo or the closing page** as a `titles` entry in the plan: the look's template, its anchors (`at`, and `until` or `frames`), and its words from `words.md`;
+- **a terminal, an agent's box or a key-line card** as an entry in the video's render spec, `graphics/spec.json` (`tools/remotion.md`), whose clip goes in as a `panels` entry on V3. The spec takes timeline frames: read them from the edit list after `assemble.py` (each caption word's time on the timeline, and each panel's `record`), so every cue lands on the frame he says its word.
 
-The motion designer builds each one in the look and checks it; you own when.
+Titles or panels that overlap on one track are refused: anchor the first one's end to the next one's start with `until`. The motion stage builds each one in the look and checks it; the cut owns when.
 
-### The fault gate
+### The checks that are yours
 
-`qc.py` measures a rendered cut against the classes in `tools/faults.md` and reports each finding with its frame and an evidence image. These classes are yours: eyes shut at a cut; lips out of sync; a clipped word or a hard join at a sound join; a highlight late or early; a caption on his face; a caption past the safe line; a caption word with no sound. It is the one definition of those faults. Run it on the classes you changed, as SKILL.md, "The loop" sets out, on a span rendered at the delivery's loudness (`tools/faults.md`, "Running the gate"), and never a copy of its tests: two instruments measuring one class their own ways find different faults, and then nobody knows which cut is right.
+`cut.py` runs two. `joins check` scores every join in the rendered sound (`tools/audio.md`). The gate, `qc.py`, measures the rendered file for the classes in `tools/faults.md`; these are yours: eyes shut at a cut; lips out of sync; a caption on his face; a caption past the safe line; a highlight late or early; and, when it is given the heard words, which `cut.py` does not do, a caption word with no sound under it. Run either alone on a span while you work (`tools/faults.md`, "Running the gate"); never a copy of their tests.
 
-What the gate cannot see is yours to look at: a face touch; framing and face size across a camera change; a bare jump cut; a graphic's exit revealing him mid-blink (it checks eyes only at segment starts); whether the words either side of each cut read as one thought; how a join sounds.
+What the checks cannot see is yours to look at: a face touch; framing and face size across a camera change; a bare jump cut; a graphic's exit revealing him mid-blink (the gate checks eyes only at cuts); whether the words either side of each cut read as one thought; pitch and breath at a join.
 
 ## Working fast
 
-Your time goes on turns, not on placing. A cut built one edge at a time (look at a frame pair, place, render, measure, look again) costs hundreds of turns for a short. Work as a professional works a paper edit into a timeline:
+Your time goes on turns, not on placing. A cut built one edge at a time (look at a frame pair, place, render, measure, look again) costs hundreds of turns for a short; October's took 673. Work as a professional works a paper edit into a timeline:
 
 1. Read the page and the verbatim transcript once, and choose every take and every join in the text.
-2. Measure in batches: one level call per join, the frames for every cut in one command per camera, one frame per layout.
-3. Write the whole list, every row with its `why`, and place it once.
-4. Render the finish timeline, run the gate on your classes over the whole cut, and look by eye only where the gate cannot.
-5. Fix every finding at its source in the list, and place again.
-
-A fault class that comes back after you fixed it means you have misread a mechanism: read its section in `tools/faults.md` and the tool file again before you look harder. A join that will not come clean is a reason to change the join (another take, a different edge, a crossfade, a covering shot), not to measure it again.
-
-Write `scratch/editor/state.md` as you go (SKILL.md, "The roles, and why in this order").
+2. Write the whole plan, every choice with its `why`, and run `assemble.py`. Read its report: every edge with no pause, every flagged join, every caption word that matched nothing.
+3. Fix those in the plan, then `look.py --cuts` to choose cameras and find blinks and hands at every cut, opening the doubtful ones at full size.
+4. Run `cut.py`. Decide every item it lists, and look where the checks cannot.
+5. Change the plan and run again under the next build number.
 
 ## What proves the cut right
 
-- `place.py` exits 0: the timeline is the list.
-- The gate passes your classes on a render of the finish timeline at the delivery's loudness, or every row left is overridden in writing in your hand-over, with its frame, evidence and reason (SKILL.md, "The loop").
-- You have looked at full size at everything the gate cannot see, on every cut, not on a sample.
-- You have read the placed cut's heard words (`word_times.py`) from start to end, as a stranger hears them: every join reads as one thought, nothing is said twice, nothing refers to something not yet heard, and it ends on the ask.
+- `cut.py` exits 0, or every item left in its list is kept with a written reason.
+- You have looked at full size at everything the checks cannot see, on every cut, not on a sample.
+- You have read the placed cut's words from start to end, as a stranger hears them: every join reads as one thought, nothing is said twice, nothing refers to something not yet heard, and it ends on the ask.
 
 ## Notes and lock
 
-A note about what is said goes to the story role; a note about what is seen, heard, or when, is yours. Change the thing he named inside the same design, through the list and a re-place or in place on a duplicate of the cut timeline (`roles/director.md`, "Applying a note"), and keep everything he did not mention. When he locks, the words, order, cameras, framing, layouts and graphic timings are fixed; a later change goes to him as an option, never silently.
-
-## Hand over
-
-After `tidy.py` (SKILL.md, "The timeline"), give the director the list, the cut timeline's name, and a few lines: the balance between cameras and tool, anything you could not make clean, the joins nobody heard, and every word, pause or breath you dropped to keep a cut clean. The colourist grades from your cut, the motion designer builds to your spotting, and finishing renders what you placed.
+A note about what is said goes back to the story; a note about what is seen, heard, or when, is yours. Change the thing he named inside the same design, in place with `note.py` where it can (a camera, a join, a caption, a title) and through the plan where it cannot (`roles/director.md`, "Applying his notes"), and keep everything he did not mention. When he locks, the words, order, cameras, framing, layouts and graphic timings are fixed; a later change goes to him as an option, never silently.

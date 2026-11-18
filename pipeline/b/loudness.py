@@ -3,7 +3,7 @@ Written by AI on 2026-10-25 by GPT-6.1 Sol.
 Usage: loudness.py --preset-dir DIR --target LUFS --ceiling DBTP
 Targets are whole numbers, as stored by Resolve. Uses route 3's exported Audio
 Only donor and Qt blob codec, unchanged. The imported preset is audio-only;
-LoadRenderPreset(name) before render_timeline.py sets the phone/post format.
+render.py --loudness NAME loads it, then sets the phone or post format on top.
 Optimize is measured to undershoot its target; measure the actual delivery.
 """
 import argparse, os, re, sys, uuid
@@ -109,7 +109,7 @@ def encode(m):
 
 def run(resolve, directory, target, ceiling):
     project = resolve.GetProjectManager().GetCurrentProject()
-    donor = Path(__file__).resolve().parents[2]/'.cache/audio-route-test-2/drt/r2-audio-base.xml/r2 audio base.xml'
+    donor = Path(os.environ.get('VIDEO_MEDIA', '/Volumes/Josh Extreme Pro USB4 4TB/Media'))/'Edits/.cache/audio-route-test-2/drt/r2-audio-base.xml/r2 audio base.xml'
     base = donor.read_text()
     blob = re.search(r'<FieldsBlob>([0-9a-f]+)</FieldsBlob>',base)[1]
     values = dict(RecordNormalizeAudio=('bool',True), RecordAudioNormalizationMethod=('int',1),

@@ -1,21 +1,21 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: what a fault is, how the gate measures each class and what it cannot see, and how to run it. Every number is checked against pipeline/b/qc.py. The dated calls behind the numbers are in history.md. -->
+<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: what a fault is, how the gate measures each class and what it cannot see, and how to run it. Updated by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: the sound-join classes moved to pipeline/joins, the gate run by cut.py, a flag decided by the model. Every number is checked against pipeline/b/qc.py. The dated calls behind the numbers are in history.md. -->
 
 # Faults and the gate
 
 ## What a fault is
 
-A fault is something wrong in a cut that a professional editor would fix without asking: a cut on a blink, a clipped word, two cameras that do not match, a caption on his mouth, a card too fast to read. Faults never reach Josh (SKILL.md, "The loop"). Taste is what a professional would ask him about, and is never a fault (below, "Not faults: taste"). When unsure, ask whether a professional would fix it without asking: if yes, it is a fault.
+A fault is something wrong in a cut that a professional editor would fix without asking: a cut on a blink, a clipped word, two cameras that do not match, a caption on his mouth, a card too fast to read. Faults never reach Josh (SKILL.md, "Invariants"). Taste is what a professional would ask him about, and is never a fault (below, "Not faults: taste"). When unsure, ask whether a professional would fix it without asking: if yes, it is a fault.
 
 Each class below says what the viewer notices, the number that decides it, what that number rests on, and what measures it:
 
 - **measured:** `pipeline/b/qc.py` measures it on the rendered file and fails the gate on it;
 - **look:** the gate marks a place for a model to judge by eye, and does not fail on it;
-- **listen:** a place only an ear can settle; nobody here can yet, so it is named for Josh;
-- **eyes:** no instrument; the role that owns the class, finishing and the cold judge look for it.
+- **listen:** a place only an ear can settle; nobody here can, so it is named for Josh with the cut;
+- **eyes:** no instrument; you look for it at the stage that owns it, again at finishing, and the cold look sees it fresh.
 
 Every number is a limit of what a viewer notices, set from cold judges' calls on real cuts or from a published norm, never a value measured on one recording. Several rest on only one or two judged cuts; each class says what its number rests on, so you know how much to trust it.
 
-**The gate finds; the model decides.** A measured fault row is fixed at its source by default. A role may override one only in writing, in its hand-over: the row's frame, its evidence image, and the reason the frames show it is not a fault here. Every override reaches the cold judge and the director, either of whom may reinstate it. When the cold judge or Josh sees a fault the gate missed, the owner fixes the cut now, and the gap in the instrument is logged for the end of the video. A number a judge keeps disagreeing with is reviewed then, with the frames.
+**The gate finds; you decide.** A fault row is fixed in the plan by default. You may keep one only with its frame, its evidence image, and the reason the frames show it is not a fault here, written in the `why` of the plan entry it belongs to; the cold look sees what you kept. When the cold look or Josh sees a fault the gate missed, fix the cut now, and note the gap in the instrument for the end of the video. A number that keeps disagreeing with what you see on the frames is reviewed then.
 
 ## How the gate works
 
@@ -25,30 +25,27 @@ Every number is a limit of what a viewer notices, set from cold judges' calls on
 - **Sound,** decoded to mono at 48 kHz. Each sound piece of the list is found in the cut by matching its samples to the lav, so the gate knows each piece's real offset and level. A level trace every 5 ms finds word onsets in the cut's own sound.
 - **Heard words,** when given (`--heard-words`, Resolve's transcription of the file's own sound by `word_times.py --media`), are paired in order with the lit caption words.
 
-It writes `report.md`, `report.json` and an `evidence/` folder of images (frame strips, crops, level traces, spectrograms) into the video's `build/qc/<file name>/`, one row per finding with its class, frames, time, number and evidence. It exits 1 while any row is a fault. A row whose evidence shows the instrument misread the frame (a hand taken for a blink, a book spine read as a caption) is overridden in writing as above and logged as an instrument error for the end of the video.
+It writes `report.md`, `report.json` and an `evidence/` folder of images (frame strips, crops, level traces, spectrograms) into the video's `build/qc/<timeline>/`, one row per finding with its class, frames, time, number and evidence. It exits 1 while any row is a fault. A row whose evidence shows the instrument misread the frame (a hand taken for a blink, a book spine read as a caption) is kept with that frame as its reason and noted as an instrument error for the end of the video.
 
-**What the gate cannot see:** a face touch; framing, face size and background across a camera change; a bare jump cut; his eyes anywhere but at segment starts; the content of a graphic and whether its pill covers its word; encoding breakup; the story at a join; how a join sounds; motion. Each role's file says which of these are its to look at, and finishing and the director look at all of them on the whole film.
+**What the gate cannot see:** a face touch; framing, face size and background across a camera change; a bare jump cut; his eyes anywhere but at cuts; the content of a graphic and whether its pill covers its word; encoding breakup; the story at a join; how a join sounds beyond what the join check measures; motion. Each stage's file says which of these are its to look at, and finishing looks at all of them on the whole film.
 
 ## Running the gate
 
-Any role runs it on the classes it is changing, through the video's lock for the Resolve steps, from the video's folder with Resolve's variables set (`tools/resolve.md`, "Driving it"). Never write a copy of its tests: two instruments measuring one class their own ways find different faults, and then nobody knows which cut is right.
-
-`qc.py` needs ffmpeg, ffprobe and Xcode's `swiftc` on the `PATH`; it compiles `qc_vision.swift` into the report folder when the binary there is missing or older than the source.
-
-**The level matters.** Every render the gate measures loads the delivery-loudness preset that `pipeline/b/loudness.py` wrote (`tools/audio.md`, "Level"). The sound tests measure levels; a render at the master's level can sit 11 dB under the delivery and pass or fail a different sound from the one Josh hears.
-
-**A span,** in seconds for sound joins, frames for anything visual. `--range` takes timeline frames, both ends included:
+`cut.py` runs the gate on every whole render (every check but joins, which the join check covers) and lists its fault rows; its look rows are in `report.md`. To run it yourself, on a whole render or on the span you are changing, from the pipeline devenv with absolute paths:
 
 ```sh
-L="/usr/bin/lockf -k -t 3600 scratch/resolve.lock /usr/bin/python3 -B"
-$L ../pipeline/resolve/render_timeline.py PROJECT "NAME finish" scratch/ROLE/span.mp4 --preset phone --subtitles --range FIRST LAST --load-render-preset LOUDNESS
-$L ../pipeline/b/word_times.py "NAME finish" --media scratch/ROLE/span.mp4 > scratch/ROLE/heard-span.json
-../pipeline/.devenv/profile/bin/python3 ../pipeline/b/qc.py scratch/ROLE/span.mp4 --video-folder . --range FIRST LAST --heard-words scratch/ROLE/heard-span.json --only joins highlights
+cd pipeline && devenv shell -- python3 b/qc.py FILE --edit-list EDIT_LIST --out DIR [--range FIRST LAST] [--only CHECK ...] [--heard-words HEARD.json]
 ```
 
-`--subtitles` burns the caption track in; without it the caption checks measure nothing. `--only` takes `eyes`, `sync`, `joins`, `loudness`, `captions`, `highlights`, `caption-edges`, `colour`, `text` and `flashes`. Loudness is never checked on a span. A span's phone render takes its bit rate from the span's length, so it encodes far better than the whole film and hides breakup: judge breakup on the whole file.
+`--only` takes `eyes`, `flashes`, `sync`, `loudness`, `captions`, `highlights`, `caption-edges`, `colour` and `text`. `--range` takes timeline frames, both ends included, for a file rendered over that span:
 
-**The whole cut,** before anyone reviews it or it is sent on: finishing's commands in `roles/finishing.md`, "The fault gate". Without `--heard-words` the "caption word with no sound" class is not measured, and the report says so. A cut of about 100 s takes about a minute.
+```sh
+/usr/bin/python3 -B pipeline/b/render.py EDIT_LIST --timeline "NAME finish" --out SPAN.mp4 --preset phone --range FIRST LAST --loudness PRESET
+```
+
+Render every span the gate measures with the loudness preset, so its level is the delivery's: the checks measure levels, and a render at another level passes or fails a different sound from the one Josh hears. Loudness is never checked on a span. A span's phone render takes its bit rate from the span's length, so it encodes far better than the whole film and hides breakup: judge breakup on the whole file. To check the joins in a span, give `joins check --audio SPAN.mp4` each join's time in the span's own seconds (the edit list's `record_s` for each piece after the first, less FIRST divided by the frame rate). `qc.py` needs ffmpeg, ffprobe and Xcode's `swiftc` on the `PATH`; it compiles `qc_vision.swift` into the report folder when the binary there is missing or older than the source. A cut of about 100 s takes 11 to 47 s.
+
+`--heard-words` is Resolve's transcription of the file's own sound (`word_times.py NAME --media FILE`); without it, which is how `cut.py` runs, the "caption word with no sound" class and the connected-speech highlight rows are not measured, and the report says so.
 
 ## Picture
 
@@ -76,28 +73,15 @@ $L ../pipeline/b/word_times.py "NAME finish" --media scratch/ROLE/span.mp4 > scr
 
 ## Sound
 
-**Clipped word at a sound join** (measured). A sound piece starts or ends inside his speech, so part of a word plays and is cut off. Either test decides it, measured on the lav through the piece's real offset and level:
-- **A fragment.** The kept side holds a word's start or end within 250 ms of the edge (a rise of 10 dB or more out of a level under -33 dBFS), and the dropped side carries on at -25 dBFS or louder. 250 ms is about a syllable.
-- **Through a word.** The lav is at speech level, -30 dBFS or louder, for the whole 40 ms around the edge.
-- An edge where the source runs on unbroken into the next piece is not a join.
-- Rests on: no judged basis is recorded for these levels beyond the cuts the gate was built against; 250 ms is the length of a syllable.
-
-An edge just after an unvoiced consonant has to pass both tests at once: the dropped side under the fragment line, and a fade-in that ends before the next word's rise.
-
-**Hard sound join** (measured; sometimes listen). The sound stops or starts more sharply than his voice does at that point. Decided by the steepest 20 ms change of level within 60 ms of the edge, against the lav's own change at the same moment. A fault when all hold:
-- the step is 6 dB or more;
-- the louder side is at -30 dBFS or louder, or 12 dB or more above the room tone within 100 ms of the edge (a weak word tail cut into room tone after a short fade sits under -30 dBFS and is still heard as a chop; this clause rests on one join a cold judge heard);
-- the step is 10 dB or more steeper than the lav's.
-
-A step 6 to 10 dB steeper than the lav's is a "listen" row.
+**Sound joins** (measured, by `pipeline/joins/joins check`, not the gate). A word cut short, a clipped start, a scrap of a removed word, a click, a jump in room sound, a cut inside connected speech. `cut.py` scores every join in the rendered sound and lists each flagged one; what the check is and what it misses is in `tools/audio.md`. The gate's own October join classes, hand-set levels that fitted his microphone and flagged 17% of clean joins on other voices, were retired on 17 Nov.
 
 **Loudness** (measured, whole file only). -14 LUFS integrated within 1 LU, true peak at most -1 dBTP (ffmpeg `ebur128`). Measured on the delivered file, because the encode can raise a peak.
 
-**A join that sounds like an edit** (listen). A level trace and a spectrogram do not show it (`tools/audio.md`, "Seeing a join"). Until a listening route is established, name at most three such moments for Josh.
+**A join that sounds like an edit** (listen). Pitch, breath and meaning at a join: the join check does not measure them, and a level trace and a spectrogram do not show them (`tools/audio.md`). Name at most three such moments for Josh with the cut.
 
 ## Captions
 
-**Caption word with no sound** (measured, needs `--heard-words`). A lit word he is not heard saying, such as a word left in a caption after the sound piece under it was cut short.
+**Caption word with no sound** (measured, needs `--heard-words`, which `cut.py` does not pass). A lit word he is not heard saying, such as a word left in a caption after the sound piece under it was cut short.
 - Decided by: the lit words and the heard words aligned in order; a lit word with no heard partner within 2 s is a fault when at least half its lit frames are under -38 dBFS.
 - A lit word with no partner over sound is a "look" row: usually an OCR slip or a spelling ("1" for "a", "$600" for "six hundred").
 
@@ -108,18 +92,18 @@ A step 6 to 10 dB steeper than the lav's is a "listen" row.
 **Highlight late or early** (measured after a pause; look inside connected speech). The pill lights more than 3 frames before or after he starts the word. In his look the pill walks the eye through his speech, so a viewer sees it miss. Rests on: judged cuts where a highlight 4 frames late was called; nothing tighter has been judged.
 - An onset is a rise of 10 dB or more within 80 ms, out of a dip of at least 30 ms, reaching speech, on the cut's own sound. After a pause (100 ms under -33 dBFS) a rise can only be a word's start, so the first word lit after a pause is measured against the rise nearest its lit frame, and more than 3 frames either way is a fault.
 - Inside connected speech, a closure inside a word ("brea|king") and the gap between two words look alike on the level, so the gate cannot fail there. Where Resolve's heard word and a rise agree on an onset that the lit frame misses by more than 3 frames, and no rise sits at the lit frame, it writes a "look" row with a spectrogram: a yellow line at the lit frame, red at the rise. Judge each by reading the spectrogram against the words. Most are Resolve's word time running late; a few are real early highlights, typically on the word after a very short one.
-- `align.py` gives the start of each known word on the placed sound (`roles/editor.md`, "Word times on the placed sound"). Once it is proven on his real voice and the gate reads it, this class becomes measured in connected speech too, at the same 3 frames, and the look rows go.
+- Inside connected speech these look rows need `--heard-words`; without them (as `cut.py` runs), the forced alignment that times the captions is the instrument, and its `doubtful_words` in the assemble report are the places to look on the spectrogram; move a word that is off with the caption's `word_starts_s` in the plan.
 - The report lists every lit word with its first frame, as read by OCR.
 
 **Caption page broken mid-phrase** (eyes; the report lists every page). A page ends inside a phrase: an article left at the end, a verb split from its object, the next sentence's first word, a one-word orphan page. Reading decides this, not a count.
 - The report lists every page with its frames and the text read off them, and marks one-word pages as "look" rows. Resolve's template can split a caption into pages by its own rule (a word over 25 frames after the last), so compare the page list with the list's captions.
-- A break no paging inside the safe line can avoid comes from a phrase wider than one row at the look's type size. It is not a fault: the director names it to Josh with the look (smaller type, or accept the break).
+- A break no paging inside the safe line can avoid comes from a phrase wider than one row at the look's type size. It is not a fault: it goes to Josh with the cut as a look decision (smaller type, or accept the break).
 
 **Pill does not cover its word** (eyes). Josh: "your subtitles and pills and highlights on terminal stuff do NOT properly cover words and look WRONG". At full size on the frame it arrives: the whole ink covered, even padding, touching nothing else.
 
 **Caption too short to read** (eyes). A caption is never shorter than its words take to say. One up for under about 0.5 s joins a neighbour when the joined page fits the safe line; when it cannot, it stays, and that is taste.
 
-**Caption too fast to read** (eyes; the pace is taste). Captions follow his speech, so their pace is his; condensing his words to slow it is his call, raised by the director from finishing's pace numbers. About three words a second finds the captions worth reading again at phone width.
+**Caption too fast to read** (eyes; the pace is taste). Captions follow his speech, so their pace is his; condensing his words to slow it is his call, raised with the cut when a caption flashes by. About three words a second finds the captions worth reading again at phone width.
 
 ## Graphics
 
@@ -140,9 +124,9 @@ What only eyes find: a card cropped mid-card, a sliver of the next card at an ed
 
 **Abrupt ending** (eyes). The sound or the picture stops dead.
 
-## Not faults: taste
+## Not faults
 
-Taste is Josh's. Never change it without him and never count it as a fault:
+The checks, you and the cold look never count these as faults. Who decides each is a separate question, answered in SKILL.md, "What is his, and what is yours": the lines, their order, the look and the words on screen are his; the camera for each line, a punch-in and the rest of the craft are yours, without asking him.
 
 - which lines are kept, their order, and the length;
 - the camera for each line where both are clean, and how tight a punch-in is;

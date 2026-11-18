@@ -8,10 +8,10 @@ rows marked "look" or "listen" are places a model or Josh must judge, and never 
 usage: qc.py CUT.mp4 [--edit-list EDIT_LIST] [--out DIR] [--heard-words FILE] [--range FIRST LAST] [--only CHECK ...]
 Defaults: the edit list is CUT's video folder's edit-list.json, the report goes to the video folder's build/qc/<cut name>/.
 Writes report.json, report.md and evidence/ there. Exits 1 when any row is a fault, 0 when none.
---range FIRST LAST: timeline frames, inclusive, as render_timeline.py --range takes them. CUT is either a render of that
+--range FIRST LAST: timeline frames, inclusive, as render.py --range takes them. CUT is either a render of that
 span (render it with the loudness preset loaded, so its level is the delivery's) or of the whole timeline; only rows inside
 the span are reported, at timeline frames. --only runs the named checks and nothing else (see CHECKS below), so a role runs
-the gate itself on the class it is fixing, in seconds for sound joins, instead of a copy of its tests.
+the gate itself on the class it is fixing, in seconds, instead of a copy of its tests.
 Run it with pipeline/.devenv/profile/bin/python3; it needs ffmpeg, ffprobe and swiftc (Xcode's) on PATH.
 Takes the cuts on him from the list, with the pixels as a cross-check, since 2026-10-26 (stream A, after stream I
 found a pixel cut firing mid-shot on encoder noise). Reads the picture from the list's `segments` (each a moment of its camera's file) and `panels` since 2026-10-26
@@ -19,6 +19,8 @@ found a pixel cut firing mid-shot on encoder noise). Reads the picture from the 
 `reference`.
 Since 2026-10-27 (Claude Opus 5.5, hill-climb stream L, after run 4's gate passed a build a cold judge failed): lit caption
 words against their onsets on the cut's own sound, caption pills and letters against the look's safe line, --range and --only.
+Since 2026-11-17 (Claude Opus 5.5, the rebuild): no sound-join class; `pipeline/joins/joins check` scores joins (cut.py runs
+both), and the edit list's paths are read relative to its own folder.
 Sync offsets from the edit list's picture offsets since 2026-10-29 (Claude Opus 5.5): a camera's `picture_offset_s`, set picture
 against picture at ingest, replaces its own microphone, because the Pocket's microphone is the lav's radio feed, which arrives
 30 to 60 ms after its picture. A camera without one is still timed by its microphone, and the report says so.
@@ -43,14 +45,7 @@ OUT_OF_SYNC_FAULT_FRAMES = 4
 MICROPHONE_OFFSET_WARNING = "offset from this camera's microphone; the Pocket's radio feed can lag the picture by 30 to 60 ms"
 SPEECH_DBFS = -30
 SILENCE_DBFS = -38
-HARD_JOIN_STEP_DB = 6
-HARD_JOIN_EXCESS_OVER_LAV_DB = 10
-LISTEN_JOIN_EXCESS_OVER_LAV_DB = 6
-# A step is in his voice when its louder side is at speech level, or this far above the room tone around the join: a word's
-# weak tail cut into room tone after a short fade-out sits under -30 dBFS and is still heard as a chop (run 4, 50.43 s).
-JOIN_ABOVE_ROOM_TONE_DB, ROOM_TONE_SEARCH_SECONDS = 12, 0.1
-CONTIGUOUS_SOURCE_SECONDS = 0.03
-PAUSE_DBFS, WORD_ONSET_RISE_DB, CLEAR_SPEECH_DBFS, FRAGMENT_LONGEST_SECONDS = -33, 10, -25, 0.25
+PAUSE_DBFS = -33
 LIT_WORD_PILL_FRACTION = 0.3
 WORD_SEARCH_SECONDS = 2.0
 CAPTION_ON_FACE_GAP_FRAMES = 2
@@ -154,6 +149,13 @@ class Cut:
     def __init__(self, cut_path, edit_list_path, out_dir, heard_words_file=None, span=None):
         self.path, self.out = cut_path, out_dir
         self.edit_list = json.load(open(edit_list_path))
+        folder = Path(edit_list_path).resolve().parent  # the list's paths are relative to its own folder
+        absolute = lambda path: str((folder / path).resolve())
+        for camera in self.edit_list.get('cameras', {}).values():
+            camera['file'] = absolute(camera['file'])
+        self.edit_list['sound']['lav'] = absolute(self.edit_list['sound']['lav'])
+        for row in self.edit_list.get('audio', []) + self.edit_list.get('panels', []):
+            row['file'] = absolute(row['file'])
         self.heard_words_file = heard_words_file
         probe = json.loads(run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries',
                                 'stream=width,height,r_frame_rate,nb_frames', '-of', 'json', str(cut_path)]).stdout)['streams'][0]
@@ -458,65 +460,6 @@ class Cut:
             if any(offsets[name]['timed_by_own_microphone'] for name in camera_files):
                 what += f' ({MICROPHONE_OFFSET_WARNING})'
             self.add('lips out of sync or frozen under speech', verdict, first, last, f'{frames} frames, {np.median(differences):+.2f} s', what, ('strip', first))
-
-    def sound_joins(self):
-        pieces = self.pieces
-        for index, piece in enumerate(pieces):
-            offset, gain = piece['offset_s'], piece['gain_db']
-            for edge in ('in', 'out'):
-                listed = piece['record_start_s'] if edge == 'in' else piece['record_end_s']
-                neighbour = pieces[index - 1] if edge == 'in' and index > 0 else pieces[index + 1] if edge == 'out' and index + 1 < len(pieces) else None
-                if neighbour and abs((neighbour['record_end_s'] + neighbour['offset_s'] if edge == 'in' else neighbour['record_start_s'] + neighbour['offset_s'])
-                                     - (listed + offset)) < CONTIGUOUS_SOURCE_SECONDS:
-                    continue  # the source runs on unbroken across this edge
-                if edge == 'in' and listed < 0.5 or edge == 'out' and listed > len(self.cut_audio) / AUDIO_RATE - 0.5:
-                    continue
-                # 1. A step the edit made: the steepest 20 ms change near the edge, against the lav's change at the same moment.
-                best = (0.0, listed)
-                for t in np.arange(listed - 0.06, listed + 0.06, 0.0025):
-                    change = (level_at(self.cut_audio, t, t + 0.01) - level_at(self.cut_audio, t - 0.01, t) if edge == 'in'
-                              else level_at(self.cut_audio, t - 0.01, t) - level_at(self.cut_audio, t, t + 0.01))
-                    best = max(best, (change, t))
-                step, at = best
-                if edge == 'in':
-                    cut_before, cut_after = level_at(self.cut_audio, at - 0.02, at - 0.01), level_at(self.cut_audio, at, at + 0.01)
-                    lav_step = level_at(self.lav, at + offset, at + offset + 0.01) - level_at(self.lav, at + offset - 0.02, at + offset - 0.01)
-                    cut_step, louder = cut_after - cut_before, cut_after
-                else:
-                    cut_before, cut_after = level_at(self.cut_audio, at - 0.01, at), level_at(self.cut_audio, at + 0.01, at + 0.02)
-                    lav_step = level_at(self.lav, at + offset - 0.01, at + offset) - level_at(self.lav, at + offset + 0.01, at + offset + 0.02)
-                    cut_step, louder = cut_before - cut_after, cut_before
-                excess = cut_step - lav_step
-                frame = int(at * self.fps)
-                room_tone = min(level_at(self.cut_audio, t, t + 0.01) for t in np.arange(at - ROOM_TONE_SEARCH_SECONDS, at + ROOM_TONE_SEARCH_SECONDS, 0.01))
-                number = f'{cut_step:.0f} dB in 20 ms at {louder:.0f} dBFS ({louder - room_tone:.0f} dB over the room tone), {excess:.0f} dB more than the lav'
-                if cut_step >= HARD_JOIN_STEP_DB and (louder >= SPEECH_DBFS or louder - room_tone >= JOIN_ABOVE_ROOM_TONE_DB):
-                    if excess >= HARD_JOIN_EXCESS_OVER_LAV_DB:
-                        self.add('hard sound join', 'fault', frame, frame, number, f'the sound {"starts" if edge == "in" else "stops"} sharper than his voice does', ('join', at))
-                        continue
-                    if excess >= LISTEN_JOIN_EXCESS_OVER_LAV_DB:
-                        self.add('hard sound join', 'listen', frame, frame, number, 'steeper than his voice; only an ear can say if it sounds cut', ('join', at))
-                # 2. An edge inside his speech, judged on the lav through the piece's measured offset and gain.
-                edge_source = listed + offset
-                windows = lambda start, count: [level_at(self.lav, start + k * 0.01, start + (k + 1) * 0.01) + gain for k in range(count)]
-                if min(windows(edge_source - 0.02, 4)) >= SPEECH_DBFS:
-                    self.add('clipped word at a sound join', 'fault', int(listed * self.fps), int(listed * self.fps),
-                             'the lav is at speech level all through the 40 ms around the edge', f'the piece {"starts" if edge == "in" else "ends"} through a word', ('join', listed))
-                    continue
-                # A fragment: the kept side holds the start (or end) of a word within 300 ms of the edge, and the dropped side is clear speech.
-                steps = int(FRAGMENT_LONGEST_SECONDS / 0.01)
-                kept = windows(edge_source - FRAGMENT_LONGEST_SECONDS, steps) if edge == 'out' else windows(edge_source, steps)
-                dropped = windows(edge_source, 3) if edge == 'out' else windows(edge_source - 0.03, 3)
-                if edge == 'in':
-                    kept = kept[::-1]  # read the kept side away from the edge, so a word's end becomes a rise towards the edge
-                rises = [k for k in range(4, steps) if kept[k - 4] < PAUSE_DBFS and kept[k] - kept[k - 4] >= WORD_ONSET_RISE_DB]
-                if rises and max(dropped) >= CLEAR_SPEECH_DBFS:
-                    kept_ms = (steps - rises[-1] + 4) * 10
-                    point = 'out point back' if edge == 'out' else 'in point on'
-                    self.add('clipped word at a sound join', 'fault', int(listed * self.fps), int(listed * self.fps),
-                             f'sound for up to {kept_ms} ms from the {point} to a pause; the dropped side is speech at {max(dropped):.0f} dBFS',
-                             f'the piece {"ends" if edge == "out" else "starts"} with a short sound cut from speech its source goes on with: '
-                             f'a fragment of a word, or a whole short word (the evidence shows which)', ('join', listed))
 
     def loudness(self):
         log = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-i', str(self.path), '-af', 'ebur128=peak=true', '-f', 'null', '-'],
@@ -929,7 +872,6 @@ CHECKS = {
     'eyes': (('read_vision', 'read_small_frames', 'find_picture_cuts'), ('eyes_at_cuts', 'cross_check_cuts')),
     'flashes': (('read_vision', 'read_small_frames', 'find_picture_cuts'), ('flashes_and_black',)),
     'sync': (('read_vision', 'read_audio', 'measure_audio_pieces'), ('picture_against_sound',)),
-    'joins': (('read_audio', 'measure_audio_pieces'), ('sound_joins',)),
     'loudness': ((), ('loudness',)),
     'captions': (('read_vision', 'read_audio'), ('captions',)),
     'highlights': (('read_vision', 'read_audio', 'read_onsets'), ('highlight_timing',)),

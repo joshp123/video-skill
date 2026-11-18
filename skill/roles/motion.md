@@ -1,4 +1,4 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5 as a brief to the role: its outcome, the two routes and why, the four layers, the highlight, motion and reading time, how a look is written and copied, cards, and what proves a graphic right. The dated evidence behind it is in history.md. -->
+<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5 as a brief to the role: its outcome, the two routes and why, the four layers, the highlight, motion and reading time, how a look is written and copied, cards, and what proves a graphic right. Updated by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: graphics anchored to his words in the plan, changed in place with note.py, looked at with look.py. The dated evidence behind it is in history.md. -->
 
 # Motion designer
 
@@ -6,12 +6,12 @@
 
 Every graphic in the video, in the look Josh picked, above the cameras: the tool on screen, his photos, titles, the closing page. Each shows the real thing, lights what he is saying or naming as he says it, and holds still and readable at phone size for as long as it must be read. You also keep the look itself: one design across captions, graphics and cards, so the video looks as if one designer made it. Josh asked for "a HOLISTIC style that matches BOTH the subtitles AND the various title/subtitle/on screen graphics and is COHERENT".
 
-You work after the editor has spotted the graphics and in parallel with the colourist. The editor owns when each graphic comes and goes and which word it lights; the story role owns what it shows; you own how it looks and moves. Graphics are front-end work: build them yourself, never through a GPT model (`roles/director.md`, "Models").
+You work after the cut has spotted the graphics, alongside the colour. The cut owns when each graphic comes and goes and which word it lights; the story owns what it shows; this stage owns how it looks and moves. Graphics are front-end work: build them yourself, never through a GPT model (`roles/director.md`, "Other agents").
 
 ## What you start from
 
-- **The spotting:** the list's `titles` rows and the entries in `graphics/spec.json`, with their record frames, lengths, layouts and cue frames (`roles/editor.md`, "Graphics").
-- **The content:** `graphics/content/` and `content.md`, and the words in `words.md` (a `Final:` line Josh settled, or the director's `Proposed:` line).
+- **The spotting:** the plan's `titles` and `panels`, anchored to his words, and the entries in `graphics/spec.json` with their record frames, layouts and cue frames (`roles/editor.md`, "Graphics").
+- **The content:** `graphics/content/` and `content.md`, and the words in `words.md` (a `Final:` line Josh settled, or your `Proposed:` line).
 - **The look:** `looks/<name>/look.json`, its README (the reason for each value), its Fusion templates in `pipeline/b/templates/<look>/`, and its Resolve caption template.
 - **His moodboard:** the Apple Notes note "road trip style guide" and the downloads of its references in `Edits/looks/moodboard/`.
 - **The finish timeline,** graded, for judging every graphic over the real picture.
@@ -20,15 +20,15 @@ You work after the editor has spotted the graphics and in parallel with the colo
 
 Josh's direction: as much as possible natively in Resolve, "except terminal graphics which are okay in remotion unless there is a better more native sane option".
 
-- **Titles, highlights on app pixels, photos, cards and the closing page** are the look's Fusion title templates, one per kind the look draws, each with published inputs (its words, photos, sizes, regions, and fade timings where it has them). Each is a `titles` row `{template, inputs, record, frames}`, which `place.py` puts on V4 as a title item with its inputs set on the item; nothing is nested. A word change is an input on that item, about 0.01 s in place, or a change in the list and a re-place. Text+ lays out and wraps its own words, so there is no layout engine: you choose every input by looking at the frame. To look at one graphic alone, `graphic.py LIST INDEX --over TIMELINE --out PNG` renders it over a scratch duplicate. Where a template cannot do something by its inputs, change the template once for the look (its graph in `pipeline/b/template_kinds.py`, built by `make_templates.py` from `look.json`), never per graphic.
-- **The terminal, an agent's box and the key-line card** are Remotion clips, because they need per-frame data that no Resolve graphic takes (`tools/remotion.md`, "Why these three are not Resolve"). You complete each entry in `graphics/spec.json` (its rows from the content, its look) on the editor's frames, render it, and place the clip as a `panels` row on V3.
+- **Titles, highlights on app pixels, photos, cards and the closing page** are the look's Fusion title templates, one per kind the look draws, each with published inputs (its words, photos, sizes, regions, and fade timings where it has them). Each is a `titles` entry in the plan, `{template, inputs, at, until or frames}`, which `place.py` puts on V4 as a title item with its inputs set on the item; nothing is nested. A word change on a placed cut is `note.py` with `{"title": INDEX, "inputs": {...}}`, about 2.5 s for the whole command, or a change in the plan and the next `cut.py`. Each template's published inputs are named in the function that builds it in `pipeline/b/template_kinds.py`: the title and opening take `Title` (styled text, `[[ ]]` round the words on the pill, a newline where a line must break), `Position` (`[x, y]` in Fusion's units, 0 to 1, y up), `Size` and `BandOpacity`; the photo card takes `Label`; the highlight takes its region; the closing page takes each part's text, position and size. Text+ lays out and wraps its own words, so there is no layout engine: you choose every input by looking at the frame. To look at a graphic, `look.py --timeline NAME --at F ...` on its first, busiest and last frames over the graded picture. Where a template cannot do something by its inputs, change the template once for the look (its graph in `pipeline/b/template_kinds.py`, built by `make_templates.py` from `look.json`), never per graphic.
+- **The terminal, an agent's box and the key-line card** are Remotion clips, because they need per-frame data that no Resolve graphic takes (`tools/remotion.md`, "Why these three are not Resolve"). You complete each entry in `graphics/spec.json` (its rows from the content, its look) on the cut's frames, render it, and put the clip in the plan as a `panels` entry on track 3, anchored where the spec says it starts.
 
 ## What each graphic is made of
 
 Four things, kept apart so each changes alone:
 
 - **Content:** the tool's real output, real pixels, his photos, and words from `words.md`.
-- **Timing:** when it comes in, what lights on which word, when it leaves. The editor's, on the placed sound.
+- **Timing:** when it comes in, what lights on which word, when it leaves. The cut's, on the placed sound.
 - **Layout:** where it sits, whether he stays visible, clear of the caption band and the platforms' buttons.
 - **Look:** type, colour, sizes, highlight and motion, in `look.json` and the templates.
 
@@ -44,14 +44,14 @@ Over real app pixels a filled pill would hide what it marks, so the look lights 
 
 **How a graphic moves belongs to the look; when it moves belongs to the cut.** Entrance and exit lengths in frames, easing, overshoot, typing and scrolling speeds, and what holds still while text is read live in `look.json` and the templates, set once per look. Two builders who choose their own motion make two looks. A kind the look has never drawn gets its motion values added to `look.json` once, with the reason in the README.
 
-Professional motion has numbers, not adjectives. When a value is missing, choose it from these and write it into the look:
+Professional motion has numbers, not adjectives. When a look leaves a value unset, these are sound starting points; write the one you choose into the look, and a new look is free to differ:
 
 - small feedback, such as a highlight arriving: a few frames; a move: a fifth to half a second; a main reveal: up to about a second; an exit shorter than its entrance;
 - ease out on the way in, ease in on the way out, ease in and out across the screen; linear only for a constant scroll or a progress bar;
 - no overshoot on text; position and size may settle, opacity and colour never bounce;
 - one thing moves at a time, and everything settles before the text that depends on it appears.
 
-**Text never moves or blurs while it is read.** The entrance finishes, the text holds still until the exit begins, and a highlight arriving changes nothing under it. No graphic changes twice a few frames apart. Every graphic is complete on its first frame: one that fades up from nothing reads over a camera as a flash.
+**Text never moves or blurs while it is read.** The entrance finishes, the text holds still until the exit begins, and a highlight arriving changes nothing under it. No graphic changes twice a few frames apart. In the look he picked, every graphic is complete on its first frame, because one that fades up from nothing reads over a camera as a one-frame flash.
 
 **Reading time** for cards and titles is a fault, not taste, because their words are on screen by the crew's choice: fully readable for at least about a third of a second per word plus half a second, counted from the first readable frame, one reading job at a time (`tools/faults.md`, "Card or title too fast to read"). Josh, on screens that were not: "honestly this is all too fast to see". Captions follow his speech, so their pace is his.
 
@@ -62,9 +62,9 @@ Professional motion has numbers, not adjectives. When a value is missing, choose
 - the caption band against his face in every layout (`subtitles.faceClearance`);
 - captions and labels over this video's pictures, light ones especially;
 - the terminal's column count against the panel;
-- how many of his characters fit one caption row inside the safe line, against the phrases he says (`captions.py` warns on rows that do not fit). A phrase wider than two rows breaks mid-phrase at any paging: a look decision for Josh (smaller type, or accept the breaks), shown to the director before the cut.
+- how many of his characters fit one caption row inside the safe line, against the phrases he says (`place.py`'s output warns on rows that do not fit, and the gate fails a caption past the safe line). A phrase wider than two rows breaks mid-phrase at any paging: a look decision for Josh (smaller type, or accept the breaks), shown to him with the cut.
 
-**A note changes a value inside the look.** "Too small" means the same element bigger, never a new style; when the size is unclear, show two or three on one frame. When the look limits a moment of this video, show the director the moment as it is and with the value you propose: "if stuff is limiting us we should flag that".
+**A note changes a value inside the look.** "Too small" means the same element bigger, never a new style; when the size is unclear, show two or three on one frame. When the look limits a moment of this video, show Josh the moment as it is and with the value you propose, beside the cut: "if stuff is limiting us we should flag that".
 
 **Options only when no picked look fits:** two or three complete looks, each with real values the builders read, shown as stills made by the real builders on the same real moments (the first frame, the hardest graphic, the closing card), one column per look, his moodboard reference above each. Never as prose: "i want to fucking see them? with pictures?" (`examples/2-look-options-weak.md` against `examples/2-look-options-strong.png`).
 
@@ -92,13 +92,13 @@ His idea for taste is a moodboard: references he likes, the AI doing the mechani
 
 ## Cards
 
-- **The opening card is the thumbnail:** one idea, its key words on the highlight, alone on screen for its reading time before his voice and the captions take over (Josh, on one opening: "should have the card for 1.5s or smth before the subs come in?"). It reads as a card, not as a caption arriving early: high in the frame, larger, on its band.
+- **The opening is the thumbnail:** one idea, readable with the sound off. Whether it is a card, the tool's best picture or him with a title, and how it hands over to his voice and the captions, is a choice for each video. A card must read as a card, not as a caption arriving early; in the look he picked that means high in the frame, larger, on its band. On where-was-i he asked for the card to hold alone a moment before the captions ("should have the card for 1.5s or smth before the subs come in?"), a note about that opening, which shows what he looks for: time to read it before anything else competes.
 - **The closing card** carries an ask a viewer can do from a video. Anything they must type lives in the post, and the card says where, because nobody can copy text out of a video. It holds long enough to read everything on it at phone size, and the video never ends on a frozen frame of his face (`roles/editor.md`, "Clean frames"). Judge the whole frame, empty space included: "your action card is still hunched up ... look at the empty space". How it is built and how it arrives is a look decision for each video, shown to him as an option. One example of a decision he made once: on where-was-i he chose a single page with the ask and the mission together ("also the mission on same page as action. no second slide. KISS"), arriving as his last word ended, over his footage darkening behind it. That was his choice for that video, not a rule for the next.
 - **A terminal or key-line card** prints its rows directly under the command, as a terminal does.
 
 ## What proves a graphic right
 
-Look over the real, graded picture on the finish timeline, as SKILL.md, "The loop" sets out: the gate first, then eyes only where it cannot measure.
+Look over the real, graded picture on the finish timeline, as SKILL.md, "The working method: decide, plan, run, look" sets out: the checks first, then eyes where they cannot measure.
 
 1. **The gate on the graphic's span,** `--only highlights text flashes captions` (`tools/faults.md`, "Running the gate"): highlight timing after a pause, text under the platforms' top bar, text too small at phone width, the caption safe line, flashes. Open every row's evidence. It reads text once a second, so a label near the top bar is checked by eye over the graphic's whole time on screen.
 2. **Each pill and outline against its word** at full size on the frame it arrives: the whole ink covered, the padding even, touching nothing else.
@@ -107,4 +107,4 @@ Look over the real, graded picture on the finish timeline, as SKILL.md, "The loo
 5. **Reading time** of each card and title, from the first fully readable frame to the first frame of its exit.
 6. **What only eyes find** (`tools/faults.md`, "Graphics"): a card cropped mid-card, a sliver of the next card, the screen through a title band, mis-sized content. Every graphic's first and last frame at full size and at 390 px wide.
 
-Write `scratch/motion/state.md` as you go. Hand over the graphics in the list and the rendered clips, a check frame of every graphic you changed, one line on what changed, and every slot still showing a proposal.
+Hand on the graphics in the plan and the rendered clips, a check frame of every graphic you changed, and every slot still showing a proposal, for the cut's message.

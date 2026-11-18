@@ -1,14 +1,14 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: how to make each view of a cut, what each shows and what it hides. Who looks at what is in each role's file; the measured classes are in tools/faults.md. -->
+<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: how to make each view of a cut, what each shows and what it hides. Updated by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: frames from the timeline come from look.py (Resolve 21.2's ExportFrame and ExportThumbnails). Who looks at what is in each stage's file; the measured classes are in tools/faults.md. -->
 
 # Looking at a cut
 
-The gate measures first (`tools/faults.md`). These views open what it found and judge what it cannot measure. Instruments find where to look; only frames, looked at, pass anything.
+The checks measure first (`tools/faults.md`, `tools/audio.md`). These views open what it found and judge what it cannot measure. Instruments find where to look; only frames, looked at, pass anything.
 
 **A contact sheet is for finding where to look in a long file, never for judging.** It shrinks each frame to a thumbnail, so it hides exactly what a cut is judged on: an eyelid, a fingertip at a cheek, a pill a few pixels off its word, a one-frame sliver of the next card. Josh: "its too compressed and you miss the full story".
 
 ## Frames from the camera files
 
-A segment shows a frame of its camera's own file, so what the camera saw at a cut (eyes, hands, mouth, a head turn, both cameras at one moment) is in the file, with no Resolve and no lock. Seek by time, frame n at n divided by the frame rate, and take every frame a decision needs in one command:
+A segment shows a frame of its camera's own file, so what the camera saw at a cut (eyes, hands, mouth, a head turn, both cameras at one moment) is in the file, with no Resolve at all; the edit list gives each segment's `source_in` in that file's own frames. Seek by time, frame n at n divided by the frame rate, and take every frame a decision needs in one command:
 
 ```sh
 for n in 14210 14211 14212 31004; do
@@ -20,7 +20,9 @@ done
 
 ## Frames from the timeline, with no render
 
-`pipeline/b/frame.py NAME FRAME OUT.png` shows what the timeline shows: framing, layout, the grade on a finish timeline, a graphic over him. It selects the timeline, opens the Color page, sets the playhead, exports the viewer twice a second apart, and keeps the frame only when both are identical, so the viewer had settled (`ExportCurrentFrameAsStill`, API 1858). Stills from the viewer matched the rendered frame within about one level of 255 on a shot with CineFocus and Magic Mask, and on a Fusion graphic over a camera (22 Oct). When a caption is on the frame, it renders that one frame instead, with the captions burnt in, because the viewer route is not proven to show the caption track as Deliver renders it. It gives one frame per call and holds the Resolve lock while it works.
+`pipeline/b/look.py LIST --timeline NAME --at FRAME [FRAME ...] --out DIR` shows what the timeline shows: framing, layout, the grade on a finish timeline, a graphic over him. Each frame comes out at full size (PNG) and at phone width (390 by 693 JPEG), from `Timeline.ExportFrame`, about 45 ms a frame once warm; the playhead and page do not move. On the Mac mini an exported frame matched a one-frame render to within 1 level in 255 (17 Nov). It does not draw the caption track: to see captions, render a still (`render.py --preset still --range F F`).
+
+`look.py LIST --cuts --out DIR` puts every segment's first and last frame on both cameras, graded and framed as the finish timeline will show them, on labelled sheets of six segments (`Timeline.ExportThumbnails`; 92 frames in 16 s). It is a contact sheet, so it finds; open what it finds at full size before you judge.
 
 ## Frames from the delivered file
 
@@ -45,7 +47,7 @@ ffmpeg -v error -i CUT.mp4 -vf "select=between(n\,700\,750),crop=W:H:X:Y,signals
 
 `YDIF` is the mean change in brightness from the frame before. A cut stands out far above its neighbours; a spike where nothing should change is a sliver, a flash or content jumping. Crop to the panel or card first, so his live footage behind it does not count: under a held highlight the content must not move, apart from the highlight's own arrival. Open every spike as consecutive frames.
 
-`pipeline/graphics/scan-flashes.mjs FILE`, in the graphics devenv, lists isolated one-frame changes and brightness spikes across a whole file, to open.
+`pipeline/graphics/scan-flashes.mjs FILE`, in the graphics devenv, lists isolated one-frame changes and brightness spikes across a whole file, to open (not run since the rebuild).
 
 ## What changed since the last version
 
@@ -68,4 +70,4 @@ Time each card and title from frames, never from the list: the first frame its t
 
 ## What nobody here can check
 
-No model here watches motion or hears sound, and a run of stills is not watching. Consecutive frames and the difference trace show most motion faults; how something feels in motion, and how a join sounds, go to Josh as at most three named moments with their times.
+No model here watches motion or hears sound, and a run of stills is not watching. Consecutive frames and the difference trace show most motion faults, and the join check most join faults; how something feels in motion, and how a join sounds beyond what the check measures, go to Josh with the cut as at most three named moments with their times.

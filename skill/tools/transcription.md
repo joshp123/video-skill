@@ -1,14 +1,14 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: the three transcriptions, what each is for and what each gets wrong, and how to run them. -->
+<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: the transcriptions, what each is for and what each gets wrong, and how to run them. Updated by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: the verbatim transcript is now what the plan's words are found in and timed by. -->
 
 # Transcription
 
-Three transcriptions, each for its own job. Both made at ingest come from the lav, never a camera's microphone, which hears the room and mishears names ("Claude Coe" for "Claude Code"), and both are on the front camera's clock.
+Each transcription has its own job. Both made at ingest come from the lav, never a camera's microphone, which hears the room and mishears names ("Claude Coe" for "Claude Code"), and both are on the front camera's clock.
 
 | | For | How |
 | --- | --- | --- |
-| Resolve's, of the lav | Reading the story within minutes of ingest, while the cameras may still be set up | `pipeline/ingest/transcribe.py PROJECT LAV OUT --offset S`, from the Edit page: 23 minutes in 87.5 s (22 Oct) |
-| Verbatim, of the lav | Finding every attempt at a line, with its stumbles | `scripts/verbatim_transcript.py`, CrisperWhisper: 5 to 6 minutes for 23 minutes on the Mac's GPU |
-| Of the placed timeline | Every on-screen time: caption words, highlights, typed words | `pipeline/b/word_times.py NAME` and `pipeline/b/align.py` (`roles/editor.md`, "Word times on the placed sound") |
+| Resolve's, of the lav | Reading the story within minutes of ingest, while the cameras may still be set up | `pipeline/ingest/transcribe.py PROJECT LAV OUT --offset S`, from the Edit page: 23 minutes in 87.5 s (22 Oct). It needs Resolve running with the project open and its scripting variables set (`tools/resolve.md`, "Driving it"); not run since the rebuild |
+| Verbatim, of the lav | Finding every attempt at a line; the plan's `transcript`, in which `assemble.py` finds every piece and times every caption word | `scripts/verbatim_transcript.py`, CrisperWhisper: 5 to 6 minutes for 23 minutes on the Mac's GPU |
+| Resolve's, of a rendered cut | The words a viewer hears, for the gate's "caption word with no sound" check | `pipeline/b/word_times.py NAME --media FILE`, passed to `qc.py --heard-words`; not run since the rebuild |
 
 ## Why two transcripts of the same lav
 
@@ -30,7 +30,7 @@ The model is read from the Hugging Face cache that the devenv's `HF_HOME` names,
 
 ## Read it whole before handing it over
 
-- **Word times only locate a word.** A verbatim word can sit seconds from its neighbour across a long pause ("All" five seconds before "right"). Cuts come from the lav's level; on-screen times from the placed timeline.
+- **Word times only locate a word.** A verbatim word can sit seconds from its neighbour across a long pause ("All" five seconds before "right"), and on codex-switch its times ran 0.15 to 0.5 s out in places. Cuts come from the lav's level (`joins place`); caption times come from forced alignment of the same words on the lav (`pipeline/b/words.py`, which `assemble.py` runs).
 - **Loops.** The verbatim model can repeat a phrase dozens of times across a long pause and leave those words without times, and the script drops untimed words without saying so. Check that the last time reaches the end of the audio and look at every long gap; Resolve's transcript shows what was said there.
-- **Names** come out wrong from both ("Kodux" for Codex). Correct them in a working copy from the tool's README, help and output, word by word, keeping each time, and list every correction. One recognised word standing for two ("MenuBuy" for "menu bar") becomes two words sharing its span.
+- **Names** come out wrong from both ("Kodux" for Codex). Correct them in a working copy from the tool's README, help and output, word by word, keeping each time, and list every correction. The corrected copy is the one the plan's `transcript` points at, because `assemble.py` finds his words and times the captions in it. One recognised word standing for two ("MenuBuy" for "menu bar") becomes two words sharing its span.
 - **One canonical transcript, never a merge.** Keep both raw outputs. Settle a disputed word by transcribing a few seconds around it again, and by what was on screen at that moment.

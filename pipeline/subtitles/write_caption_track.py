@@ -298,7 +298,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(description="Write the look's caption track with the given captions into an exported timeline file.")
     ap.add_argument('timeline_drt', help='a .drt exported from the timeline (Timeline.Export with EXPORT_DRT)')
     ap.add_argument('look_track_drt', help="the look's caption-track.drt")
-    ap.add_argument('captions_json', help='build/captions.json from build_captions.py')
+    ap.add_argument('captions_json', help='build/captions.json from pipeline/b/captions.py')
     ap.add_argument('output')
     ap.add_argument('--start-frame', type=int, required=True, help="the timeline's first frame (Timeline.GetStartFrame)")
     args = ap.parse_args()

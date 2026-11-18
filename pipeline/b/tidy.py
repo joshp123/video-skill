@@ -21,7 +21,7 @@ It decides nothing; the rule is its arguments and the README:
 Bins after: Source (clips already there, plus non-timeline media the current cuts use directly, the cameras' multicam
 included), Timelines (the current cuts and their finish timelines), Graphics (only for an older cut that nests graphic
 timelines: those and the media inside them), Old (old timelines and the media only they use). Empty bins are deleted. Prints a JSON plan with --dry-run, the plan and the project
-read back after without it, and saves the project. Run it through scratch/bin/resolve-py.
+read back after without it, and saves the project. Run it with /usr/bin/python3 -B, through the video's Resolve lock.
 """
 import argparse
 from fnmatch import fnmatch

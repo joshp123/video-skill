@@ -1,12 +1,12 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: why the terminal kinds are Remotion, what the render spec holds, how real output becomes rows, and how to render and check a clip. Every field is checked against pipeline/b/render-graphics.mjs and pipeline/graphics/. -->
+<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: why the terminal kinds are Remotion, what the render spec holds, how real output becomes rows, and how to render and check a clip. Every field is checked against pipeline/b/render-graphics.mjs and pipeline/graphics/. Updated by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: clips enter the plan as panels; frames come from the edit list; this route was not exercised in the 17 Nov rebuild. -->
 
 # Remotion: the terminal, the agent's box and the key-line card
 
 ## Why these three are not Resolve
 
-Josh's direction: graphics native in Resolve, "except terminal graphics which are okay in remotion unless there is a better more native sane option". A terminal graphic needs per-frame data: rows of real output, a command typed character by character, a scroll by whole rows, a highlight on exact character cells from the frame he names them. Resolve gives a graphic no way to take that: an OGraf graphic takes a file, a trim, a hold and play frames (pp. 2376 to 2378), and a script cannot put a Text+ character style on named characters (22 Oct). So these three render in Remotion, each as its own transparent clip, placed as a `panels` row on V3 above the cameras. Everything else (titles, photos, cards, the closing page) is the look's Fusion templates (`roles/motion.md`). When Resolve gains a route for per-frame text data, this exception should go (SKILL.md, "Keep moving into Resolve").
+Josh's direction: graphics native in Resolve, "except terminal graphics which are okay in remotion unless there is a better more native sane option". A terminal graphic needs per-frame data: rows of real output, a command typed character by character, a scroll by whole rows, a highlight on exact character cells from the frame he names them. Resolve gives a graphic no way to take that: an OGraf graphic takes a file, a trim, a hold and play frames (pp. 2376 to 2378), and a script cannot put a Text+ character style on named characters (22 Oct). So these three render in Remotion, each as its own transparent clip, which goes into the plan as a `panels` entry on track 3, above the cameras. Everything else (titles, photos, cards, the closing page) is the look's Fusion templates (`roles/motion.md`). When Resolve gains a route for per-frame text data, this exception should go (SKILL.md, "Keep moving into Resolve").
 
-The project is `Edits/pipeline/graphics/` (Remotion 4, React 19, in its own devenv, which provides Node and ffmpeg). Its components are in `src/`: `Terminal.tsx`, `AskTerminal.tsx` (the agent's box), `Keyline.tsx`, with `glyphBounds.ts` measuring each highlighted word's rendered ink so a pill fits it.
+The project is `pipeline/graphics/` (Remotion 4, React 19, in its own devenv, which provides Node and ffmpeg). It renders as it did in October, but the 17 Nov rebuild did not exercise it: on its first use, check one clip over the graded picture before building a video's worth. Its components are in `src/`: `Terminal.tsx`, `AskTerminal.tsx` (the agent's box), `Keyline.tsx`, with `glyphBounds.ts` measuring each highlighted word's rendered ink so a pill fits it.
 
 ## Real output, at the panel's width
 
@@ -24,7 +24,7 @@ It runs the command in a pseudo-terminal N columns wide (`COLUMNS=N`, `LINES=40`
 
 ## The render spec: `graphics/spec.json`
 
-One file per video, beside `graphics/content/`. The editor writes each graphic's timing into it (`roles/editor.md`, "Graphics"); the motion designer completes and renders it. Frames are timeline frames: a graphic is on screen from `record` for `frames`, and every cue frame lies inside that span.
+One file per video, beside `graphics/content/`. The cut writes each graphic's timing into it (`roles/editor.md`, "Graphics"); the motion stage completes and renders it. Frames are timeline frames: a graphic is on screen from `record` for `frames`, and every cue frame lies inside that span. Read them from the edit list `assemble.py` wrote, where every caption word has its time on the timeline: a cue on his word is that word's start times the frame rate. A change to the cut moves his words, so render the clips again after any change that moves a piece.
 
 ```json
 {
@@ -49,15 +49,15 @@ Before it renders anything the renderer checks every frame against the span, eve
 
 ## Rendering
 
-From `Edits/pipeline/graphics`, where VIDEO is the video's folder under `Edits/`:
+From `pipeline/graphics`, with VIDEO the video's folder as an absolute path (a relative one resolves against the repository, not the media drive's link to it):
 
 ```sh
-devenv shell -- node ../b/render-graphics.mjs ../../VIDEO/graphics/spec.json --out=../../VIDEO/build/graphics-vN
+devenv shell -- node ../b/render-graphics.mjs VIDEO/graphics/spec.json --out=VIDEO/build/graphics-vN
 ```
 
-Each graphic becomes `<id>.mov`, ProRes 4444 with alpha, 10-bit, Rec.709, with a `manifest.json` of `{id, file, record, frames}`; the clip goes on V3 as a `panels` row at that record frame. It refuses any file that exists, so each version renders into its own folder. Three terminal clips took about half a minute (22 Oct). It runs Remotion's own downloaded headless shell through `chrome-render.sh`, never the installed Chrome app, whose every launch left a 1.4 GB copy of itself in a temporary folder. Display-referred Rec.709 clips pass through the timeline unchanged only with the inverse DRT on (`tools/resolve.md`, "Colour management").
+Each graphic becomes `<id>.mov`, ProRes 4444 with alpha, 10-bit, Rec.709, with a `manifest.json` of `{id, file, record, frames}`; the clip goes into the plan as a `panels` entry at that frame (`"at": {"frame": N}`, `"frames": F`). It refuses any file that exists, so each version renders into its own folder. Three terminal clips took about half a minute (22 Oct). It runs Remotion's own downloaded headless shell through `chrome-render.sh`, never the installed Chrome app, whose every launch left a 1.4 GB copy of itself in a temporary folder. Display-referred Rec.709 clips pass through the timeline unchanged only with the inverse DRT on (`tools/resolve.md`, "Colour management").
 
-`pipeline/graphics/render-clips.mjs` is the older renderer, which builds its data from the older edit format (`pipeline/edit-format.md`, below its line); new work uses `render-graphics.mjs`.
+`pipeline/graphics/render-clips.mjs` is the older renderer, for the older edit format that was removed on 17 Nov; new work uses `render-graphics.mjs`.
 
 ## Making each kind read
 
@@ -76,4 +76,4 @@ ffmpeg -hide_banner -loglevel error -y -i CLIP.mov -f lavfi -i 'color=c=0x808080
   -map '[out]' -frames:v 1 EDIT/build/check/ID-FRAME.png
 ```
 
-Then look at the same moments on the placed finish timeline. A pill is right when its padding is even on all four sides and it touches nothing but its own text. When a pill looks wrong, check the font first: a face with no declared file falls back silently, and every pill is then measured on the wrong glyphs.
+Then look at the same moments on the placed finish timeline (`look.py --at`). A pill is right when its padding is even on all four sides and it touches nothing but its own text. When a pill looks wrong, check the font first: a face with no declared file falls back silently, and every pill is then measured on the wrong glyphs.
