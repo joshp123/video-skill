@@ -36,7 +36,11 @@ and one still of each distinct layout, by camera, framing and the panels over it
 which this render does not hold), and sets aside as hidden_cuts the same-camera cuts where the picture does not change
 (an opaque panel over what moved, a camera panned off frame, a still body under a panel over his face), which are no
 jump cuts. About 8 s.
-Prints {faults, borderline, cuts, jump_candidates, hidden_cuts, panel_moves, flagged_frames, layouts, seconds}. Exit 1 when there is any fault. What it
+It also checks his whole head (head.py): a fault where the frame's edge, the camera picture's own edge or a panel cuts
+it; a no_face row wherever no face could be read in a shot in view or within 3 frames of a cut, which is a reason to
+look and never a pass; and face_read_per_shot. Titles are not in this render: the gate checks them on the render.
+Prints {faults, borderline, no_face, face_read_per_shot, cuts, jump_candidates, hidden_cuts, panel_moves,
+flagged_frames, layouts, seconds}. Exit 1 when there is any fault. What it
 cannot see: titles over his face, and the captions' real rows (it uses the look's band constants, as the gate does).
 Tested on codex-switch run 5's builds 10, 12 and 18: every eye, lip and sync fault row their gates raised on full
 renders, build 18's blink at frame 208 as borderline (0.68 of normal here, 0.58 in the gate), and no other fault row.
@@ -398,8 +402,12 @@ def measure(list_path, out, window):
                     panel_moves.append({"frame": at, "panel": row["file"], "source_frame": source_frame, "change": round(change, 1),
                                         "what": f"the panel's picture jumps at its frame {source_frame} (timeline frame {at}) while the "
                                                 f"highlight from frame {over[0]['record']} is still up: is it still on its target?"})
-    looked = exports(render_file, out, data, faults, borderline, jumps)
-    return {"faults": faults, "borderline": borderline, "cuts": cuts, "jump_candidates": [j for j in jumps if not j.get("hidden")],
+    import head  # his whole head in the planned picture: frame edges and panels (titles are not in this render)
+    head_faults, no_face, coverage = head.check([(f.get("face") or {}).get("box") for f in vision], data, folder,
+                                                int(data["format"]["width"]), height)
+    faults += head_faults
+    looked = exports(render_file, out, data, faults, borderline + no_face, jumps)
+    return {"faults": faults, "borderline": borderline, "no_face": no_face, "face_read_per_shot": coverage, "cuts": cuts, "jump_candidates": [j for j in jumps if not j.get("hidden")],
             "hidden_cuts": [j for j in jumps if j.get("hidden")], "panel_moves": panel_moves, **looked,
             "frames_read": len(vision),
             "seconds": {"render": round(render_seconds, 1), "vision": round(vision_seconds, 1), "all": round(time.monotonic() - began, 1)}}

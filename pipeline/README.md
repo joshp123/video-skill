@@ -160,7 +160,7 @@ Renders a finish timeline and waits. `phone` (H.264 sized to 28 MB, the file Jos
 ## The checks
 
 - `joins/joins check --audio FILE --joins TIMES.json --lav LAV --span SPAN` scores every join in the finish timeline's sound as mixed, rendered with normalisation off (`joins/README.md`): with the lav and the lav check's `calibration_span`, so both checks use one threshold, and with the exact join times (each piece's `record_s`). 13 to 38 s for 14 joins (the lav check inside `assemble.py`'s `joins place` adds 20 to 50 s the first time for a stretch, to fit its threshold, then is cached). On codex-switch with constant-power crossfades, 11 of 14 joins scored within 0.05 of the lav check; the render's normalisation raised two clean joins by 0.07 and 0.12, which put one (0.594 against a threshold of 0.569) over the flag as `borderline`.
-- `b/qc.py CUT.mp4 --edit-list EDIT_LIST --out DIR [--range FIRST LAST] [--only CHECK ...]` (`cd pipeline && devenv shell -- python3 b/qc.py ...`; it compiles its Vision tool with Xcode's own compiler, without the devenv's SDK variables that broke it inside the shell in run 6; with `--range`, every frame in a row and its text is a timeline frame) is the gate for everything else: eyes shut at a cut, flashes, lips against sound, loudness, captions read back from the picture, lit words against his voice, caption edges, the cameras' colour against the reference camera, text too small at phone width. Fault rows fail it; look rows are for the model. 11 to 47 s for 95 s. Its sound-join class is gone: the join check replaces it.
+- `b/qc.py CUT.mp4 --edit-list EDIT_LIST --out DIR [--range FIRST LAST] [--only CHECK ...]` (`cd pipeline && devenv shell -- python3 b/qc.py ...`; it compiles its Vision tool with Xcode's own compiler, without the devenv's SDK variables that broke it inside the shell in run 6; with `--range`, every frame in a row and its text is a timeline frame) is the gate for everything else: eyes shut at a cut, flashes, lips against sound, loudness, captions read back from the picture, lit words against his voice, caption edges, the cameras' colour against the reference camera, text too small at phone width, and his whole head (as preflight, plus titles, from the text the gate reads once a second inside each title's span). Fault rows fail it; look rows are for the model. 11 to 47 s for 95 s. Its sound-join class is gone: the join check replaces it.
 
 ## `b/preflight.py EDIT_LIST [--out DIR] [--window 8]`
 
@@ -178,6 +178,17 @@ Vision instrument (about 11 s). Then:
 - **options** for every cut: each pairing of cameras and each shift of the cut within the window that is clean, at a
   join only shifts that keep the outgoing picture over silence; or "no clean cut within the window", which means the
   edge, the take or the pause must change.
+- **his whole head** (`b/head.py`, shared with the gate): a fault wherever a frame edge, the camera picture's own edge or a
+  panel cuts his head (hair included) by 5% of its height for 3 frames or more, with the side or panel, by how much and the
+  frames; `no_face` rows where no face could be read in a shot in view or within 3 frames of a cut (a reason to look,
+  never a pass); and `face_read_per_shot`. His head is Vision's face box plus 0.75 of its height above and 0.4 of its
+  width either side: on 22 frames of both cameras person segmentation put his hair 0.47 to 0.77 of the box's height
+  above it and 0.29 to 0.40 of its width to one side. Panels are placed from their framing (scaled to fill the frame,
+  zoomed about the centre, Pan by fitted width / frame width a unit, Tilt in frame pixels, crops before zoom), which
+  reproduces run 6's 668 by 690 px accounts panel ending at y 890. On run 6's v1 render it fails the opening front shot
+  (up to 23% of his head off the left edge) and the accounts and cost panels (35% and 41% of his head under them), passes
+  the wide shots at 0:09 to 0:20 and the task row, and also fails every other front shot (the same framing) and the
+  menu-bar strip (12%).
 - **jump candidates**: every cut that keeps the camera, with its framing's scale change (the gate does not measure jump
   cuts; run 5's 10 to 15% changes read as jump cuts). A cut where the picture does not change is listed under **hidden_cuts**
   instead: an opaque panel covers what moved, the camera is panned off frame, or a panel covers his face and his still

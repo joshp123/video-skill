@@ -29,7 +29,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 JOINS = HERE.parent / "joins" / "joins"
 LEVEL_STEP_WORTH_A_LOOK_DB = 6  # joins/README.md: ordinary speech steps 3 to 5 dB between sentences
-QC_CHECKS = ["eyes", "flashes", "sync", "loudness", "captions", "highlights", "caption-edges", "colour", "text"]
+QC_CHECKS = ["eyes", "flashes", "sync", "loudness", "captions", "highlights", "caption-edges", "colour", "text", "head"]
 
 
 def numpy_python():
@@ -105,6 +105,7 @@ def main():
         options = by_cut.get(f.get("cut"), {}).get("options")
         needs.append(f"before placing, {f['class']} at frame {f['frame']}: {f['what']}" + (f"; clean instead: {options}" if options else ""))
     needs += [f"borderline before placing, {f['class']} at frame {f['frame']}: {f['what']}" for f in checked_faces["borderline"]]
+    needs += [f"look before placing, {f['class']} at frame {f['frame']}: {f['what']}" for f in checked_faces.get("no_face", [])]
     needs += [f"look before placing: a {j['camera']}-to-{j['camera']} cut at frame {j['cut']} changes scale by {j['scale_change']}x "
               "(a small change reads as a jump cut)" for j in checked_faces["jump_candidates"]]
     needs += [f"look before placing: {m['what']}" for m in checked_faces.get("panel_moves", [])]

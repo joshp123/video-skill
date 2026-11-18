@@ -152,6 +152,7 @@ class Cut:
         self.path, self.out = cut_path, out_dir
         self.edit_list = json.load(open(edit_list_path))
         folder = Path(edit_list_path).resolve().parent  # the list's paths are relative to its own folder
+        self.edit_list_folder = folder
         absolute = lambda path: str((folder / path).resolve())
         for camera in self.edit_list.get('cameras', {}).values():
             camera['file'] = absolute(camera['file'])
@@ -719,6 +720,24 @@ class Cut:
                      f'his skin on {Path(camera).name} is a different colour from the reference camera, seen at {len(changes)} camera changes: ' + ', '.join(str(c + self.span_offset) for c in changes),
                      ('pair', changes[0]) if changes else None)
 
+    def head_in_frame(self):
+        """His whole head in the picture (head.py): a fault where a frame edge, a panel or a title cuts it, a look row where
+        no face could be read, and how many frames of each shot had a face."""
+        import head
+        faces = [(frame.get('face') or {}).get('box') for frame in self.vision]
+        text = {}
+        for title in self.edit_list.get('titles', []):
+            first, last = title['record'], title['record'] + title['frames']
+            boxes = [line['box'] for frame in self.vision[first:last] for line in frame.get('frame_lines', [])]
+            for f in range(first, last):
+                text[f] = boxes  # titles are read every FULL_FRAME_TEXT_EVERY_N_FRAMES frames and stand still meanwhile
+        faults, looks, coverage = head.check(faces, self.edit_list, self.edit_list_folder, self.width, self.height, text)
+        for row in faults:
+            self.add(row['class'], 'fault', row['first'], row['last'], f"{row['camera']} shot {row['segment']}", row['what'], ('frame', row['frame']))
+        for row in looks:
+            self.add(row['class'], 'look', row['first'], row['last'], row.get('camera', ''), row['what'], ('frame', row['frame']))
+        self.measurements['face_read_per_shot'] = coverage
+
     def graphic_text(self):
         """Text outside the caption band that sits under the phone apps' top controls or is too small to read on a phone."""
         hits = {'text under the top controls': [], 'text too small at phone width': []}
@@ -887,6 +906,7 @@ CHECKS = {
     'caption-edges': (('read_vision',), ('caption_edges',)),
     'colour': (('read_vision',), ('camera_colour',)),
     'text': (('read_vision',), ('graphic_text',)),
+    'head': (('read_vision',), ('head_in_frame',)),
 }
 
 
