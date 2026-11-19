@@ -24,7 +24,7 @@ You come after the story and before colour, motion and finishing, as an editor w
 
 ## It plays as one take
 
-His standard: "my order in the vid was all over the place so we should make sure its coherent". The page fixed the lines and their order; you choose which attempt of each line plays and where it joins.
+He talks out of order; the cut must play coherently. The page fixed the lines and their order; you choose which attempt of each line plays and where it joins.
 
 - **Keep his last complete take of a line** unless an earlier one is cleaner. He restarts because an attempt went wrong, so the last full run is usually the one he meant.
 - **Never build one line from two attempts** when one clean run exists. Two attempts differ in energy, pitch, pace and distance from the lav, and a listener hears the seam even when the trace looks clean. The more of a line one piece carries, the fewer joins there are to hear.
@@ -48,7 +48,7 @@ A join the checker flags comes back to you, never to Josh: move the edge into th
 
 ## Every line is on the camera that serves it
 
-The front camera is eye contact: the promise, a claim, the ask. The wide camera shows gesture and him looking at his screen, and covers removed time. A punch-in on one camera is a deliberate cut inside one angle, to land a line or hide a jump. His words: "the cam moments syncing should reqiure some smart judgement (how much cam1 how much cam2)". Alternating by position is no reason. Know the balance: seconds on each camera and on the tool.
+The front camera is eye contact: the promise, a claim, the ask. The wide camera shows gesture and him looking at his screen, and covers removed time. A punch-in on one camera is a deliberate cut inside one angle, to land a line or hide a jump. How much of each camera is a judgement for every line; alternating by position is no reason. Know the balance: seconds on each camera and on the tool.
 
 A jump cut is never bare. When the same camera continues across removed time with his face on screen, his head jumps: change camera, punch in, or put the tool on screen over the join. Resolve's SmartSwitch chooses angles by who is speaking; with one speaker that says nothing about the story, so the choice stays yours.
 
@@ -58,18 +58,18 @@ A viewer studies the first and last frame of every shot, and every frame where h
 
 When the picture cut lands on a blink but the sound cut is right, move only the picture a few frames: a split edit. Watch the frames either side, because his mouth then moves to the outgoing words over the incoming sound. When every frame either camera has at that moment shows shut eyes, choose between a cutaway, letting the outgoing shot run on, another take, or dropping a word, a pause or a breath. That is your call while his meaning stands.
 
-His standard on touches: "cut all the moments where i touch my face etc (as a pro director would do)". Both cameras film the same moment, so a touch on one camera is a touch on both: cut round it, or cover it with the tool.
+Cut every moment he touches his face, as a director would. Both cameras film the same moment, so a touch on one camera is a touch on both: cut round it, or cover it with the tool.
 
 ## The thumbnail and the ending
 
-The first frame is the thumbnail, so it is the opening of the video, not a separate image. Josh, on stills offered as thumbnails: "none of them actually explain the thing", and of the one he preferred, "it shows that it's a video and it shows the icon"; then "we should have a thumbnail where i dont look awkward?", and "why don't you put it as the first frame of the video?". So it says what the video is about, shows that a person is talking and what the tool is, and catches him with a natural expression. What that looks like differs by video; show him a few stills that differ in kind and let him pick by eye. Judge his expression at a size where you can see it, and search the whole take, not only the lines in the cut.
+The first frame is the thumbnail, so it is the opening of the video, not a separate image. It says what this video is about, shows that a person is talking and what the tool is, and catches him with a natural expression, never an awkward one. What that looks like differs by video: when it is not obvious, show him a few first frames that differ in kind and let him pick by eye. Judge his expression at a size where you can see it, and search the whole take for it, not only the lines in the cut.
 
-The video never ends on a frozen frame of his face: "make it fade out from the stuff over  of my face so we don't just stare at a freeze frame of me". The closing card holds long enough to read at phone size (`roles/motion.md`).
+The video never ends on a frozen frame of his face: the ending fades out from what is over him. The closing card holds long enough to read at phone size (`roles/motion.md`).
 
 ## The frame is built for a phone held upright
 
 - **The same kind of shot has the same face size and eye line on both cameras,** so a change reads as one camera from two angles. Their lenses and positions differ, so they need different framing values: find this project's on real frames at full size.
-- **His whole head, hair included, is inside the frame and clear of every graphic, in every shot.** The frame is an upright strip of a landscape picture, a third of its width, so slide it onto him shot by shot as he moves. Josh, on a cut where it did not: "the crop still crops out half my head, which is a bit weird".
+- **His whole head, hair included, is inside the frame and clear of every graphic, in every shot.** The frame is an upright strip of a landscape picture, a third of its width, so slide it onto him shot by shot as he moves.
 - **Sharpness has a limit you can work out.** From a 3840 by 2160 camera, a full-height 9:16 frame shows the source at 0.89 of its pixels, so a total zoom up to about 1.12 stays at native sharpness. Beyond that, judge the softness on a full-size frame.
 - **Keep his hands in frame** when a gesture is the reason for choosing the wide camera.
 - **Decide layouts with the cut:** him full frame; the tool above and him below; the tool, a photo or a card full frame. They decide which camera works and how long a line can stay on him.
@@ -78,7 +78,7 @@ The video never ends on a frozen frame of his face: "make it fade out from the s
 
 ## The proof lands on his word
 
-Spot every graphic during the cut, because a graphic changes the cut: where it sits decides the camera, the framing and how long a line can run. Josh asked to keep "on screen graphic design and the (timing of how we pan/highlight/etc each elemnt) orthogonal": the timing is yours, the design is the motion stage's, the content is the story's. For each graphic decide its content, its layout and whether his face stays, when it comes in and leaves (on a camera cut or a spoken word; an edge a few frames from a picture cut reads as a mistake), what it lights on which of his words, and its reading time, counted from the first frame it is fully readable.
+Spot every graphic during the cut, because a graphic changes the cut: where it sits decides the camera, the framing and how long a line can run. The timing is yours, the design is the motion stage's and the content is the story's, kept apart so each changes alone. For each graphic decide its content, its layout and whether his face stays, when it comes in and leaves (on a camera cut or a spoken word; an edge a few frames from a picture cut reads as a mistake), what it lights on which of his words, and its reading time, counted from the first frame it is fully readable.
 
 Anchor each graphic to his words rather than to frames, so it stays on its word when the cut moves.
 
@@ -94,7 +94,7 @@ You phrase and time every caption. Resolve's own captioning breaks lines by a co
 
 ## Looking at the cut
 
-Judge on full-size frames, one at a time, at full size and at phone width (390 px wide). A contact sheet is for finding where to look, never for judging: it shrinks away an eyelid, a fingertip at a cheek, a letter at a panel's edge. Josh: "its too compressed and you miss the full story". Frames come from the timeline without a render (`pipeline/README.md`, or the MCP's `get_image`), and from the camera files by source frame with no Resolve at all.
+Judge on full-size frames, one at a time, at full size and at phone width (390 px wide). A contact sheet is for finding where to look, never for judging: it shrinks away an eyelid, a fingertip at a cheek, a letter at a panel's edge. Frames come from the timeline without a render (`pipeline/README.md`, or the MCP's `get_image`), and from the camera files by source frame with no Resolve at all.
 
 Before the cut moves on, read its words from start to end as a stranger hears them: every join reads as one thought, nothing is said twice, nothing refers to something not yet heard, and it ends on the ask.
 

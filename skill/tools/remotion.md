@@ -4,13 +4,13 @@
 
 ## Why these three are not Resolve
 
-Josh's direction: graphics native in Resolve, "except terminal graphics which are okay in remotion unless there is a better more native sane option". A terminal graphic needs per-frame data: rows of real output, a command typed character by character, a scroll by whole rows, a highlight on exact character cells from the frame he names them. No Resolve graphic takes that: an OGraf graphic takes a file, a trim, a hold and play frames (pp. 2376 to 2378), and a script cannot put a Text+ character style on named characters (22 Oct). So these three render in Remotion, each as its own transparent clip on the app track. When Resolve gains a route for per-frame text data, this exception should go.
+Graphics are native in Resolve, with terminal graphics the one exception (SKILL.md, "Tools"). A terminal graphic needs per-frame data: rows of real output, a command typed character by character, a scroll by whole rows, a highlight on exact character cells from the frame he names them. No Resolve graphic takes that: an OGraf graphic takes a file, a trim, a hold and play frames (pp. 2376 to 2378), and a script cannot put a Text+ character style on named characters (22 Oct). So these three render in Remotion, each as its own transparent clip on the app track. When Resolve gains a route for per-frame text data, this exception should go.
 
 The project is `pipeline/graphics/` (Remotion 4, React 19, in its own devenv). The 17 Nov rebuild did not exercise it: on its first use, check one clip over the graded picture before building a video's worth. Its components are `Terminal.tsx`, `AskTerminal.tsx` (the agent's box) and `Keyline.tsx`, with `glyphBounds.ts` measuring each highlighted word's rendered ink so a pill fits it. It renders with Remotion's own downloaded headless shell, never the installed Chrome app, whose every launch left a 1.4 GB copy of itself in a temporary folder.
 
 ## Real output, at the panel's width
 
-Josh: "WE CAN FAKE REAL TERMINALS WE SHOULD OBVIOUSLY JUST MAKE IT LOOK REAL BUT FIT THE VERTICAL FORMAT". Real means the tool's own output, run at the column count the panel gives, in one monospace face on a character grid.
+The terminal is redrawn, but it must look real and fit the vertical frame. Real means the tool's own output, run at the column count the panel gives, in one monospace face on a character grid.
 
 ```sh
 python3 pipeline/graphics/capture-terminal.py --columns N --output EDIT/graphics/content/NAME.txt -- COMMAND ARGS

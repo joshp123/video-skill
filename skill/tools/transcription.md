@@ -6,7 +6,7 @@ The transcript made at ingest is of the lav, never a camera's microphone, which 
 
 ## Why verbatim
 
-Josh: "the transcript with umms and ahhs is also key right?" Resolve's transcription drops what a cut needs to see: every um becomes `(...)`, the same mark as a pause; a repeated phrase collapses ("We saw a we saw a bear" came back as "We saw (...) a bear"); a cut-off word disappears (21 Oct). Resolve has no verbatim mode. So the transcript is CrisperWhisper's, run by this skill's `scripts/verbatim_transcript.py`, which ingest starts as soon as the lav is on the front clock: 5 to 6 minutes for 23 minutes on the Mac's GPU. When Resolve gains a verbatim mode, test it on a take with known ums and retire the script.
+Resolve's transcription drops the ums, restarts and cut-off words a cut needs to see: every um becomes `(...)`, the same mark as a pause; a repeated phrase collapses ("We saw a we saw a bear" came back as "We saw (...) a bear"); a cut-off word disappears (21 Oct). Resolve has no verbatim mode. So the transcript is CrisperWhisper's, run by this skill's `scripts/verbatim_transcript.py`, which ingest starts as soon as the lav is on the front clock: 5 to 6 minutes for 23 minutes on the Mac's GPU. When Resolve gains a verbatim mode, test it on a take with known ums and retire the script.
 
 To run it by hand (a stretch again, another session): in this skill's `scripts/` devenv, detached, with `TMPDIR` left alone (a temporary folder on a path with spaces breaks devenv's launcher):
 

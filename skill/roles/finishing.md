@@ -8,7 +8,7 @@ The file Josh receives is the cut exactly as decided, graded, mixed, captioned, 
 
 ## Captions on the track
 
-The captions are Resolve's own animated captions on the subtitle track, so a caption fix is an edit. Josh, told Resolve has them: "well then why the fuck aren't we using this".
+The captions are Resolve's own animated captions on the subtitle track, so a caption fix is an edit.
 
 - **Every caption over its whole life.** The template splits a caption into a new page when a word starts more than 25 frames after the one before, so a caption right in the text can still never show its words together. The report of checks lists every page with its frames and the text read off them: compare it with the captions as written, and read every page boundary for a phrase broken mid-thought.
 - **One rendered pill's colour,** once per look and after any change to the template, in a flat part, against the look's orange and a graphic's pill in the same cut. The template stores its colours as linear values (`tools/resolve.md`, "Colour management"), so a wrong value renders a visibly different orange.
@@ -45,4 +45,4 @@ When a render goes to him, copy it unchanged to `versions/cut-vN.mp4` and give i
 
 ## Hand on
 
-The file, in `versions/` with its line; for the cut's message, what changed since the last version and where, and what only his eyes or ears can settle. Before it goes to him, tidy the project so the timeline he may open is the current one.
+The file, in `versions/` with its line; for the cut's message, what changed since the last version and where, and what only his eyes or ears can settle. Before it goes to him, delete by name any scratch timelines you made, so the one he may open is the current one; the pipeline's tidy waits until the video is posted (SKILL.md, "The timeline").

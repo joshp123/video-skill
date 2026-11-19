@@ -4,7 +4,7 @@
 
 ## Your outcome
 
-The two cameras read as one camera from two angles; the wide camera looks as if it was shot on a fast lens; the whole picture carries his look's colour feel; and nothing you do touches a graphic or a caption. A viewer then never notices a camera change, so the editor can cut wherever the story needs. Josh's bar: "matching diff cameras? whole point of log? plus white balance? ... you know how both cameras work better than i do so tackle this properly". And the method: "ok for final grade i think we can do all this natively in correct stuff WITHOUT luts in resolve", "no LUT bullshit must match darren approach".
+The two cameras read as one camera from two angles; the wide camera looks as if it was shot on a fast lens; the whole picture carries his look's colour feel; and nothing you do touches a graphic or a caption. A viewer then never notices a camera change, so the editor can cut wherever the story needs. Matching two log cameras on auto white balance is the point of the grade, and you know how both cameras work better than he does. Do it natively in Resolve, without LUTs, the way the professional colourist he chose works (below).
 
 The match does not depend on which lines he chooses, so it can start on this recording's frames while he reads the script page. The wide camera's blur goes on last, once the words and cameras are settled, and the cut he watches has it.
 
@@ -18,7 +18,7 @@ The match does not depend on which lines he chooses, so it can start on this rec
 
 ## Why matching is needed
 
-Josh records both cameras in log and on auto white balance, by choice: "i'm not at that skill level yet (or effort level). so we must figure things out how to do easily?", and "most of the time i do actually want it AWB". Never ask him for a set-up routine.
+Josh records both cameras in log and on auto white balance, by choice: he does not want a set-up routine at the shoot, so the grade does the work. Never ask him for one.
 
 Colour management maps each log recording into one working space, so the two are on the same scale (`tools/resolve.md`, "Colour management"). It cannot make them agree: the cameras differ in sensor, lens and exposure, each chose its own white point, and auto white balance can drift through a take. So the grade has three layers, in this order: colour management, a match per camera, and the look shared by both. Read the project's settings and each camera's input colour space back rather than assume them.
 
@@ -39,17 +39,17 @@ A second video from the same session starts from the first video's values, check
 
 ## How a grade reaches the timeline
 
-One grade and one group per camera, not a grade per clip: Josh, "why are you grading clips individually instead of with just one per cam since they are the same source?" By script a colour group's own graph takes only a LUT, so the camera's CDL goes on node 1 of each of its clips, and the hand work (a curve between bands) goes on the group, where it reaches every clip of that camera by itself. A clip added later, such as a shot switched to the wide camera, takes the camera's group and CDL when it is placed. Nothing is graded at timeline level, because the titles would take the grade too. Write each camera's values, with a few words on why, where the builder keeps them (`pipeline/README.md`), so a new clip gets the current grade.
+One grade and one group per camera, not a grade per clip, because each camera is one source. By script a colour group's own graph takes only a LUT, so the camera's CDL goes on node 1 of each of its clips, and the hand work (a curve between bands) goes on the group, where it reaches every clip of that camera by itself. A clip added later, such as a shot switched to the wide camera, takes the camera's group and CDL when it is placed. Nothing is graded at timeline level, because the titles would take the grade too. Write each camera's values, with a few words on why, where the builder keeps them (`pipeline/README.md`), so a new clip gets the current grade.
 
 ## The wide camera's fast lens
 
-The front camera's large sensor and fast lens put the background out of focus; the Pocket keeps everything sharp, so the depth jumps at every cut. His target: "blurring as if it was shot with ashallow DOF lens (f/1.8) for the cam2 (Even though we fake in post)". On strength: "stong but fix glasses", and "do the background blur on the wide camera but dont overdo it".
+The front camera's large sensor and fast lens put the background out of focus; the Pocket keeps everything sharp, so the depth jumps at every cut. The target is the wide camera looking as if shot at about f/1.8: a strong blur, his glasses clean, not overdone.
 
 - **The look's blur** is Resolve's AI CineFocus over an inverted AI Magic Mask of him, so the bookcase goes soft and his hair, glasses and edges stay sharp. Its node stack lives on the look's carrier clip (`look.json`, `colour.backgroundBlur`) and is copied onto each wide clip with `CopyGrades`, which brings node 1 too, so the camera's CDL goes back on after the copy (`tools/resolve.md`).
 - **Never a cut-out of him with a blur behind it:** it reads as fake at a glance.
 - **The copied mask is not tracked on the new shot,** so look at his glasses' far rim where it crosses the bookcase on every wide shot, at full size, through his movement. Where it breaks up, no script call mends the mask (`tools/resolve.md`, "`CreateMagicMask`"): put the line on the front camera when the layout leaves room for his head there, and otherwise say in the cut's message which shots show it.
 - **When more aperture changes nothing visible,** look at the depth map and stretch it with Adjust Map Levels so the background reads as far away.
-- **Strength is his call** when it changes: three strengths on one full-size frame beside the front camera's real blur, with a crop of the edge round his head and glasses. His verdict on one too gentle to see: "both look identical to me?" If he cannot see it at phone width, it is not worth its render time.
+- **Strength is his call** when it changes: three strengths on one full-size frame beside the front camera's real blur, with a crop of the edge round his head and glasses. If he cannot see it at phone width, it is not worth its render time.
 
 The blur costs about 0.4 s a frame to render live; flagged for Resolve's render cache, the film renders in about a minute (`tools/resolve.md`, "Rendering").
 

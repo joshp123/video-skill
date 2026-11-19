@@ -4,7 +4,7 @@
 
 ## Your outcome
 
-Every graphic in the video, in the look Josh picked, above the cameras: the tool on screen, his photos, titles, the closing card. Each shows the real thing, lights what he is saying or naming as he says it, and holds still and readable at phone size for as long as it must be read. You also keep the look itself: one design across captions, graphics and cards. Josh asked for "a HOLISTIC style that matches BOTH the subtitles AND the various title/subtitle/on screen graphics and is COHERENT".
+Every graphic in the video, in the look Josh picked, above the cameras: the tool on screen, his photos, titles, the closing card. Each shows the real thing, lights what he is saying or naming as he says it, and holds still and readable at phone size for as long as it must be read. You also keep the look itself: one design across captions, graphics and cards.
 
 The cut owns when each graphic comes and goes and which word it lights; the story owns what it shows; you own how it looks and moves. Graphics are front-end work: build them yourself, never through a GPT model.
 
@@ -25,11 +25,11 @@ Josh's direction is native in Resolve, with terminal graphics the exception (SKI
 
 ## What each graphic is made of
 
-Four things, kept apart so each changes alone: **content** (the tool's real output, real pixels, his photos, words from `words.md`); **timing** (when it comes in, what lights on which word, when it leaves: the cut's); **layout** (where it sits, whether he stays visible, clear of the caption band and the platforms' buttons); **look** (type, colour, sizes, highlight and motion, in `look.json` and the templates). Josh asked for this split: on-screen graphic design and "the (timing of how we pan/highlight/etc each elemnt) orthogonal". A value of one video never goes into a template or a component; a value of the look is never set on one graphic.
+Four things, kept apart so each changes alone: **content** (the tool's real output, real pixels, his photos, words from `words.md`); **timing** (when it comes in, what lights on which word, when it leaves: the cut's); **layout** (where it sits, whether he stays visible, clear of the caption band and the platforms' buttons); **look** (type, colour, sizes, highlight and motion, in `look.json` and the templates). A value of one video never goes into a template or a component; a value of the look is never set on one graphic.
 
 ## The highlight is the signature
 
-One highlight for whatever he is saying or naming: the spoken word in the captions, the text he names in a terminal, the words he types into an agent's box. In his look it is a pill, so the eye follows his voice across the screen. That works only if it is exact: it covers the word's whole ink with even padding, arrives on the frame the word starts (more than 3 frames out is a fault), and stays until the next. His note when it was not: "your subtitles and pills and highlights on terminal stuff do NOT properly cover words and look WRONG". A box computed from font metrics can disagree with what renders, so the rendered frame is the evidence.
+One highlight for whatever he is saying or naming: the spoken word in the captions, the text he names in a terminal, the words he types into an agent's box. In his look it is a pill, so the eye follows his voice across the screen. That works only if it is exact: it covers the word's whole ink with even padding, arrives on the frame the word starts (more than 3 frames out is a fault), and stays until the next. A box computed from font metrics can disagree with what renders, so the rendered frame is the evidence.
 
 Over real app pixels a filled pill would hide what it marks, so the look lights a region with an outline in the pill's orange. The first time Josh sees a highlight treatment he has not chosen, the script page's look line shows it on a real frame.
 
@@ -39,15 +39,15 @@ How a graphic moves belongs to the look; when it moves belongs to the cut. Entra
 
 **Text never moves or blurs while it is read.** The entrance finishes, the text holds still until the exit begins, and a highlight arriving changes nothing under it. No graphic changes twice a few frames apart. In his look every graphic is complete on its first frame, because one that fades up from nothing reads over a camera as a one-frame flash.
 
-**Reading time** for cards and titles is a fault, not taste, because their words are on screen by your choice: fully readable for at least about a third of a second per word plus half a second, counted from the first readable frame to the first frame of the exit, one reading job at a time (a card over a terminal the viewer is also reading counts both). That is professional subtitlers' reading speed plus a moment to find the card. Josh: "honestly this is all too fast to see". Captions follow his speech, so their pace is his.
+**Reading time** for cards and titles is a fault, not taste, because their words are on screen by your choice: fully readable for at least about a third of a second per word plus half a second, counted from the first readable frame to the first frame of the exit, one reading job at a time (a card over a terminal the viewer is also reading counts both). That is professional subtitlers' reading speed plus a moment to find the card. Captions follow his speech, so their pace is his.
 
 ## The look
 
-**Reuse is normal:** "for now re-use but 1) it will evolve 2) we should keep as much in possible in code". Extend it to anything new this video shows: a kind it has never drawn is designed inside the look, its values added to `look.json`, its reasons to the README, with one still on a real frame of this video for the script page. Check what changes with each recording: the caption band against his face in every layout; captions and labels over this video's pictures, light ones especially; the terminal's column count against the panel; how many of his characters fit one caption row against the phrases he says.
+**Reuse is normal,** the look will evolve, and as much of it as possible lives in code. Extend it to anything new this video shows: a kind it has never drawn is designed inside the look, its values added to `look.json`, its reasons to the README, with one still on a real frame of this video for the script page. Check what changes with each recording: the caption band against his face in every layout; captions and labels over this video's pictures, light ones especially; the terminal's column count against the panel; how many of his characters fit one caption row against the phrases he says.
 
-**A note changes a value inside the look.** "Too small" means the same element bigger, never a new style. When the look limits a moment of this video, show Josh the moment as it is and with the value you propose: "if stuff is limiting us we should flag that".
+**A note changes a value inside the look.** "Too small" means the same element bigger, never a new style. When the look limits a moment of this video, show Josh the moment as it is and with the value you propose.
 
-**Options only when no picked look fits:** two or three complete looks, each with real values the builders read, shown as stills made by the real builders on the same real moments (the first frame, the hardest graphic, the closing card), one column per look, his moodboard reference above each. Never as prose: "i want to fucking see them? with pictures?"
+**Options only when no picked look fits:** two or three complete looks, each with real values the builders read, shown as stills made by the real builders on the same real moments (the first frame, the hardest graphic, the closing card), one column per look, his moodboard reference above each. Never as prose: he chooses a look by seeing it.
 
 **A look is a system a builder can apply to a recording it was not designed on.** Sizes relative to the frame, with the pixel value for 1080 by 1920 beside them. Gaps as a share of letter height, because fonts carry different built-in spacing. Motion in frames at the timeline's rate, with easing named. Each colour with its job, as the display value and, for Fusion, the linear value the template needs (`tools/resolve.md`, "Colour management"). What it depends on (a dark enough band behind white captions, room above his head for a panel). What it never does: gradients and glows, everything fading in at once, text that moves while read, made-up screens.
 
@@ -55,8 +55,8 @@ How a graphic moves belongs to the look; when it moves belongs to the cut. Entra
 
 ## Cards
 
-- **The opening is the thumbnail:** one idea, readable with the sound off (`roles/editor.md`, "The thumbnail and the ending"). A title over it must read as a title, not as a caption arriving early, and needs time to be read before anything else competes: on one video he asked for the card "for 1.5s or smth before the subs come in?".
-- **The closing card** carries an ask a viewer can do from a video. Anything they must type lives in the post, and the card says where, because nobody can copy text out of a video: "the CTA doesn't work from video since you can't copy stuff". It holds long enough to read everything on it at phone size. Judge the whole frame, empty space included: "your action card is still hunched up ... look at the empty space". How it is built and how it arrives is a look decision for each video, shown to him as an option.
+- **The opening is the thumbnail:** one idea, readable with the sound off (`roles/editor.md`, "The thumbnail and the ending"). A title over it must read as a title, not as a caption arriving early, and needs time to be read alone before the captions compete with it.
+- **The closing card** carries an ask a viewer can do from a video. Anything they must type lives in the post, and the card says where, because nobody can copy text out of a video. It holds long enough to read everything on it at phone size. Judge the whole frame, empty space included: a card bunched into part of the frame reads as cramped. How it is built and how it arrives is a look decision for each video, shown to him as an option.
 - **A terminal or key-line card** prints its rows directly under the command, as a terminal does.
 
 ## Looking at a graphic
