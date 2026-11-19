@@ -30,7 +30,7 @@ Expect false starts, asides to the editor ("you can cut here"), the same point m
 - **Look before you cut an odd line.** His words often lean on the screen, so a line that reads as rambling on paper can be the proof on screen.
 - **Arrange by the viewer's questions:** what is this, why should I care, does it really work, how do I get it. Nothing may refer to something the viewer has not yet heard or seen.
 - **Join in his voice.** Prefer one long clean run to a line built from fragments. At every join, read the words either side together. When two lines side by side do not follow, he has often said the link himself a few seconds further on: search the raw take before you propose a reorder, words on screen or a re-record.
-- **Measure the length from the cut edges,** with the builder's dry run (`pipeline/README.md`), never by adding times by hand. It also names every edge with no pause next to it: a line that cannot be cut cleanly is better found now than after he has chosen it.
+- **Measure the length from the cut edges,** by assembling the plan without Resolve (`pipeline/README.md`, `assemble.py` alone), never by adding times by hand. That also names every edge with no pause next to it: a line that cannot be cut cleanly is better found now than after he has chosen it.
 
 When he read from a script, the story is his: for each line choose the take, his eyes on the lens for front-camera lines, his spoken words over the script's.
 

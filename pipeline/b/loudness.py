@@ -120,7 +120,7 @@ def as_mixed(resolve, project, directory):
 
 def run(resolve, directory, target, ceiling, normalise=True):
     project = resolve.GetProjectManager().GetCurrentProject()
-    donor = Path(os.environ.get('VIDEO_MEDIA', '/Volumes/Josh Extreme Pro USB4 4TB/Media'))/'Edits/.cache/audio-route-test-2/drt/r2-audio-base.xml/r2 audio base.xml'
+    donor = Path(__file__).resolve().parent/'templates/render-preset-base.xml'
     base = donor.read_text()
     blob = re.search(r'<FieldsBlob>([0-9a-f]+)</FieldsBlob>',base)[1]
     values = dict(RecordNormalizeAudio=('bool',normalise), RecordAudioNormalizationMethod=('int',1),

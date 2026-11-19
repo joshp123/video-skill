@@ -111,7 +111,7 @@ Each camera's clips sit in that camera's colour group with that camera's grade. 
 
 ## Tools
 
-The tools are in `~/code/video-skill/pipeline/`, linked as `Media/Edits/pipeline`. `pipeline/README.md` is the reference for what each one does, takes, returns and cannot do; read it whole at the start of a video. In outline: ingest from cards to a checked session; the first-cut builder; the sound-join placer and checker (`pipeline/joins/`); the word aligner that times captions; frames from a timeline without rendering; the render; the report of checks on a finished cut; and tidying the project.
+The tools are in `~/code/video-skill/pipeline/`, linked as `Media/Edits/pipeline`. `pipeline/README.md` is the reference for what each one does, takes, returns and cannot do; read it whole at the start of a video. In outline: ingest from cards to a checked session; the first-cut builder; the sound-join placer and checker (`pipeline/joins/`); the word aligner that times captions; the edits every track must follow together (taking time out, a camera switch, a caption retype); the render, from Resolve's cache; the report of checks on a finished cut; and tidying the project.
 
 Blackmagic's MCP server for Resolve (`davinci-resolve`) drives the same API: `run_script` for calls, `get_image` and `get_thumbnails` for graded frames straight into your view, `search_scripting_api` and `get_scripting_docs` for the API. The tested facts about Resolve that change how you use it are in `tools/resolve.md`. Read the manual and the API before saying Resolve cannot do something: "literally all of the times you say "resolve cannot do thing" i yell at you and you find out resolve can do the thing".
 
