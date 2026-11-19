@@ -32,7 +32,7 @@ Read the manual's procedure, search the API for the feature by every name it mig
 - **With the Project Manager open and no project loaded,** `LoadProject` returned None, and cancelling "Create New Project" quit Resolve (21 Oct).
 - **`ImportMedia([path])`** works; the dictionary form the README recommends returns None (17 Nov). A timeline name with a colon is refused.
 - **It crashed on:** adding Magic Mask to a Fusion composition by script (18 Oct); `comp.Render()` on a timeline clip's composition, after which nothing worked until a relaunch (14 Oct).
-- **Memory:** Resolve grew to 10 GB within a stage and 17 GB over 45 minutes of blur work (18 Nov). Quit and relaunch between heavy stages.
+- **Memory:** Resolve grew to 10 GB within a stage and 17 GB over 45 minutes of blur work (18 Nov). Quit and relaunch between heavy stages when the Mac is swapping.
 
 ### After a sleep or a drop
 

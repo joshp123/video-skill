@@ -56,7 +56,7 @@ How a graphic moves belongs to the look; when it moves belongs to the cut. Entra
 ## Cards
 
 - **The opening is the thumbnail:** one idea, readable with the sound off (`roles/editor.md`, "The thumbnail and the ending"). A title over it must read as a title, not as a caption arriving early, and needs time to be read alone before the captions compete with it.
-- **The closing card** carries an ask a viewer can do from a video. Anything they must type lives in the post, and the card says where, because nobody can copy text out of a video. It holds long enough to read everything on it at phone size. Judge the whole frame, empty space included: a card bunched into part of the frame reads as cramped. How it is built and how it arrives is a look decision for each video, shown to him as an option.
+- **The closing card** carries an ask a viewer can do from a video. Anything they must type lives in the post, and the card says where, because nobody can copy text out of a video. It holds long enough to read everything on it at phone size. Judge the whole frame, empty space included. How it is built and how it arrives is yours.
 - **A terminal or key-line card** prints its rows directly under the command, as a terminal does.
 
 ## Looking at a graphic

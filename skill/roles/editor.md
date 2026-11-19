@@ -64,7 +64,7 @@ Cut every moment he touches his face, as a director would. Both cameras film the
 
 The first frame is the thumbnail, so it is the opening of the video, not a separate image. It says what this video is about, shows that a person is talking and what the tool is, and catches him with a natural expression, never an awkward one. What that looks like differs by video: when it is not obvious, show him a few first frames that differ in kind and let him pick by eye. Judge his expression at a size where you can see it, and search the whole take for it, not only the lines in the cut.
 
-The video never ends on a frozen frame of his face: the ending fades out from what is over him. The closing card holds long enough to read at phone size (`roles/motion.md`).
+How the film ends is yours. The closing card holds long enough to read at phone size, and a viewer can act on it (`roles/motion.md`).
 
 ## The frame is built for a phone held upright
 

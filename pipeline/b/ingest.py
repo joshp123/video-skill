@@ -513,7 +513,7 @@ def work(session):
                "(tools/transcription.md)")
     state.need("each camera's picture against its own sound: his lips closing on a p, b or m against the lav, late in the take "
                "(the wide camera's offset above is picture against picture)")
-    state.need("record.md: Josh's words about this video (scripts/record.py)")
+    state.need("record.md: Josh's words about this video (the raw-steering skill's scripts)")
     state.data["finished"] = time.time()
     state.data["seconds"] = round(time.time() - began, 1)
     state.save()

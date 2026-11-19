@@ -15,7 +15,7 @@ The deliverable, unless he says otherwise, is a vertical short, 1080 by 1920 at 
 
 What it costs him is the measure. His attention and his waiting are the scarce things: every round in which he looks, notes five things and then waits for fixes is the cost to cut. So everything runs in the background, out of his way; he chooses the script, watches the finished cut once, and gives his notes in one pass; and each note is applied in minutes on the cut he saw.
 
-Agents know professional editing practice and forget to apply it. Each stage's file reminds you of the practice that matters at that stage and gives the facts of his rig, his look and Resolve that you could not know. How you meet the outcome is yours.
+Each stage's file gives the professional practice that matters at that stage and the facts of his rig, his look and Resolve that you could not know. How you meet the outcome is yours.
 
 ## What a good demo video is
 
@@ -30,7 +30,7 @@ A viewer meets it on a phone, in a feed, playing muted, and decides within a sec
 - **It sounds like him.** Nobody hears a join; the file plays at -14 LUFS integrated, at most -1 dBTP.
 - **It lands on one ask** a viewer can act on from a video. A prompt to paste is one possible ask, not the default.
 
-You know what a good video is. When a rule here, the look or a tool stands in the way of one, tell him: the house style and the tools are his to change.
+When a rule here, the look or a tool stands in the way of a good video, tell him: the house style and the tools are his to change.
 
 ## What is his, and what is yours
 
@@ -75,7 +75,7 @@ One agent makes the video, walking the stages a post house works in, in their or
 | The cut | `roles/editor.md` | The first cut: his chosen lines, every join, every camera, captions and graphics spotted |
 | Colour | `roles/colour.md` | Each camera's grade; the wide camera's blur |
 | Motion | `roles/motion.md` | Every graphic in his look |
-| Finishing | `roles/finishing.md` | The file he watches, looked at first; after lock, the file he posts |
+| Finishing | `roles/finishing.md`; `roles/director.md`, "Other agents" | The file he watches, looked at first and given one fresh review; after lock, the file he posts |
 | His notes | `roles/director.md` | Each note applied on the cut he saw; other agents; when the work goes wrong |
 
 **The order follows cost:** cheap, reversible work first, expensive work once on what will not move. Ingest and transcribe first, while a gap can still be re-recorded. Then the script, because every later stage hangs off which words are in. Work that does not depend on his choice (demo content, room tone, the colour match on this recording's frames) starts while he reads the page.
@@ -107,7 +107,7 @@ Blackmagic's MCP server for Resolve (`davinci-resolve`) drives the same API: `ru
 
 Do as much as possible natively in Resolve by script, as little as possible by computer use or custom code; terminal graphics in Remotion are the one standing exception, until Resolve has a sane native route. At the end of a video, compare Resolve's version with the one `tools/resolve.md` was last checked against; when it has moved, read the installed scripting `CHANGELOG.md` and propose any custom step that now has a native route, with the test that proves it.
 
-If a tool is wrong or missing something, fix it in `pipeline/` with the smallest change and say so at the end of the video; never fork a copy into a video's folder. Python and Node run in devenvs, so nothing is installed on his machine by hand.
+If a tool is wrong or missing something, fix it in `pipeline/` with the smallest change and say so at the end of the video; never fork a copy into a video's folder. Nothing is installed on his machine by hand: the Resolve commands run on the system Python, and the tools that need packages run in the repository's devenvs (`pipeline/README.md`).
 
 ## Limits
 
@@ -122,7 +122,7 @@ Media is on the SSD at `/Volumes/Josh Extreme Pro USB4 4TB/Media/`; paths below 
 - **Source footage:** `Input Media/<camera>/<session>/`. **Exports he posts:** `Exports/<slug>/`. **Caches and scratch:** `Edits/.cache/`. Resolve's cache: `Resolve Cache/`.
 - **Per recording session,** `Edits/<session>/`: `inventory.md` (each file's camera, profile, lens and offsets, with how each was established), `screen-recording.md`, `audio/`, `transcript/`, the face-touch scans.
 - **Per video,** `Edits/YYYY-MM-DD-slug/`: `record.md`, `words.md` (one heading per slot for words on screen, with `Final:` for what he settled and `Proposed:` for yours), `graphics/content/` with `content.md`, `versions/` (everything he saw, numbered, one line each in `versions/README.md`), and the builder's working files. A note of his about this video stays here.
-- **`record.md`** is his words about this video, verbatim, with the agent text he was answering, written by this skill's `scripts/record.py`. When no thread is about this video, give it the threads about how he wants videos made and the session where this one was recorded.
+- **`record.md`** is his words about this video, verbatim, with the agent text he was answering. Write it with the `raw-steering` skill's scripts, which read from each harness's own records who wrote a message: a brief another agent sent into a thread is not his. When no thread is about this video, use the threads about how he wants videos made and the session where this one was recorded.
 - **Looks:** `looks/` in this repository, linked from `Media/Edits/looks/`. The one he picked on 16 Oct, and every video's until he changes it, is `looks/2026-10-16-signpost-pill/`. His moodboard is the Apple Notes note "road trip style guide", with downloads of its references in `Media/Edits/looks/moodboard/`.
 - **Examples** of forms he could judge in one pass (a script page, look options, a decision message, words on screen) are in `~/code/video-skill/skill/examples/` on his Mac only (`examples/README.md`).
 

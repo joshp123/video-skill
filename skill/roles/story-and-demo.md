@@ -80,7 +80,7 @@ A note is about the page he was reading, sized to what he named. A note asking w
 
 ## The proof: what the viewer sees of the tool
 
-Treat the tool's real output as footage: re-shot cleanly at the size the frame needs, the most telling run, one thing at a time, the thing he names lit as he names it. Copying the screen recording fails because a full-width laptop screen in a 1080-pixel frame cannot be read on a phone; redrawing it fails because it no longer looks like the tool (`tools/remotion.md`). A demo that went badly on the day can be done again from the real tool.
+Treat the tool's real output as footage: re-shot cleanly at the size the frame needs, the most telling run, one thing at a time, the thing he names lit as he names it. Copying the screen recording fails because a full-width laptop screen in a 1080-pixel frame cannot be read on a phone; inventing a screen fails because it is no longer the tool. A terminal's real output redrawn at the panel's width is still the tool (`tools/remotion.md`). A demo that went badly on the day can be done again from the real tool.
 
 | The line is about | Show |
 | --- | --- |
@@ -90,17 +90,15 @@ Treat the tool's real output as footage: re-shot cleanly at the size the frame n
 | Asking an agent to use the tool | The agent's real screen, his request as he says it, the answer from a real fresh run |
 | What the tool found in his own data | The key lines of real output, with the real thing it came from beside it |
 
-Show the full breadth and depth of the tool while keeping to the most interesting things: its range in brief glimpses under the lines that name its abilities, and depth on the one worked example he narrates.
-
 - **The version a viewer installs.** Check the copy on the Mac against the release: a development checkout can be ahead of it.
 - **Output that depends on today** runs as of the recording day. When the tool cannot reproduce that state, say so on the page and leave his claim as he made it.
 - **A tool with no help** is read in its source before you run a subcommand, because `--help` on a subcommand can run it.
 
-**Tidying is allowed; inventing never is.** You may narrow the command, choose the run, hide whole rows, crop, re-wrap at word boundaries with every word unchanged, cut dead time visibly, and use the app's own privacy mode. Never change a number, name, date, count or result, never make the tool look faster than it is, never draw an interface that did not run, and never write an agent's answer. Hiding private rows (family trips, say) is the kind of faking he allows; changing what the tool found is not. Hide by narrowing the command first, so private rows are never captured. Other people appear only if he says so.
+**Tidying is allowed; inventing never is.** You may narrow the command, choose the run, hide whole rows, crop, re-wrap at word boundaries with every word unchanged, cut dead time visibly, and use the app's own privacy mode. Never change a number, name, date, count or result, never make the tool look faster than it is, never draw an interface that did not run, and never write an agent's answer. Hiding private rows is allowed; changing what the tool found is not. Hide by narrowing the command first, so private rows are never captured. Other people appear only if he says so.
 
 In a vertical frame, white captions dissolve over a light app window, so say which content is light where the caption band falls; what he names sits above the caption band and clear of the platforms' button column; check both margins of a small window for private desktop detail over the whole time it is used.
 
-A bug you find in the tool is a separate matter for Josh, not a problem for the video. The video shows the tool as it is.
+The video shows the tool as it is. A bug you find in the tool goes to Josh; it changes the video only when it undoes what the video claims.
 
 ## Hand over
 
