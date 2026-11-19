@@ -91,7 +91,9 @@ def closing(t, look):
     words = t.over(parts[0], parts[1], name="AskOver")
     words = t.over(words, parts[2], name="AddressOver")
     last = t.over(background, words, name="Page")
-    t.animate(last, "Blend", {frame: min(1, (frame + 1) / fade["textFrames"]) for frame in range(fade["textFrames"])})
+    # The words fade in once the footage has darkened (19 Nov: over textFrames from frame 0 they were whole while the
+    # footage was barely darker).
+    last.Blend.SetExpression(f"min(1, max(0, (time + 1 - Fade.NumberIn1) / {fade['textFrames']}))")
     published = []
     for name in ("Headline", "Ask", "Address"):
         published += [(name, f"{name}Text", "StyledText"), (f"{name}Position", f"{name}Text", "Center")]

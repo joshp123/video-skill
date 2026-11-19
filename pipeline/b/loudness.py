@@ -1,6 +1,7 @@
 """Write and import an Optimize to Standard BS.1770-4 render preset; print its name.
 Written by AI on 2026-10-25 by GPT-6.1 Sol.
-Usage: loudness.py --preset-dir DIR --target LUFS --ceiling DBTP
+Usage: loudness.py --target LUFS --ceiling DBTP   (Resolve started windowless if need be; the open project's presets)
+A preset with that target and ceiling already in Resolve is reused, not written again.
 Targets are whole numbers, as stored by Resolve. Uses route 3's exported Audio
 Only donor and Qt blob codec, unchanged. The imported preset is audio-only;
 render.py --loudness NAME loads it, then sets the phone or post format on top.
@@ -120,6 +121,10 @@ def as_mixed(resolve, project, directory):
 
 def run(resolve, directory, target, ceiling, normalise=True):
     project = resolve.GetProjectManager().GetCurrentProject()
+    prefix = f'B loudness {target} LUFS {ceiling} dBTP' if normalise else AS_MIXED
+    found = [p for p in project.GetRenderPresetList() or [] if p.startswith(prefix)]
+    if found:
+        return found[0]
     donor = Path(__file__).resolve().parent/'templates/render-preset-base.xml'
     base = donor.read_text()
     blob = re.search(r'<FieldsBlob>([0-9a-f]+)</FieldsBlob>',base)[1]
@@ -139,11 +144,11 @@ def run(resolve, directory, target, ceiling, normalise=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--preset-dir',type=Path,required=True)
+    parser.add_argument('--preset-dir',type=Path)
     parser.add_argument('--target',type=int,required=True); parser.add_argument('--ceiling',type=int,required=True)
     args = parser.parse_args()
-    import DaVinciResolveScript
-    try: print(run(DaVinciResolveScript.scriptapp('Resolve'),args.preset_dir.resolve(),args.target,args.ceiling))
+    import session  # Resolve's scripting variables, a windowless start
+    try: print(run(session.start(),(args.preset_dir or session.CACHE/'render-presets').resolve(),args.target,args.ceiling))
     except Exception as error:
         print(str(error),file=sys.stderr); sys.stdout.flush(); os._exit(1)
     sys.stdout.flush(); os._exit(0)

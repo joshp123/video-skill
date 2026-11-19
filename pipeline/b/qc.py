@@ -644,12 +644,14 @@ class Cut:
                                     '-f', 'rawvideo', '-'], stdout=subprocess.PIPE)
         frame_bytes = self.width * height * 3
         over = []
+        offset = getattr(self, 'span_offset', 0)
+        shown = [(round(c['start'] * self.fps) - offset, round(c['end'] * self.fps) - offset) for c in self.edit_list.get('captions', [])]
         for frame in range(self.frame_count):
             raw = decoder.stdout.read(frame_bytes)
             if len(raw) < frame_bytes:
                 break
             lines = self.vision[frame]['caption_lines'] if frame < len(self.vision) else []
-            if not lines:
+            if not lines or not any(a <= frame < b for a, b in shown):  # a title in the band is not a caption
                 continue
             picture = np.frombuffer(raw, np.uint8).reshape(height, self.width, 3)
             for line in lines:

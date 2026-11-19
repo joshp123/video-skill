@@ -82,8 +82,11 @@ def camera_rows(data):
             framing = min(main_framings, key=lambda m: abs(m[0] - s['record']))[1] if main_framings else cameras[main].get('framing', {})
             row = {'camera': main, 'record': s['record'], 'frames': s['frames'], 'framing': framing,
                    'source_in': frame_on(cameras, s['camera'], main, s['source_in'], fps)}
+        if s.get('off'):
+            row['off'] = True
         last = rows[-1] if rows else None
         if (last and last.get('speed_percent', 100) == row.get('speed_percent', 100) == 100 and last['framing'] == row['framing']
+                and last.get('off') == row.get('off')
                 and last['record'] + last['frames'] == row['record'] and last['source_in'] + last['frames'] == row['source_in']):
             last['frames'] += row['frames']
         else:
@@ -252,10 +255,10 @@ def lay(resolve, project, timeline, data, folder, name, seconds):
     placed = {}
     for row, track, file in video_rows:
         if file not in media:
-            media[file] = (pool.ImportMedia([file]) or [None])[0]
-            if media[file] is None:
-                raise RuntimeError(f'Could not import {file}')
+            media[file] = import_media(pool, file)
         item = place(resolve, project, timeline, media, row, track, file)
+        if row.get('off'):
+            item.SetClipEnabled(False)
         if row.get('group'):  # a panel's colour group (the look's background); screen material takes none
             groups = {g.GetName(): g for g in project.GetColorGroupsList() or []}
             if row['group'] not in groups:
@@ -302,6 +305,29 @@ def lay(resolve, project, timeline, data, folder, name, seconds):
     resolve.OpenPage('edit')  # Resolve fills the render cache in the background while a page is open and it is idle
     return {'timeline': name, 'clips': {f'V{k}': len(v) for k, v in sorted(placed.items())}, 'sound': laid['clips'],
             'crossfades': len(laid['crossfades']), 'file_pass': file_pass, 'differences': found}
+
+
+def import_media(pool, path):
+    """The media pool item of the file at PATH, imported if it is not there yet. A picture whose name ends in a digit is
+    imported from a copy named otherwise, because Resolve reads it as one frame of an image sequence."""
+    found = readback_media(pool)
+    if path in found:
+        return found[path]
+    source = Path(path)
+    if source.suffix.lower() in ('.png', '.jpg', '.jpeg', '.tif', '.tiff') and source.stem[-1:].isdigit():
+        copy = session.CACHE / 'pipeline-b' / 'stills' / f'{source.stem} still{source.suffix}'
+        copy.parent.mkdir(parents=True, exist_ok=True)
+        if not copy.exists() or copy.stat().st_mtime < source.stat().st_mtime:
+            copy.write_bytes(source.read_bytes())
+        if str(copy) in found:
+            return found[str(copy)]
+        path = str(copy)
+    item = (pool.ImportMedia([path]) or [None])[0]
+    if item is None:
+        item = readback_media(pool).get(path)  # ImportMedia can return None for a file it did import
+    if item is None:
+        raise RuntimeError(f'Could not import {path}')
+    return item
 
 
 def readback_media(pool):

@@ -697,9 +697,10 @@ def write_inventory(session, state, files, offset, padded, tone, profile):
              "| File | Kind | Length | Picture | Audio | Bytes |", "| --- | --- | --- | --- | --- | --- |"]
     for f in files:
         v = f["video"]
+        audio = ", ".join(f"{a['codec_name']} {a['channels']} ch {a['sample_rate']}" for a in f["audio"]) or "none"
         lines.append(f"| `{Path(f['path']).name}` | {f['kind']} | {f['duration_s']:.2f} s | {v.get('width')}x{v.get('height')} "
                      f"{v.get('codec_name')}, {v.get('avg_frame_rate')} fps, range {v.get('color_range')} | "
-                     f"{', '.join(f'{a['codec_name']} {a['channels']} ch {a['sample_rate']}' for a in f['audio']) or 'none'} | {f['bytes']:,} |")
+                     f"{audio} | {f['bytes']:,} |")
     lines += ["",
               f"- **The lav's offset:** {offset['offset_s']:.6f} s. {offset['how']}.",
               f"- **The lav on the front clock:** `{os.path.relpath(padded['padded'], session)}` ({padded['samples']} samples of "

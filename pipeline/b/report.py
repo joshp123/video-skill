@@ -13,8 +13,8 @@ report.py PLAN.json --timeline NAME --render FILE
 3. qc.py on FILE (a render of the whole timeline): eyes at cuts, flashes, lip sync, loudness, captions read back from
    the picture, lit words against his voice, caption edges, colour against the reference camera, text size at phone
    width, his whole head.
-Prints {joins, rows, files}: every flagged or borderline join with its score, and every fault and look row of qc.py
-with its frame. Exit 0 whatever it finds.
+Prints {joins, rows, files}: every dialogue join with its time, score, threshold, flag, borderline and likely fault (the
+same fields every time), and every fault and look row of qc.py with its frame. Exit 0 whatever it finds.
 """
 import argparse
 import json
@@ -58,11 +58,12 @@ def report(plan_path, name, render_file):
                            described['sound']['lav'], '--span', assembled['calibration_span'], '--out', str(work / 'joins.json')],
                           capture_output=True, text=True)
     if done.returncode:
-        out['joins'].append(f'the join check failed: {done.stderr[-400:]}')
+        out['joins_error'] = f'the join check failed: {done.stderr[-400:]}'
     else:
         checked = json.loads((work / 'joins.json').read_text())
-        out['joins'] = [f"join at {j['at']} s {'borderline' if j.get('borderline') else 'flagged'}: score {j['score']} "
-                        f"over {checked['threshold']}, likely {j.get('likely')} (a hint)" for j in checked['joins'] if j['flag'] or j.get('borderline')]
+        out['joins'] = [{'at_s': j['at'], 'score': j['score'], 'threshold': checked['threshold'], 'flag': j['flag'],
+                         'borderline': bool(j.get('borderline')), 'likely': j.get('likely'), 'level_step_db': j.get('level_step_db')}
+                        for j in checked['joins']]
         out['files']['joins'] = str(work / 'joins.json')
     qc_out = work / 'qc'
     subprocess.run([numpy_python(), 'qc.py', str(render_file), '--edit-list', str(work / 'description.json'), '--out', str(qc_out),

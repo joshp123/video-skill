@@ -66,18 +66,18 @@ def from_cache(project):
 
 
 def cache_filling(project, settle_s=20, limit_s=1800):
-    """Wait until the project's render cache folder stops growing for SETTLE_S seconds (Resolve fills it in the
-    background while it is idle); returns {megabytes, seconds}."""
-    folder = Path(project.GetSetting("perfCacheClipsLocation"))
-    began, last, still_since = time.monotonic(), -1, time.monotonic()
+    """Wait until Resolve has written nothing to the project's render cache for SETTLE_S seconds. It fills the cache in the
+    background while idle, and re-caches a changed clip by rewriting its files, so the folder's size can stay the same;
+    the newest write is what tells. Returns {megabytes, seconds}."""
+    folder = Path(project.GetSetting("perfCacheClipsLocation")) / project.GetUniqueId()
+    began = time.monotonic()
     while time.monotonic() - began < limit_s:
-        size = int(subprocess.run(["du", "-sk", str(folder)], capture_output=True, text=True).stdout.split()[0] or 0)
-        if size != last:
-            last, still_since = size, time.monotonic()
-        elif time.monotonic() - still_since >= settle_s:
+        files = [f.stat() for f in folder.rglob("*.dvcc")] if folder.exists() else []
+        newest = max((f.st_mtime for f in files), default=0)
+        if time.monotonic() - began >= settle_s and time.time() - newest >= settle_s:
             break
         time.sleep(2)
-    return {"megabytes": round(last / 1024), "seconds": round(time.monotonic() - began)}
+    return {"megabytes": round(sum(f.st_size for f in files) / 2 ** 20), "seconds": round(time.monotonic() - began)}
 
 
 def render(project, timeline, output, preset="phone", frame_range=None, captions=True, loudness=None):

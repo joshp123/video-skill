@@ -337,10 +337,7 @@
 				},
 				Page = Merge {
 					Inputs = {
-						Blend = Input {
-							SourceOp = "PageBlend",
-							Source = "Value"
-						},
+						Blend = Input { Expression = "min(1, max(0, (time + 1 - Fade.NumberIn1) / 3))" },
 						Background = Input {
 							SourceOp = "Background",
 							Source = "Output"
@@ -350,16 +347,6 @@
 							SourceOp = "AddressOver",
 							Source = "Output"
 						}
-					}
-				},
-				PageBlend = BezierSpline {
-					SplineColor = { Red = 205, Green = 205, Blue = 205 },
-					CtrlWZoom = false,
-					NameSet = true,
-					KeyFrames = {
-						[0] = { 0.333333333333333, RH = { 0.333333333333333, 0.444444444444444 }, Flags = { Linear = true } },
-						{ 0.666666666666667, RH = { 1.33333333333333, 0.777777777777778 }, Flags = { Linear = true }, LH = { 0.666666666666667, 0.555555555555556 } },
-						{ 1, Flags = { Linear = true }, LH = { 1.66666666666667, 0.888888888888889 } }
 					}
 				},
 				ColourNode = ColorSpaceTransform {

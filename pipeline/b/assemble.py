@@ -30,7 +30,7 @@ The plan (paths relative to the plan's folder; times in seconds on the front cam
                  occurrence after "from"),
       "pause_after_s"?: the pause wanted at the join after this piece (joins place splits it between both sides),
       "start_s"?, "end_s"?: an edge set by hand on the lav's clock, given to joins place as start_at or end_at,
-      "shots"?: [{"camera", "framing"?, "at"?: a word of the piece (default its start), "n"?, "offset_frames"?}],
+      "shots"?: [{"camera", "framing"?, "at"?: a word of the piece (default its start), "n"?, "offset_frames"?, "off"?}],
                  a piece without shots continues the camera and framing before it; offset_frames moves a shot's
                  picture cut that many frames (negative: earlier), on any shot: at a piece's start it splits the
                  picture cut from the sound cut;
@@ -43,8 +43,11 @@ The plan (paths relative to the plan's folder; times in seconds on the front cam
   "titles": [{"template", "inputs", "at": ANCHOR, "frames" or "until": ANCHOR}],
   "panels": [{"file", "source_in", "track", "framing"?, "group"?, "at": ANCHOR, "frames" or "until": ANCHOR}]
 }
-ANCHOR: {"piece": index from 0, "word": "words", "n"?: which occurrence in the piece, from 0, "edge": "start" or "end",
-"offset_frames"?}, or {"frame": N}, or {"end": true} for the film's last frame.
+ANCHOR: {"piece": index from 0, "word": "words", "n"?: which occurrence in the piece, from 0, "edge": "start", "end" or "cut",
+"offset_frames"?}, or {"frame": N}, or {"end": true} for the film's last frame. "cut" is the camera cut nearest the word's
+start when one is within 6 frames (a shot starts a few frames before its first word), else the word's start.
+A shot with "off": true lays its camera disabled, so the background and panels show alone (the tool with no camera);
+it continues to the next shot, like any shot.
 """
 import argparse
 import difflib
@@ -162,7 +165,7 @@ def joins_place(plan, folder, pieces, lav, transcript, work):
     return json.loads(out.read_text())
 
 
-def resolve_anchor(anchor, pieces, fps, duration_frames=None):
+def resolve_anchor(anchor, pieces, fps, duration_frames=None, cuts=()):
     if anchor.get("end"):
         return duration_frames
     if "frame" in anchor:
@@ -174,8 +177,12 @@ def resolve_anchor(anchor, pieces, fps, duration_frames=None):
     if not hits:
         raise ValueError(f"{anchor['word']!r} is not in piece {anchor['piece']}")
     k = hits[anchor.get("n", 0)]
-    t = tokens[k]["start"] if anchor.get("edge", "start") == "start" else tokens[k + len(want) - 1]["end"]
-    return round((piece["record_s"] + t - piece["start"]) * fps) + anchor.get("offset_frames", 0)
+    t = tokens[k]["end"] if anchor.get("edge", "start") == "end" else tokens[k]["start"]
+    frame = round((piece["record_s"] + t - piece["start"]) * fps)
+    if anchor.get("edge") == "cut":
+        near = min(cuts, key=lambda c: abs(c - frame), default=None)
+        frame = near if near is not None and abs(near - frame) <= NEAR_CUT_FRAMES else frame
+    return frame + anchor.get("offset_frames", 0)
 
 
 def from_zero(check):
@@ -414,7 +421,7 @@ def assemble(plan_path):
         for shot in p.get("shots", []):
             at = piece_first if "at" not in shot else resolve_anchor({"piece": k, "word": shot["at"], "n": shot.get("n", 0)}, pieces, fps)
             at += shot.get("offset_frames", 0)
-            cuts[at] = (shot["camera"], shot.get("framing", cameras[shot["camera"]].get("framing", {})))
+            cuts[at] = (shot["camera"], shot.get("framing", cameras[shot["camera"]].get("framing", {})), bool(shot.get("off")))
         if not any("at" not in shot for shot in p.get("shots", [])):
             cuts[piece_first] = None  # continues the camera before it, from this piece's source
         piece_cuts.append(sorted(cuts.items()))
@@ -425,10 +432,11 @@ def assemble(plan_path):
             look = shot or look
             if look is None or nxt <= first:
                 continue
-            cam, fr = look
+            cam, fr, off = look
             front_s = p["start"] + first / fps - p["record_s"]
             source_in = round((front_s - cameras[cam].get("picture_offset_s", 0.0)) * fps)
-            segments.append({"camera": cam, "source_in": source_in, "record": first, "frames": nxt - first, "framing": fr})
+            segments.append({"camera": cam, "source_in": source_in, "record": first, "frames": nxt - first, "framing": fr,
+                             **({"off": True} if off else {})})
     report["shortest_segments"] = sorted(({"record": s["record"], "frames": s["frames"]} for s in segments), key=lambda s: s["frames"])[:3]
     def on_timeline(lav_s):
         holder = next((p for p in pieces if p["start"] - 0.05 <= lav_s <= p["end"] + 0.05), None)
@@ -476,15 +484,15 @@ def assemble(plan_path):
             template.frames_for_template(c, fps)
         except ValueError as refusal:
             report["caption_refusals"].append(str(refusal))
-    titles = []
+    titles, cuts = [], sorted(s["record"] for s in segments)[1:]
     for t in plan.get("titles", []):
-        first = resolve_anchor(t["at"], pieces, fps, duration_frames)
-        frames = t["frames"] if "frames" in t else resolve_anchor(t["until"], pieces, fps, duration_frames) - first
+        first = resolve_anchor(t["at"], pieces, fps, duration_frames, cuts)
+        frames = t["frames"] if "frames" in t else resolve_anchor(t["until"], pieces, fps, duration_frames, cuts) - first
         titles.append({"template": t["template"], "inputs": t["inputs"], "record": first, "frames": frames})
     panels = []
     for row in plan.get("panels", []):
-        first = resolve_anchor(row["at"], pieces, fps, duration_frames)
-        frames = row["frames"] if "frames" in row else resolve_anchor(row["until"], pieces, fps, duration_frames) - first
+        first = resolve_anchor(row["at"], pieces, fps, duration_frames, cuts)
+        frames = row["frames"] if "frames" in row else resolve_anchor(row["until"], pieces, fps, duration_frames, cuts) - first
         panels.append({"file": row["file"], "source_in": row["source_in"], "source_out": row["source_in"] + frames,
                        "track": row["track"], "record": first, "framing": row.get("framing", {}),
                        **({"group": row["group"]} if "group" in row else {})})
@@ -508,7 +516,7 @@ def assemble(plan_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("plan", type=Path)
     parser.add_argument("--out", type=Path)
     parser.add_argument("--force", action="store_true")

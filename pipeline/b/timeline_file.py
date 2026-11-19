@@ -9,8 +9,8 @@ On 21.2 no script call gives a crossfade a sub-frame start or length (AddTransit
 one centres on a sub-frame edit, a one-frame one does not; a placed transition cannot be moved or trimmed), and none
 creates a caption, sets its text or its word times. The timeline's .drt holds both. So: export the timeline, rewrite
 those parts of its file, import it as a new timeline, put back what the import drops (every audio fade, voice
-isolation, track names), check that every video and audio item kept its place, length, source, framing, grade node
-count and colour group, read the rewritten parts back, and only then delete the original and give the new one its
+isolation, track names, a disabled clip's colour group), check that every video and audio item kept its place, length,
+source, framing, grade node count, colour group and enabled state, read the rewritten parts back, and only then delete the original and give the new one its
 name. On any fault the import is deleted and the original keeps its name.
 
 The import is a new timeline, so it has no render cache: every cached frame is worked out again, at the next render or
@@ -128,7 +128,7 @@ def items(timeline):
                 if kind == "video":
                     state = (tuple(item.GetProperty(k) for k in FRAMING_KEYS), (item.GetSpeed() or {}).get("Percentage"),
                              item.GetProperty("RetimeProcess"), graph.GetNumNodes() if graph else None,
-                             group.GetName() if group else None)
+                             group.GetName() if group else None, item.GetClipEnabled())
                 else:
                     isolation = item.GetVoiceIsolationState() or {}
                     state = (tuple(sorted(item.GetFades().items())), bool(isolation.get("isEnabled")), isolation.get("amount"))
@@ -180,6 +180,22 @@ def put_audio_back(timeline, before):
                 raise RuntimeError(f"{track}: voice isolation could not be set back")
 
 
+def put_video_back(project, timeline, before):
+    """Each video item's colour group and enabled state as they were: the import drops a disabled clip's group."""
+    groups = {g.GetName(): g for g in project.GetColorGroupsList() or []}
+    for track, rows in before.items():
+        if not track.startswith("video"):
+            continue
+        placed = [i for i in timeline.GetItemListInTrack("video", int(track.split()[1])) or [] if i.GetType() != "transition"]
+        for item, row in zip(placed, rows):
+            group, enabled = row[5][4], row[5][5]
+            if item.GetClipEnabled() != enabled:
+                item.SetClipEnabled(enabled)
+            now = item.GetColorGroup()
+            if group and (now is None or now.GetName() != group):
+                item.AssignToColorGroup(groups[group])
+
+
 def rewrite(resolve, project, timeline, work, crossfades=None, captions=None, look_track=None):
     """Rewrite TIMELINE through its file and put the result in its place, under its name. crossfades: [{track, start,
     length}] in frames from the timeline's first, one per transition already on that track. captions: the whole caption
@@ -212,6 +228,7 @@ def rewrite(resolve, project, timeline, work, crossfades=None, captions=None, lo
             raise RuntimeError(f"Import of the rewritten timeline failed or could not be named {name!r}")
         set_track_names(imported, names)
         put_audio_back(imported, before)
+        put_video_back(project, imported, before)
         after = items(imported)
         faults = [f"{track} changed: {[(b, a) for b, a in zip(before[track], after.get(track, [])) if b != a][:2]}"
                   for track in before if before[track] != after.get(track)]

@@ -24,7 +24,9 @@ after, and `notes`: anything the model must look at or decide.
                            show CAMERA from START to END (END excluded): the second camera is a clip on V3 over the main
                            camera on V2, graded, blurred and framed like its neighbours; the main camera shows where V3
                            is empty.
-  title AT JSON            set inputs of the title under frame AT, e.g. '{"Title": "[[New]] words"}'.
+  title AT JSON [--frames N]
+                           set inputs of the title under frame AT, e.g. '{"Title": "[[New]] words"}' ('{}' for none);
+                           --frames lays it again N frames long.
   still FILE START FRAMES  a picture over everything from START for FRAMES.
   captions JSON            retype or re-time captions, [{"index": i, "text"?: ..., "words"?: [{text, start, end}]}]
                            (seconds on the timeline), through the timeline's file. Costs the render cache: see notes.
@@ -122,6 +124,13 @@ def move(timeline, kind, track, items, frames):
 def copy_of(project, timeline, item, kind, track, record, source, length):
     """A new clip of ITEM's media: SOURCE (frames of its file) for LENGTH frames at RECORD (frames from the timeline's
     first), with ITEM's framing, grade, blur, colour group and render-cache flags, or its fades and voice isolation."""
+    new = placed_copy(project, timeline, item, kind, track, record, source, length)
+    if not item.GetClipEnabled():
+        new.SetClipEnabled(False)
+    return new
+
+
+def placed_copy(project, timeline, item, kind, track, record, source, length):
     pool, start = project.GetMediaPool(), timeline.GetStartFrame()
     if kind == 'audio':
         fps = float(timeline.GetSetting('timelineFrameRate'))
@@ -226,8 +235,6 @@ def change_time(resolve, project, name, at, delta, plan_path):
                 later.append(item)
             elif a < at and (b > end if delta < 0 else True):
                 if splits:
-                    if kind == 'audio' and delta < 0:
-                        joins[(track, float(at))] = CROSSFADE_FRAMES  # the two parts of the sound meet at AT
                     gone = 0 if delta > 0 else -delta
                     fades = item.GetFades() if kind == 'audio' else None
                     copies.append((item, kind, track, item.GetLeftOffset(True) + at - a + gone, b - at - gone, fades))
@@ -250,6 +257,12 @@ def change_time(resolve, project, name, at, delta, plan_path):
         if fades:
             item.SetFades({'FadeIn': fades['FadeIn'], 'FadeOut': 0})
             new.SetFades({'FadeIn': 0, 'FadeOut': fades['FadeOut']})
+    # The sound's two parts meet in a plain butt join: a crossfade there would play the frames just taken out, and fades
+    # dip the room under the join (the join check scored 5, 10 and 20 ms fades 0.58 to 0.99, the butt join 0.41; 19 Nov).
+    for t, a in list(joins_of(timeline)) if delta < 0 else []:  # a trim can drag a crossfade onto the new join
+        if abs(a - at) < 1e-2:
+            timeline.DeleteClips([i for i in timeline.GetItemListInTrack('audio', t) if i.GetType() == 'transition'
+                                  and abs((i.GetStart(True) + i.GetEnd(True)) / 2 - timeline.GetStartFrame() - at) < 1e-2], False)
     for item, start, length in titles:
         relay_title(resolve, project, timeline, item, start, length, plan['look'])
     if delta > 0:
@@ -399,11 +412,13 @@ def camera(resolve, project, name, start, end, to, plan_path, framing=None):
     return done(timeline, before, began, notes=notes)
 
 
-def title(resolve, project, name, at, inputs):
-    """Set INPUTS on the title (V5) under frame AT."""
+def title(resolve, project, name, at, inputs, plan_path, frames=None):
+    """Set INPUTS on the title (V5) under frame AT (photo paths relative to the plan's folder) and, given FRAMES, lay it
+    again at that length (no offset call can lengthen a title)."""
     began = time.monotonic()
     timeline = timeline_of(project, name)
     before = snapshot(timeline)
+    plan = json.loads(Path(plan_path).read_text(encoding='utf-8'))
     found = [i for i in clips(timeline, 'video', TITLES) if where(timeline, i)[0] <= at < where(timeline, i)[1]]
     if len(found) != 1:
         raise ValueError(f'{len(found)} titles under frame {at}')
@@ -413,10 +428,14 @@ def title(resolve, project, name, at, inputs):
         tool = comp.FindTool(key)
         if tool and tool.GetAttrs()['TOOLS_RegID'] == 'StyledTextCLS':
             graphic.set_styled_text(tool, value)
-        elif not macro.SetInput(key, graphic.input_value(value, Path.cwd(), graphic.STAGING / 'photos')):
+        elif not macro.SetInput(key, graphic.input_value(value, Path(plan_path).resolve().parent, graphic.STAGING / 'photos')):
             raise RuntimeError(f'Could not set the title\'s {key!r}')
+    if frames:
+        start = where(timeline, found[0])[0]
+        relay_title(resolve, project, timeline, found[0], start, frames, plan['look'])
+        found = [i for i in clips(timeline, 'video', TITLES) if where(timeline, i)[0] == start]
     session.save(resolve)
-    return done(timeline, before, began, inputs=graphic.read_title(found[0])['inputs'])
+    return done(timeline, before, began, inputs=graphic.read_title(found[0])['inputs'], inputs_set=inputs)
 
 
 def still(resolve, project, name, file, start, frames):
@@ -425,10 +444,8 @@ def still(resolve, project, name, file, start, frames):
     timeline = timeline_of(project, name)
     before = snapshot(timeline)
     pool = project.GetMediaPool()
-    path = str(Path(file).resolve())
-    media = next((m for m in readback_media(project) if m.GetClipProperty('File Path') == path), None) or (pool.ImportMedia([path]) or [None])[0]
-    if media is None:
-        raise RuntimeError(f'Could not import {path}')
+    import build
+    media = build.import_media(pool, str(Path(file).resolve()))
     timeline.AddTrack('video')
     track = timeline.GetTrackCount('video')
     new = (pool.AppendToTimeline([{'mediaPoolItem': media, 'startFrame': 0, 'endFrame': frames, 'mediaType': 1, 'trackIndex': track,
@@ -450,6 +467,7 @@ def captions(resolve, project, name, edits, plan_path):
     plan = json.loads(Path(plan_path).read_text(encoding='utf-8'))
     folder = Path(plan_path).resolve().parent
     current = readback.read(resolve, project, name)['captions']
+    was = json.loads(json.dumps(current))
     for edit in edits:
         caption = current[edit['index']]
         if 'words' in edit:
@@ -462,8 +480,11 @@ def captions(resolve, project, name, edits, plan_path):
             caption['words'] = [dict(w, text=t) for w, t in zip(caption['words'], new_words)]
     timeline = write_captions(resolve, project, timeline, current, plan['look'])
     session.save(resolve)
-    resolve.OpenPage('edit')
-    return done(timeline, before, began, notes=['the timeline was replaced by its import, which has no render cache: Resolve '
+    now = readback.read(resolve, project, timeline.GetName())['captions']
+    fps = float(timeline.GetSetting('timelineFrameRate'))
+    shown = lambda c: (c['text'], [round(w['start'] * fps, 2) for w in c['words']])
+    changed = [f'caption {i}: {shown(a)} -> {shown(b)}' for i, (a, b) in enumerate(zip(was, now)) if shown(a) != shown(b)]
+    return done(timeline, before, began, captions_changed=changed, notes=['the timeline was replaced by its import, which has no render cache: Resolve '
                                                 'fills it again in the background (about the time of one live render)'])
 
 
@@ -527,7 +548,7 @@ if __name__ == '__main__':
     p = sub.add_parser('camera')
     p.add_argument('start', type=int); p.add_argument('end', type=int); p.add_argument('to'); p.add_argument('--framing', type=json.loads)
     p = sub.add_parser('title')
-    p.add_argument('at', type=int); p.add_argument('inputs', type=json.loads)
+    p.add_argument('at', type=int); p.add_argument('inputs', type=json.loads); p.add_argument('--frames', type=int)
     p = sub.add_parser('still')
     p.add_argument('file', type=Path); p.add_argument('start', type=int); p.add_argument('frames', type=int)
     p = sub.add_parser('captions')
@@ -548,7 +569,7 @@ if __name__ == '__main__':
         if c == 'camera':
             return camera(resolve, project, t, args.start, args.end, args.to, args.plan, args.framing)
         if c == 'title':
-            return title(resolve, project, t, args.at, args.inputs)
+            return title(resolve, project, t, args.at, args.inputs, args.plan, args.frames)
         if c == 'still':
             return still(resolve, project, t, args.file, args.start, args.frames)
         if c == 'captions':
