@@ -47,7 +47,7 @@ The front camera's large sensor and fast lens put the background out of focus; t
 
 - **The look's blur** is Resolve's AI CineFocus over an inverted AI Magic Mask of him, so the bookcase goes soft and his hair, glasses and edges stay sharp. Its node stack lives on the look's carrier clip (`look.json`, `colour.backgroundBlur`) and is copied onto each wide clip with `CopyGrades`, which brings node 1 too, so the camera's CDL goes back on after the copy (`tools/resolve.md`).
 - **Never a cut-out of him with a blur behind it:** it reads as fake at a glance.
-- **The copied mask is not tracked on the new shot,** so look at his glasses' far rim where it crosses the bookcase on every wide shot, at full size, through his movement. Where it breaks up, the shot needs its mask tracked, or the line on the front camera.
+- **The copied mask is not tracked on the new shot,** so look at his glasses' far rim where it crosses the bookcase on every wide shot, at full size, through his movement. Where it breaks up, no script call mends the mask (`tools/resolve.md`, "`CreateMagicMask`"): put the line on the front camera when the layout leaves room for his head there, and otherwise say in the cut's message which shots show it.
 - **When more aperture changes nothing visible,** look at the depth map and stretch it with Adjust Map Levels so the background reads as far away.
 - **Strength is his call** when it changes: three strengths on one full-size frame beside the front camera's real blur, with a crop of the edge round his head and glasses. His verdict on one too gentle to see: "both look identical to me?" If he cannot see it at phone width, it is not worth its render time.
 
