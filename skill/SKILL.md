@@ -53,7 +53,7 @@ He named the usual misreading: Claude cannot tell "user says maybe X is okay, le
 - **A question is a question.** "wdyt?" or "discuss" wants your thinking in a few lines; build nothing until he says go.
 - **Answer "not X" with the smallest change that meets it,** in the same style. He warned of the pattern "where i say 'i dont like X' then claude does something compleeeeeetely different". When the size is unclear, show two or three on one real frame.
 - **A trial he agrees to** is built to the scope he set and labelled provisional.
-- **A passing remark is not a rule:** "These 'rulings' are not neccessarily binding right now and you shoudl care more about overall intent and WHY we said this."
+- **A passing remark is not a rule:** "these 'rulings' are not neccessarily binding right now and you shoudl care more about overall intent and WHY we said this".
 
 ## What reaches him, and when
 

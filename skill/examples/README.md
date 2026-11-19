@@ -1,8 +1,8 @@
-<!-- Written by AI on 2026-10-25 by Claude Opus 5.5, B version, from the skill of 22 Oct. The pairs are byte copies of real artefacts from the where-was-i video (sources in the 22 Oct skill's examples/README.md). -->
+<!-- Written by AI on 2026-10-25 by Claude Opus 5.5, B version, from the skill of 22 Oct. The pairs are byte copies of real artefacts from the where-was-i video (sources in the 22 Oct skill's examples/README.md). Pair 5, a brief to another agent, dropped from this list by AI on 2026.11.19 by model claude opus 5.5: briefs are covered by the working-with-other-agents skill. -->
 
 # Weak and strong, from a real video
 
-The pairs are private: they hold real artefacts from Josh's videos, so they are kept out of the public repository and exist only in the copy of this folder on his Mac. A public clone has this README alone; the role files still point at the pairs by name.
+The pairs are private: they hold real artefacts from Josh's videos, so they are kept out of the public repository and exist only in the copy of this folder on his Mac. A public clone, and the installed copy of the skill, have this README alone: the pairs are in `~/code/video-skill/skill/examples/` on his Mac.
 
 Each pair is something Josh was shown, weak then strong, with his reaction. Open the weak file, then the strong one, and notice what each asks you to hold in your head before you can judge it. Copy the move, not the words: all of it belongs to one video.
 
@@ -10,6 +10,5 @@ Each pair is something Josh was shown, weak then strong, with his reaction. Open
 2. **Look options.** Weak: three looks described in prose beside a video. Josh: "i want to fucking see them? with pictures?" Strong: one image, a column per look, the same three moments in each, his moodboard frame on top. He chose in five minutes and combined two options: "we need font of A and word highlighting tiktok stle with pill of B". Copy its form, not its frames: its first frames catch him mid-word.
 3. **A decision message.** Weak: an account of the night and a verdict on its own work, with the four things he had to do near the end. Josh: "this is too much to read and not actionable". Strong: "I need three things from you, in order", what an answer looks like, a recommendation. He answered all three in one message four minutes later.
 4. **Words on screen.** Weak: his own lines offered back to him and the card held until he wrote it. Josh: "well fucking iterate with me on the ideas". Strong: five options drawn on the real first frame in his look, his two first, a recommendation. He picked one in a line, and the picture showed him the card was too busy.
-5. **A brief.** Weak: process and rules, nothing about the video. Josh: "your kickoff is terrible? it mentions nothign about the actual goal of the video". Strong: the tool, the recording, what the video is for, his decisions apart from open questions. Three of its orders are history (placeholders on screen, a plain look, Codex refused for Resolve), and one is weak: it named a format ("looks in motion") that contradicted his ask for mockups, and the director built it faithfully. Name the outcome, not the form.
 
 What they share: the weak version made him remember, imagine or dig before he could judge; the strong one let him judge in one pass by looking at the thing itself.

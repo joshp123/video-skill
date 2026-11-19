@@ -33,7 +33,7 @@ You choose every number on real frames; the script only applies it.
 
 Scopes measure; the image decides (video 006, 9:13). A patch or an average hides what the eye sees across a cut: compare the hue of all his skin pixels on each camera, and one band at a time on what both cameras see. On his footage, skin warmer than the reference camera has read as a different room at every change, while a slightly paler wide camera with the same blue/green balance read as the same room; when the wide reads warm, look at its saturation and blue slope against the front camera's first. The report of checks measures his skin on every shot (`tools/checks.md`); the number finds a mismatch, and your eyes confirm it.
 
-Your eyes adapt: the eye that tuned a pair stops seeing its difference. The cold look at the finished cut sees your pairs fresh; when it still reads the wide as warm, fix it.
+Your eyes adapt: the eye that tuned a pair stops seeing its difference. A fresh reviewer of the finished cut (`roles/director.md`, "Other agents") sees your pairs anew; when it still reads the wide as warm, fix it.
 
 A second video from the same session starts from the first video's values, checked on its own frames. Screen recordings and app captures are already Rec.709: they take Resolve's Rec.709 input, no grade, and a colour group of their own.
 

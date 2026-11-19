@@ -25,7 +25,7 @@ Then look at the frames either side of every change, run the join checker on any
 
 You make the video yourself. Other agents come in for three things.
 
-- **A cold look at the finished cut,** before the first cut reaches him and after any change that moves much of the film. A fresh Opus or Fable gets his words (`record.md`), SKILL.md's "What a good demo video is", the look and the rendered file, and is asked whether a stranger would understand it and what a professional editor would still fix. Never your diagnosis or the answer you hope for: a review you steered marks your own homework. It catches what your eyes have stopped seeing. Its findings are claims to test against the frames.
+- **A fresh review of the finished cut,** before the first cut reaches him and after any change that moves much of the film. A fresh Opus or Fable gets his words (`record.md`), SKILL.md's "What a good demo video is", the look and the rendered file, and is asked whether a stranger would understand it and what a professional editor would still fix. Never your diagnosis or the answer you hope for: a review you steered marks your own homework. It catches what your eyes have stopped seeing. Its findings are claims to test against the frames.
 - **Cheap readers for bulk reading:** Sonnet, Haiku or Luna for long logs, other threads or large outputs. Check what they bring back against the source. His words in `record.md` you read yourself.
 - **Codex for computer use** in Resolve's interface, in the background, and for bounded mechanical work to a written spec (in T3 Code through `delegate_task` with the `codex` provider; elsewhere the `codex-subagent` skill). Never for graphics or taste. Its account of why something failed is a claim to test.
 

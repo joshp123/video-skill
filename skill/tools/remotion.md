@@ -1,79 +1,37 @@
-<!-- Rewritten by AI on 2026-10-29 by Claude Opus 5.5: why the terminal kinds are Remotion, what the render spec holds, how real output becomes rows, and how to render and check a clip. Every field is checked against pipeline/b/render-graphics.mjs and pipeline/graphics/. Updated by AI on 2026.11.18 by model claude opus 5.5 for the rebuild: clips enter the plan as panels; frames come from the edit list; this route was not exercised in the 17 Nov rebuild. -->
+<!-- Rewritten by AI on 2026.11.19 by model claude opus 5.5 from the 29 Oct and 18 Nov files: why the terminal kinds are Remotion, real output at the panel's width, the render spec, and checking a clip. The 17 Nov rebuild did not exercise this route; where pipeline/README.md differs, it wins. -->
 
 # Remotion: the terminal, the agent's box and the key-line card
 
 ## Why these three are not Resolve
 
-Josh's direction: graphics native in Resolve, "except terminal graphics which are okay in remotion unless there is a better more native sane option". A terminal graphic needs per-frame data: rows of real output, a command typed character by character, a scroll by whole rows, a highlight on exact character cells from the frame he names them. Resolve gives a graphic no way to take that: an OGraf graphic takes a file, a trim, a hold and play frames (pp. 2376 to 2378), and a script cannot put a Text+ character style on named characters (22 Oct). So these three render in Remotion, each as its own transparent clip, which goes into the plan as a `panels` entry on track 3, above the cameras. Everything else (titles, photos, cards, the closing page) is the look's Fusion templates (`roles/motion.md`). When Resolve gains a route for per-frame text data, this exception should go (SKILL.md, "Keep moving into Resolve").
+Josh's direction: graphics native in Resolve, "except terminal graphics which are okay in remotion unless there is a better more native sane option". A terminal graphic needs per-frame data: rows of real output, a command typed character by character, a scroll by whole rows, a highlight on exact character cells from the frame he names them. No Resolve graphic takes that: an OGraf graphic takes a file, a trim, a hold and play frames (pp. 2376 to 2378), and a script cannot put a Text+ character style on named characters (22 Oct). So these three render in Remotion, each as its own transparent clip on the app track. When Resolve gains a route for per-frame text data, this exception should go.
 
-The project is `pipeline/graphics/` (Remotion 4, React 19, in its own devenv, which provides Node and ffmpeg). It renders as it did in October, but the 17 Nov rebuild did not exercise it: on its first use, check one clip over the graded picture before building a video's worth. Its components are in `src/`: `Terminal.tsx`, `AskTerminal.tsx` (the agent's box), `Keyline.tsx`, with `glyphBounds.ts` measuring each highlighted word's rendered ink so a pill fits it.
+The project is `pipeline/graphics/` (Remotion 4, React 19, in its own devenv). The 17 Nov rebuild did not exercise it: on its first use, check one clip over the graded picture before building a video's worth. Its components are `Terminal.tsx`, `AskTerminal.tsx` (the agent's box) and `Keyline.tsx`, with `glyphBounds.ts` measuring each highlighted word's rendered ink so a pill fits it. It renders with Remotion's own downloaded headless shell, never the installed Chrome app, whose every launch left a 1.4 GB copy of itself in a temporary folder.
 
 ## Real output, at the panel's width
 
-Josh: "WE CAN FAKE REAL TERMINALS WE SHOULD OBVIOUSLY JUST MAKE IT LOOK REAL BUT FIT THE VERTICAL FORMAT". Real means the tool's own output, run at the column count the panel gives, set in one monospace face on a character grid.
+Josh: "WE CAN FAKE REAL TERMINALS WE SHOULD OBVIOUSLY JUST MAKE IT LOOK REAL BUT FIT THE VERTICAL FORMAT". Real means the tool's own output, run at the column count the panel gives, in one monospace face on a character grid.
 
 ```sh
 python3 pipeline/graphics/capture-terminal.py --columns N --output EDIT/graphics/content/NAME.txt -- COMMAND ARGS
 ```
 
-It runs the command in a pseudo-terminal N columns wide (`COLUMNS=N`, `LINES=40`, `TERM=xterm-256color`) and saves every byte, only if the command exits cleanly. A tool that formats for the terminal's width then wraps exactly as it would there. A tool that leaves wrapping to the terminal breaks words wherever the line runs out: capture through `-- sh -c 'COMMAND | fold -s -w N'`, after checking the piped run prints the same words. Set `PAGER=cat` or a pager waits for ever. A progress bar becomes many rows, and a full-screen interface that moves the cursor cannot be captured as rows at all. Always pass the tool's full path.
+It runs the command in a pseudo-terminal N columns wide and saves every byte, only if the command exits cleanly. A tool that formats for the terminal's width then wraps exactly as it would there. A tool that leaves wrapping to the terminal breaks words wherever the line runs out: capture through `-- sh -c 'COMMAND | fold -s -w N'`, after checking the piped run prints the same words. Set `PAGER=cat`, or a pager waits for ever. A full-screen interface that moves the cursor cannot be captured as rows. Pass the tool's full path.
 
-**The column count sets the type size.** The columns fill the panel's text width, so the size is the width divided by the columns, times 0.6 for JetBrains Mono's advance. Fewer columns, bigger type, more wrapping. Never capture wide and zoom: the tool's own layout is then cut at the panel's edge.
+**The column count sets the type size:** the panel's text width divided by the columns, times 0.6 for JetBrains Mono's advance. Fewer columns, bigger type, more wrapping. Never capture wide and zoom: the tool's own layout is then cut at the panel's edge.
 
-**From capture to rows.** `compileTerminalContent(capture, columns)` in `pipeline/graphics/terminal-content.mjs` strips colour and title escape codes, turns carriage returns, backspaces and tabs into what a terminal shows, and wraps at the column count, counting wide characters as two cells; every character is otherwise unchanged. `findTerminalTarget(rows, text, after)` finds a phrase in those rows and returns its character ranges, with `after` to pick the occurrence after another phrase. Use both from `node -e` in the graphics devenv, so a highlight can only land on text the tool really printed. `claude-screen.mjs` (`fitClaudeWelcomeRows`) refits a captured Claude Code start screen to the panel's columns, keeping its text and redrawing only the border.
+**From capture to rows.** `compileTerminalContent(capture, columns)` in `pipeline/graphics/terminal-content.mjs` strips colour and title escape codes, turns carriage returns, backspaces and tabs into what a terminal shows, and wraps at the column count, counting wide characters as two cells. `findTerminalTarget(rows, text, after)` finds a phrase in those rows and returns its character ranges, so a highlight can only land on text the tool really printed.
 
-## The render spec: `graphics/spec.json`
+## The render spec
 
-One file per video, beside `graphics/content/`. The cut writes each graphic's timing into it (`roles/editor.md`, "Graphics"); the motion stage completes and renders it. Frames are timeline frames: a graphic is on screen from `record` for `frames`, and every cue frame lies inside that span. Read them from the edit list `assemble.py` wrote, where every caption word has its time on the timeline: a cue on his word is that word's start times the frame rate. A change to the cut moves his words, so render the clips again after any change that moves a piece.
-
-```json
-{
-  "format": {"width": 1080, "height": 1920, "fps": 25},
-  "graphics": [
-    {"id": "trip", "kind": "terminal", "look": "2026-10-16-signpost-pill", "record": 412, "frames": 160,
-     "layout": {"graphic": [0, 0, 1080, 980], "picture": [0, 980, 1080, 940]},
-     "content": {"columns": 36, "prompt": "$ ", "command": "TOOL trip 2025-06-23", "rows": ["...", "..."]},
-     "cues": [{"frame": 412, "action": "type"},
-              {"frame": 470, "action": "highlight", "range": [{"row": 4, "column": 7, "length": 4}]}],
-     "source": "graphics/content/trip-36.txt, cue at 470 on his word 'Bell'"}
-  ]
-}
-```
-
-- **Every graphic:** `id` (the clip's file name), `kind`, `look` (a folder in `Edits/looks/`), `record`, `frames`, and `layout`: `graphic` is its region `[x, y, width, height]` in frame pixels (default the whole frame), and `picture`, when he shares the frame, is where his picture sits; a terminal's background stops at its top. Fields the components do not read, such as `source`, pass through untouched: use them for where each value came from.
-- **`terminal`:** `content` `{columns, prompt, command?, rows}`, every row no wider than `columns`. Cues `{frame, endFrame?, action, range?}`: `type` types the command at the look's speed, then prints the rows; `show` scrolls a range's first row to the top; `highlight` lights the range until the next highlight, scrolling it into view; `scroll` brings the range's last row to the bottom, ending at `endFrame`. A range is a list of `{row, column, length}` in character cells.
-- **`agent box`:** `content` `{columns, prompt, words, welcomeRows}`: the agent's real start screen as `welcomeRows`, and his request as `words`. Cues `{frame, endFrame, action: "type-word", index}` type `words[index]` on the frame he says it, on the pill, at the largest size that fits.
-- **`keyline`:** a few real lines held large. `content` `{command?, prompt?, typeCommand?, header?, commandColumns, keyColumns, cards, highlights}`. Each card `{fromFrame, rows}` replaces the one before at its frame; each highlight `{frame, ranges}` lights ranges `{card, row, column, length}` until the next.
-
-Before it renders anything the renderer checks every frame against the span, every row against the column count, every range against its row, and every action against its kind, and prints the text each highlight lights, so the writer sees words, not cells. Any failure stops the render.
-
-## Rendering
-
-From `pipeline/graphics`, with VIDEO the video's folder as an absolute path (a relative one resolves against the repository, not the media drive's link to it):
-
-```sh
-devenv shell -- node ../b/render-graphics.mjs VIDEO/graphics/spec.json --out=VIDEO/build/graphics-vN
-```
-
-Each graphic becomes `<id>.mov`, ProRes 4444 with alpha, 10-bit, Rec.709, with a `manifest.json` of `{id, file, record, frames}`; the clip goes into the plan as a `panels` entry at that frame (`"at": {"frame": N}`, `"frames": F`). It refuses any file that exists, so each version renders into its own folder. Three terminal clips took about half a minute (22 Oct). It runs Remotion's own downloaded headless shell through `chrome-render.sh`, never the installed Chrome app, whose every launch left a 1.4 GB copy of itself in a temporary folder. Display-referred Rec.709 clips pass through the timeline unchanged only with the inverse DRT on (`tools/resolve.md`, "Colour management").
-
-`pipeline/graphics/render-clips.mjs` is the older renderer, for the older edit format that was removed on 17 Nov; new work uses `render-graphics.mjs`.
+One `graphics/spec.json` per video lists each clip: its kind, the look, the timeline frame it starts on and its length, its layout (the graphic's region, and where his picture sits when he shares the frame), its content (rows within the column count) and its cues on timeline frames (type, show, highlight a range of character cells, scroll; for the agent's box, each word typed on the frame he says it). A cue on his word is that word's start on the placed sound, so render the clips again after any edit that moves his words. Before it renders, the renderer checks every frame, row, range and action and prints the text each highlight lights, so you read words, not cells. Each clip renders as ProRes 4444 with alpha, into its own folder (it refuses a file that exists). Three terminal clips took about half a minute (22 Oct). Display-referred Rec.709 clips pass through the timeline unchanged only with the inverse DRT on (`tools/resolve.md`, "Colour management").
 
 ## Making each kind read
 
 - **Terminal:** the prompt, the command typed in, then the rows exactly as printed. The view scrolls by whole rows, so no half row or cut-off word sits at an edge. What he names lights on the frame he names it.
 - **Agent box:** his request appears word by word as he says it, the spoken word on the pill. A caption under it would show his words twice: there is none while it is up.
 - **Key-line card:** the command small at the top, a few real lines large, re-wrapped at word boundaries with every word unchanged.
-- **Complete on its first frame.** A graphic that opens empty or fades up from nothing reads, over a camera, as a one-frame flash.
 
 ## Checking a clip
 
-Composite it over mid-grey, which shows shadows and edges that black hides:
-
-```sh
-ffmpeg -hide_banner -loglevel error -y -i CLIP.mov -f lavfi -i 'color=c=0x808080:s=1080x1920:r=25,format=rgb24' \
-  -filter_complex '[0:v]select=eq(n\,CLIP_FRAME),setpts=PTS-STARTPTS,format=rgba[fg];[1:v][fg]overlay=format=rgb:shortest=1,format=rgb24[out]' \
-  -map '[out]' -frames:v 1 EDIT/build/check/ID-FRAME.png
-```
-
-Then look at the same moments on the placed finish timeline (`look.py --at`). A pill is right when its padding is even on all four sides and it touches nothing but its own text. When a pill looks wrong, check the font first: a face with no declared file falls back silently, and every pill is then measured on the wrong glyphs.
+Composite it over mid-grey, which shows shadows and edges that black hides, then look at the same moments on the graded timeline. A pill is right when its padding is even on all four sides and it touches nothing but its own text. When a pill looks wrong, check the font first: a face with no declared file falls back silently, and every pill is then measured on the wrong glyphs.

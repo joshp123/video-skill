@@ -76,7 +76,7 @@ A claim he made on camera stays in the title, the card and the captions as he ma
 
 Captions may tidy his grammar ("it's a command line tool" shown as "this is a command line tool" is his own example) but never change his meaning, add a claim or drop one. Each tidy-up goes on the page for him to agree.
 
-A note is about the page he was reading, sized to what he named. "Is there any other good material?" asks for additions, each in full with its cost, and everything else unchanged. A repair always goes back inside the whole script, never to him as snippets: "this is fucking annoying giving me all these snippets in random order?"
+A note is about the page he was reading, sized to what he named. A note asking whether there is other good material asks for additions, each in full with its cost, and everything else unchanged. A repair always goes back inside the whole script, never to him as snippets: "this is fucking annoying giving me all these snippets in random order?"
 
 ## The proof: what the viewer sees of the tool
 
