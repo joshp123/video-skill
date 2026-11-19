@@ -94,7 +94,7 @@ The edit list is the build's input only. After the build, read the cut from the 
 | `title AT JSON` | sets inputs of the title under AT | 0.6 s |
 | `still FILE START FRAMES` | a picture over everything on a new top track | 1.2 s |
 | `captions JSON` | retypes or re-times captions, through the timeline's file | 3.9 s, then 4 min 46 s of cache refill |
-| `tidy` | deletes every other timeline but the blur carrier, and media nothing uses | 0.1 s |
+| `tidy` | deletes every other timeline but the blur carrier, and media nothing uses; names the render cache folder | 0.1 s |
 
 Taking frames out of one shot leaves a jump cut in the picture: cover it with `camera` across the cut, or a panel.
 
@@ -105,7 +105,7 @@ What Resolve's API cannot do, and what each tool does about it (21.2, tested 17 
 - **Captions.** No call creates a caption or sets its text or word times. `MoveItems` moves a caption with its words lit at the right frames. A caption cannot be trimmed. So retyping a caption, or a `cut` or `insert` across one, writes the caption track through the timeline's file (`timeline_file.py`), and the timeline is replaced by its import.
 - **Titles** cannot be lengthened, nor shortened past their first five seconds, by any offset call: `cut` and `insert` lay a title running across again at its new length, with its inputs.
 
-**The render cache.** The look's blur costs about 0.4 s a frame live. `build.py` flags each blur node for Resolve's render cache and sets the project's cache to "user"; Resolve fills it in the background while it is idle (codex-switch: 1.34 GB in about 4 minutes at load 5). Renders then read the cache (`render.py`). Trims and moves keep it; a new clip (a split's second part, a camera switch) is worked out live at the next render, about 0.4 s a frame. **A timeline imported from its file has no cache**: after a `captions` command, or a `cut` across a caption, Resolve fills it again (4 min 46 s on codex-switch); a render before then works the blurred frames out live. Deleting a timeline deletes its cache.
+**The render cache.** The look's blur costs about 0.4 s a frame live. `build.py` flags each blur node for Resolve's render cache and sets the project's cache to "user"; Resolve fills it in the background while it is idle (codex-switch: 1.34 GB in about 4 minutes at load 5). Renders then read the cache (`render.py`). Trims and moves keep it; a new clip (a split's second part, a camera switch) is worked out live at the next render, about 0.4 s a frame. **A timeline imported from its file has no cache**: after a `captions` command, or a `cut` across a caption, Resolve fills it again (4 min 46 s on codex-switch); a render before then works the blurred frames out live. The replaced timeline's cache stays on the disk (1.4 GB for codex-switch) and no call deletes it, so when a video is finished, quit Resolve and trash the project's cache folder, which `edit.py ... tidy` names with its size.
 
 ## `b/render.py PLAN.json --timeline NAME --out FILE [--preset phone|post|master|still|sound] [--range IN OUT] [--loudness PRESET] [--wait-for-cache]`
 

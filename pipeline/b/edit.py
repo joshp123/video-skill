@@ -28,7 +28,8 @@ after, and `notes`: anything the model must look at or decide.
   still FILE START FRAMES  a picture over everything from START for FRAMES.
   captions JSON            retype or re-time captions, [{"index": i, "text"?: ..., "words"?: [{text, start, end}]}]
                            (seconds on the timeline), through the timeline's file. Costs the render cache: see notes.
-  tidy                     delete every other timeline but the blur carrier, and media nothing uses.
+  tidy                     delete every other timeline but the blur carrier, and media nothing uses; report the
+                           render cache folder and its size.
 """
 import argparse
 import json
@@ -482,7 +483,8 @@ def write_captions(resolve, project, timeline, captions, look):
 
 def tidy(resolve, project, keep):
     """Delete every timeline but KEEP and the blur carrier, and every media pool item no remaining timeline uses (the
-    cameras and the lav stay in their Source bin)."""
+    cameras and the lav stay in their Source bin). Reports the project's render cache folder: Resolve keeps the cache of a
+    replaced or deleted timeline there, and no call deletes it."""
     began = time.monotonic()
     pool = project.GetMediaPool()
     timelines = [project.GetTimelineByIndex(i) for i in range(1, project.GetTimelineCount() + 1)]
@@ -505,8 +507,11 @@ def tidy(resolve, project, keep):
     for job in project.GetRenderJobList() or []:
         project.DeleteRenderJob(job['JobId'])
     session.save(resolve)
+    cache = Path(project.GetSetting('perfCacheClipsLocation')) / project.GetUniqueId()
+    size = sum(f.stat().st_size for f in cache.rglob('*') if f.is_file()) if cache.exists() else 0
     return {'timelines_deleted': sorted(t.GetName() for t in gone), 'media_deleted': len(unused),
-            'timelines': [t.GetName() for t in kept], 'seconds': round(time.monotonic() - began, 2)}
+            'timelines': [t.GetName() for t in kept], 'render_cache': {'folder': str(cache), 'gigabytes': round(size / 1e9, 2)},
+            'seconds': round(time.monotonic() - began, 2)}
 
 
 if __name__ == '__main__':
