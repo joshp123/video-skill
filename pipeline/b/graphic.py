@@ -5,7 +5,7 @@ Written by AI on 2026-10-25 by Claude Opus 5.5. Rewritten on 2026-10-26 by Claud
 stream H's proven route: a graphic is a title item on V4 with the template's composition and its inputs set on the
 item; there is no timeline per graphic.
 
-A library for place.py and note.py; it has no command of its own.
+A library for build.py and edit.py; it has no command of its own.
 
 A title row is {template, inputs, record, frames}. `template` names pipeline/b/templates/<look>/<template>.setting; each
 input is set on the template's published control of that name. A text input whose template control is a character
@@ -156,7 +156,7 @@ def timecode(frame, fps):
     return f"{hours % 24:02}:{minutes:02}:{seconds:02}:{frames:02}"
 
 
-def place_titles(resolve, project, timeline, track, titles, templates, base):
+def place_titles(resolve, project, timeline, track, titles, templates, base, empty_track=True):
     """Insert every title row on video TRACK (empty) of TIMELINE, the current timeline, with its inputs set.
     `InsertFusionTitleIntoTimeline` inserts at the playhead between the marks, as a ripple insert; at the timeline's end
     there is nothing to ripple. So each title is inserted past the end, exactly its length (the marks), and moved onto
@@ -164,7 +164,7 @@ def place_titles(resolve, project, timeline, track, titles, templates, base):
     start, fps = timeline.GetStartFrame(), float(timeline.GetSettings()["timelineFrameRate"])
     while timeline.GetTrackCount("video") < track:
         timeline.AddTrack("video")
-    if timeline.GetItemListInTrack("video", track):
+    if empty_track and timeline.GetItemListInTrack("video", track):
         raise ValueError(f"V{track} must be empty for the titles")
     resolve.OpenPage("edit")
     placed = []

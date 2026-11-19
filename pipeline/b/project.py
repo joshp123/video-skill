@@ -7,16 +7,15 @@ project.py EDIT_LIST
 Creates the project the list names (`resolve_project`) with its project media location, render cache and gallery on the
 media drive, colour management as the look needs it (DaVinci YRGB Color Managed, DaVinci Wide Gamut / Intermediate,
 Rec.709 Gamma 2.4 out, DaVinci DRTs, inverse DRT on, scale to crop), the list's resolution and frame rate, one colour
-group per camera, the cameras and the lav imported into a "Source" bin with each camera's input colour space (`log` in
-`cameras`), and the cameras' multicam `multicam` synced by their sound. Every setting is read back. An existing
-project of that name is opened and only what is missing is added; one that already holds timelines is left alone.
-Prints the multicam's angles (each camera file's offset in multicam frames), which place.py reads itself.
+group per camera, and the cameras and the lav imported into a "Source" bin with each camera's input colour space (`log`
+in `cameras`). Every setting is read back. An existing project of that name is opened and only what is missing is
+added; one that already holds timelines is left alone. The cameras' sync is the plan's `picture_offset_s`, which
+build.py lays by; there is no multicam.
 """
 import argparse
 import json
 from pathlib import Path
 
-import multicam
 import session
 
 COLOUR = {"colorScienceMode": "davinciYRGBColorManagedv2", "colorSpaceTimeline": "DaVinci WG/Intermediate",
@@ -91,14 +90,9 @@ def run(list_path):
             if item.GetClipProperty("Input Color Space") != log:
                 raise RuntimeError(f"{key}'s input colour space reads {item.GetClipProperty('Input Color Space')!r}")
         imported[key] = {"file": str(path), "input_colour_space": item.GetClipProperty("Input Color Space")}
-    existing = [item for item in source.GetClipList() or [] if item.GetName() == data["multicam"]]
-    if existing:
-        cameras = {"multicam": data["multicam"], "angles": multicam.read_angles(resolve, project, existing[0])}
-    else:
-        cameras = multicam.make_from_files(resolve, project, [files[key] for key in data["cameras"]], data["multicam"])
     session.save(resolve)
     return {"project": name, "settings": {key: read[key] for key in settings}, "colour_groups": sorted(groups),
-            "media": imported, "multicam": cameras}
+            "media": imported}
 
 
 if __name__ == "__main__":

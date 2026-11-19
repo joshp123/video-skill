@@ -20,7 +20,7 @@ found a pixel cut firing mid-shot on encoder noise). Reads the picture from the 
 `reference`.
 Since 2026-10-27 (Claude Opus 5.5, hill-climb stream L, after run 4's gate passed a build a cold judge failed): lit caption
 words against their onsets on the cut's own sound, caption pills and letters against the look's safe line, --range and --only.
-Since 2026-11-17 (Claude Opus 5.5, the rebuild): no sound-join class; `pipeline/joins/joins check` scores joins (cut.py runs
+Since 2026-11-17 (Claude Opus 5.5, the rebuild): no sound-join class; `pipeline/joins/joins check` scores joins (the report runs
 both), and the edit list's paths are read relative to its own folder.
 Sync offsets from the edit list's picture offsets since 2026-10-29 (Claude Opus 5.5): a camera's `picture_offset_s`, set picture
 against picture at ingest, replaces its own microphone, because the Pocket's microphone is the lav's radio feed, which arrives

@@ -1,4 +1,4 @@
-"""Is his whole head in the picture? One rule for preflight (the planned picture, before placing) and the gate (a render).
+"""Is his whole head in the picture? One rule, for qc.py on a render.
 
 Written by AI on 2026-11-18 by Claude Opus 5.5, after Josh on run 6's cut: "the crop still crops out half my head, which
 is a bit weird". Every check had passed it: they watch his eyes at cuts and his mouth against the captions, and nothing

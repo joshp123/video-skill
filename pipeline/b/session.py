@@ -34,6 +34,9 @@ import sys
 import time
 from pathlib import Path
 
+if not sys.flags.utf8_mode and sys.argv and Path(sys.argv[0]).resolve().parent == Path(__file__).resolve().parent:
+    # a command of this folder: plans, transcripts, names and Resolve's output are UTF-8 whatever the shell's locale
+    os.execv(sys.executable, [sys.executable, "-X", "utf8", "-B", *sys.argv])
 RESOLVE_APP = "/Applications/DaVinci Resolve/DaVinci Resolve.app"
 os.environ.setdefault("RESOLVE_SCRIPT_API", "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting")
 os.environ.setdefault("RESOLVE_SCRIPT_LIB", RESOLVE_APP + "/Contents/Libraries/Fusion/fusionscript.so")
@@ -171,7 +174,7 @@ def start_render(project, add_job, tries=6, wait_s=3):
     """Start the job ADD_JOB() makes (it sets the format and settings and returns AddRenderJob's id) and return its id.
     After a render made with a loudness preset, Resolve refuses to start the next job: it stays "Ready" however long it
     is retried, and a new job with the same settings starts at once (reproduced 18 Nov; run 6 lost 90 s on 4 of 17
-    preflights waiting on the refused one). So a refused job is deleted and made again, a few seconds apart."""
+    renders waiting on the refused one). So a refused job is deleted and made again, a few seconds apart."""
     for attempt in range(tries):
         job = add_job()
         if not job:

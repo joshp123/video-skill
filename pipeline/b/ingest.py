@@ -454,7 +454,6 @@ def work(session):
         plan = {"_about": f"Header written by pipeline/b/ingest.py on {datetime.date.today()} from measured facts "
                           f"({session / 'ingest' / 'state.json'}); nothing editorial.",
                 "resolve_project": f"{date} {slug}", "look": look, "fps": fps, "format": {"width": 1080, "height": 1920},
-                "multicam": "cameras",
                 "cameras": {
                     "front": {"file": rel(by_kind["front"]["path"]), "log": LOG_NAMES["front"], "group": "front",
                               "grade": feel, "picture_offset_s": 0, "reference": True},
@@ -484,17 +483,7 @@ def work(session):
                 raise RuntimeError(result.get("error") or done.stderr[-500:])
             return result
         try:
-            made = project()
-            fps = plan["header"]["fps"]
-            offsets = {Path(a["file"]).name: a["offset_frames"] for a in made["multicam"]["angles"].values()}
-            front_frames, wide_frames = (offsets[Path(by_kind[k]["path"]).name] for k in ("front", "wide"))
-            state.fact("multicam_offsets_frames", {"front": front_frames, "wide": wide_frames},
-                       f"project.py's multicam, synced by Resolve on the cameras' sound in whole frames: the wide camera at "
-                       f"{(wide_frames - front_frames) / fps:.3f} s on the front clock, against the lav's {lav_offset_s:.3f} s "
-                       f"and the picture's {wide_picture_s:.3f} s")
-            if abs((wide_frames - front_frames) / fps - wide_picture_s) > 1.5 / fps:
-                state.need(f"Resolve synced the multicam's wide angle {wide_frames - front_frames} frames after the front, more "
-                           f"than a frame from the measured picture offset {wide_picture_s:.3f} s: check the multicam before cutting")
+            project()
         except Exception as error:
             state.need(f"project.py did not finish ({error}): see the project step's error, fix it, and run project.py on "
                        f"{plan['plan']} again (it adds only what is missing)")
@@ -727,7 +716,7 @@ def write_inventory(session, state, files, offset, padded, tone, profile):
 
 # ---------- a second video from an ingested session ----------
 
-HEADER_KEYS = ("look", "fps", "format", "multicam", "cameras", "sound", "transcript")
+HEADER_KEYS = ("look", "fps", "format", "cameras", "sound", "transcript")
 SESSION_HEADER = "plan-header.json"  # the session's facts for any video's plan, paths relative to the session folder
 
 

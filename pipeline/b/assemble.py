@@ -1,4 +1,4 @@
-"""Turn the model's plan for a whole video into the edit list place.py builds: one command, no judgement.
+"""Turn the model's plan for a whole video into the edit list build.py lays: one command, no judgement.
 
 Written by AI on 2026-11-17 by Claude Opus 5.5, for the rebuild.
 
@@ -16,7 +16,7 @@ onto a second page (a lit word starting more than 25 frames after the one before
 The plan (paths relative to the plan's folder; times in seconds on the front camera's clock):
 
 {
-  "resolve_project", "look", "fps", "format": {"width", "height"}, "multicam",
+  "resolve_project", "look", "fps", "format": {"width", "height"},
   "cameras": {NAME: {"file", "log", "group", "grade", "picture_offset_s", "reference"?, "framing"?, "blur"?}}
              ("blur": true gives that camera the look's background blur at every finish: the wide camera),
   "sound": {"lav", "room_tone_s", "room_tone_crossfade_ms", "room_tone_end_fade_ms"},
@@ -179,8 +179,8 @@ def resolve_anchor(anchor, pieces, fps, duration_frames=None):
 
 
 def from_zero(check):
-    """The joins tool counts joins and pieces from 1; the plan, the edit list's audio rows and note.py count from 0.
-    Join k (from 0) lies between pieces k and k + 1, the same join note.py's {"join": k} rolls."""
+    """The joins tool counts joins and pieces from 1; the plan and the edit list's audio rows count from 0.
+    Join k (from 0) lies between pieces k and k + 1."""
     check = json.loads(json.dumps(check))
     for j in check.get("joins", []):
         j["join"] -= 1
@@ -462,7 +462,7 @@ def assemble(plan_path):
     for c in captions:
         c["start"], c["end"] = round(c["start"], 4), round(c["end"], 4)
     report["captions"] = unmatched
-    import captions as template  # the look's caption template's own limits, checked here so place.py does not refuse later
+    import captions as template  # the look's caption template's own limits, checked here so the build does not refuse later
     lookfile = json.loads((HERE.parents[1] / "looks" / plan["look"] / "look.json").read_text())
     report["caption_width"], size_px, limit = template.width_warnings(captions, lookfile, plan["format"]["width"], plan["format"]["height"])
     face = lookfile["fusion"]["faces"][template.TEMPLATE_FACE]
@@ -497,7 +497,7 @@ def assemble(plan_path):
                 overlaps.append(f"{kind}s on V{a['track']}: frames {a['record']} to {a['record'] + length} overlap the one at {b['record']}")
     if overlaps:
         raise ValueError("; ".join(overlaps) + " (anchor the first one's end to the next one's start with \"until\")")
-    edit_list = {key: plan[key] for key in ("resolve_project", "fps", "format", "look", "multicam", "cameras", "sound")}
+    edit_list = {key: plan[key] for key in ("resolve_project", "fps", "format", "look", "cameras", "sound")}
     edit_list.update(duration_frames=duration_frames, segments=segments, panels=panels, titles=titles, audio=audio, heard=heard,
                      captions=captions)
     report["graphic_spans"] = highlight_spans(titles, panels)

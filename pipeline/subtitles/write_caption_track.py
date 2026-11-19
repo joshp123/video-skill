@@ -5,7 +5,7 @@ Written by AI on 2026-10-22 by Claude Fable 5.1.
 Resolve's scripting API cannot create or edit captions (21.1), but it exports and imports timelines as .drt files,
 and a .drt carries the subtitle track: every caption's text, frames and per-word times, and the Fusion template
 that styles the track. So the captions are written into the file of an exported timeline, and the file is imported
-back as the timeline with captions (pipeline/resolve/add_captions.py does the export and import).
+back as the timeline with captions (pipeline/b/timeline_file.py does the export and import).
 
 The look's track comes from `looks/<look>/resolve/caption-track.drt`: a timeline exported from Resolve after the
 look's subtitle template was dropped on its subtitle track once, in the interface, when the look was made.
@@ -263,7 +263,9 @@ def read_captions(drt_path):
         start = int(re.search(r'<Start>(\d+)</Start>', block).group(1))
         duration = int(re.search(r'<Duration>(\d+)</Duration>', block).group(1))
         words, starts, ends, frame, _ = parse_caption_blob(re.search(r'<FieldsBlob>([0-9a-f]+)</FieldsBlob>', block).group(1))
-        assert frame == start
+        # A caption moved on the timeline (MoveItems) keeps its old frame and word ticks in its blob, and Resolve lights
+        # its words relative to where it now starts (rendered on 21.2, 19 Nov); ticks are half frames.
+        starts, ends = [t + 2 * (start - frame) for t in starts], [t + 2 * (start - frame) for t in ends]
         out.append({"text": text, "start": start, "end": start + duration, "words": words, "word_starts": starts, "word_ends": ends})
     return out
 

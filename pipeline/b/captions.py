@@ -1,4 +1,4 @@
-"""Turn the edit list's captions into build/captions.json, the file pipeline/resolve/add_captions.py puts on the track.
+"""Turn the edit list's captions into build/captions.json, the file build.py puts on the caption track.
 
 Written by AI on 2026-10-25 by Claude Opus 5.5, for the B pipeline. Refuses a long word gap instead of moving the word
 since 2026-10-26 (Claude Opus 5.5, stream B of the hill-climb): the move lit "left." 9 frames early in run 3.
@@ -85,9 +85,9 @@ def width_warnings(captions, look, frame_width, frame_height):
 
 
 def build(edit_list_path, output_path):
-    edit_list = json.loads(Path(edit_list_path).read_text())
+    edit_list = json.loads(Path(edit_list_path).read_text(encoding='utf-8'))
     fps = edit_list["fps"]
-    look = json.loads((LOOKS / edit_list["look"] / "look.json").read_text())
+    look = json.loads((LOOKS / edit_list["look"] / "look.json").read_text(encoding='utf-8'))
     captions, moves, overlaps, refusals = [], [], [], []
     for caption in edit_list["captions"]:
         try:
@@ -107,7 +107,7 @@ def build(edit_list_path, output_path):
     warnings, size_px, limit = width_warnings(captions, look, edit_list["format"]["width"], edit_list["format"]["height"])
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps({"fps": fps, "captions": captions}, indent=1, ensure_ascii=False) + "\n")
+    output.write_text(json.dumps({"fps": fps, "captions": captions}, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     return {"file": str(output), "captions": len(captions), "words": sum(len(c["words"]) for c in captions),
             "word_starts_moved": moves, "overlaps": overlaps, "width_warnings": warnings,
             "measured_as": f"{TEMPLATE_FACE} at {size_px:.1f} px, safe line {limit:g} px"}
