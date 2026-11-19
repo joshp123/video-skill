@@ -224,7 +224,7 @@ def rewrite(resolve, project, timeline, work, crossfades=None, captions=None, lo
         raise RuntimeError("Could not rename the timeline before the file pass")
     try:
         imported = pool.ImportTimelineFromFile(str(rewritten), {"importSourceClips": False})
-        if not imported or not imported.SetName(name):
+        if not imported or (imported.GetName() != name and not imported.SetName(name)):
             raise RuntimeError(f"Import of the rewritten timeline failed or could not be named {name!r}")
         set_track_names(imported, names)
         put_audio_back(imported, before)
