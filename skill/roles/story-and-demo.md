@@ -72,7 +72,7 @@ Decisions for you:
 
 ## His words and his notes on the page
 
-A claim he made on camera stays in the title, the card and the captions as he made it, whatever today's numbers say: "i set the content you do the mechanical stuff". A cold reader who says one of his numbers looks wrong has given you a line for "What the screens show of you", not a change to his words.
+A claim he made on camera stays in the title, the card and the captions as he made it, whatever today's numbers say (SKILL.md, "What is his, and what is yours"). A cold reader who says one of his numbers looks wrong has given you a line for "What the screens show of you", not a change to his words.
 
 Captions may tidy his grammar ("it's a command line tool" shown as "this is a command line tool" is his own example) but never change his meaning, add a claim or drop one. Each tidy-up goes on the page for him to agree.
 
@@ -80,7 +80,7 @@ A note is about the page he was reading, sized to what he named. A note asking w
 
 ## The proof: what the viewer sees of the tool
 
-Treat the tool's real output as footage: re-shot cleanly at the size the frame needs, the most telling run, one thing at a time, the thing he names lit as he names it. Copying the screen recording fails because a full-width laptop screen in a 1080-pixel frame cannot be read on a phone; redrawing it fails because it no longer looks like the tool: "WE CAN FAKE REAL TERMINALS WE SHOULD OBVIOUSLY JUST MAKE IT LOOK REAL BUT FIT THE VERTICAL FORMAT". A demo that went badly on the day can be done again from the real tool: "btw if my terminal demos were bad you can recreate them".
+Treat the tool's real output as footage: re-shot cleanly at the size the frame needs, the most telling run, one thing at a time, the thing he names lit as he names it. Copying the screen recording fails because a full-width laptop screen in a 1080-pixel frame cannot be read on a phone; redrawing it fails because it no longer looks like the tool (`tools/remotion.md`). A demo that went badly on the day can be done again from the real tool: "btw if my terminal demos were bad you can recreate them".
 
 | The line is about | Show |
 | --- | --- |

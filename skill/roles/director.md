@@ -17,6 +17,8 @@ He gives all his notes in one pass; apply them in one pass and send one new file
 - **A note that adds or removes words** moves everything after it on every track: picture, sound, captions and graphics together, never one track alone. Then re-time the captions across the change and check every graphic anchored after it still lands on its word.
 - **A note that remakes most of the film** (a new structure, a different script) is a new first cut from the builder. Say so to him before you do it, with the reason.
 
+**What keeps the render cache.** A switch, a trim or move away from a join, a title's words, an inserted still or clip and a grade nudge are made by calls on the live timeline and keep its cache for every clip they do not create. A note that moves a join (its crossfade) or re-times captions goes through the timeline's file, whose import is a new timeline: by the tests so far that means a fresh cache fill of about 6 to 7 minutes before a fast render (`tools/resolve.md`, "The timeline's file"). Batch every such change of a round into one round trip.
+
 Then look at the frames either side of every change, run the join checker on any join you moved, and render once. He sees the change only in that render, beside the version before it where that helps him see it.
 
 **When he has changed the timeline himself,** for example removed a wide clip to put a line back on the front camera, his change is a decision: keep it. Read the timeline back before you edit it, so you work on what is there, not on what you last left.

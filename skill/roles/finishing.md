@@ -26,7 +26,7 @@ The file he receives is exactly what he will see. Trust the checks for what they
 - **The whole, in order, at phone width,** as the viewer meets it: every caption, label and card readable in the time it is up, and the four questions: what is this, why should I care, does it really work, what do I do now.
 - **Against the last version he saw:** a frame-by-frame difference of the two files (same preset both sides) says where something changed. Look there; every change should be one somebody meant, and a note of his that changed nothing is a missed note.
 
-Nobody here can hear a join or watch motion. What the checks and your eyes could not settle goes to Josh with the cut: at most three moments, with times. A fault you have seen is never one of those: it is fixed first.
+What the checks and your eyes could not settle goes to Josh with the cut (SKILL.md, "What reaches him, and when"). A fault you have seen is never one of those: it is fixed first.
 
 ## Rendering
 
@@ -45,4 +45,4 @@ When a render goes to him, copy it unchanged to `versions/cut-vN.mp4` and give i
 
 ## Hand on
 
-The file, in `versions/` with its line; for the cut's message, what changed since the last version and where, and at most three moments for his eyes or ears. Before it goes to him, tidy the project so the timeline he may open is the current one.
+The file, in `versions/` with its line; for the cut's message, what changed since the last version and where, and what only his eyes or ears can settle. Before it goes to him, tidy the project so the timeline he may open is the current one.

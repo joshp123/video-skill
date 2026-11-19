@@ -6,7 +6,7 @@ The lav is the only dialogue. The cameras' own microphones are for sync and noth
 
 ## Nobody here can listen
 
-No model available here hears whether a join sounds natural. On 29 Oct every free route was tried on six clips with known faults (Ollama Cloud's models and the Codex plan refused audio; four local audio models gave the same answer for clean and broken clips alike), and Fable 5.2 and the GPT models take no audio (17 Nov). The join checker below measures what can be measured; pitch, breath and meaning at a join are judged from the words and the waveform, and what stays uncertain goes to Josh with the cut, at most three moments. When a listening route passes a test like that one, this section changes.
+No model available here hears whether a join sounds natural. On 29 Oct every free route was tried on six clips with known faults (Ollama Cloud's models and the Codex plan refused audio; four local audio models gave the same answer for clean and broken clips alike), and Fable 5.2 and the GPT models take no audio (17 Nov). The join checker below measures what can be measured; pitch, breath and meaning at a join are judged from the words and the waveform, and what stays uncertain goes to Josh with the cut. When a listening route passes a test like that one, this section changes.
 
 ## Placing the edges
 

@@ -25,7 +25,7 @@ A viewer meets it on a phone, in a feed, playing muted, and decides within a sec
 - **The proof is the tool working on real data,** readable on a phone, with what he names lit as he names it. "if you copy directly from my screen recording or fake stuff too hard then gg you will have neither."
 - **The tool is what they came to see:** on screen early and for most of the running time, with his voice over it. Josh, on a first cut: "we don't really see enough of the product, the screenshots.  It's too much of me talking".
 - **The first frame is the thumbnail** and works with the sound off.
-- **Nothing flashes past.** Every screen with words stays up long enough to read at phone size: "honestly this is all too fast to see".
+- **Nothing flashes past.** Every screen with words stays up long enough to read at phone size.
 - **One design.** Captions, titles, terminal, captures and cards look as if one designer made them, and the two cameras look like one camera from two angles.
 - **It works muted,** and nothing a viewer must read sits under the platforms' buttons and bars.
 - **It sounds like him.** Nobody hears a join; the file plays at -14 LUFS integrated, at most -1 dBTP.
@@ -39,7 +39,7 @@ The video outranks every line in this skill. When a rule or a tool stands in the
 
 **Words on screen in his voice** (a title, a card, the ask) are his to settle. Propose, his own lines first and yours marked as yours; until he settles a slot, the cut carries your proposal and the message says so. Text written for a machine, such as a prompt a viewer pastes into their agent, is yours to write well: "its a prompt for an AI i dont need to write it. you should write it". He approves it, and his edits stand exactly.
 
-**His taste.** The script: "the agents made bad scripts before ... I don't think this is within model capability right now. It needs a human". The look, which he picks once and you reuse until he changes it ("for now re-use but 1) it will evolve 2) we should keep as much in possible in code"). What of his life the video shows. The lock.
+**His taste.** The script: "the agents made bad scripts before ... I don't think this is within model capability right now. It needs a human". The look, which he picks once and you reuse until he changes it. What of his life the video shows. The lock.
 
 **Everything else is yours:** finding the story in his words, the demo content, every cut and join, the camera for each line, framing and layout, the grade, the sound, the graphics, the captions and their timing, the finish and the judging. That includes dropping a word, a pause or a breath to keep a cut clean where his meaning stands. Tell him what you did; never ask him about craft.
 
@@ -106,10 +106,7 @@ Each camera's clips sit in that camera's colour group with that camera's grade. 
 
 - **Resolve runs windowless** (`-nogui`); nothing takes the foreground or asks him to click. Computer use, when no script reaches something, is Codex's, in the background: "computer use works fine in the background in codex, model is holding it wrong".
 - **One video job per Mac.** Resolve has one open project, so two agents driving it collide, and two heavy jobs on one Mac drive it into swap. Before you start, check whether Resolve is running with a project you did not open; if so, wait or use the other Mac.
-- **Dialogs are the one way Resolve reaches his screen,** and every scripted call stops until one is answered. Never save while the unnamed "Untitled Project" is open (`tools/resolve.md`).
-- **A render blocks every other Resolve call** until it ends.
-- **Memory grows.** Resolve reached 10 to 17 GB over long blur work (18 Nov); quit and relaunch it between heavy stages.
-- **The media drive's cable drops** and the drive comes back by itself: wait and resume, never fail hard. After a sleep or a drop, relaunch Resolve before any script and trust a render only by its own frames.
+- **Dialogs, renders, memory, sleep and drive drops** each stop or corrupt scripted work in their own way: read `tools/resolve.md`, "Driving it" and "Rendering", before the first call. The media drive's cable drops and the drive comes back by itself: wait and resume, never fail hard.
 - **Mains power** before anything that runs while he is away.
 
 ## Tools
@@ -125,7 +122,7 @@ If a tool is wrong or missing something, fix it in `pipeline/` with the smallest
 ## Limits
 
 - **No Gemini, nothing from Google, nothing paid.** **No LUTs:** he shoots log, and Resolve's colour management does the conversion.
-- **Nothing he has seen is overwritten.** New file names; `trash`, never `rm`, for anything you did not make.
+- **Nothing he has seen is lost.** Every file he saw keeps its name and its line in `versions/README.md`; the timeline he saw is kept as a named duplicate before a round of notes. Use `trash`, never `rm`, for anything you did not make.
 - **Clean up** superseded timelines, scratch projects, caches and renders you made: "this will leave a million timelines that have slopped that need cleaning up and fix filling up my disk so make sure you get rid of all that shit".
 
 ## Where files live

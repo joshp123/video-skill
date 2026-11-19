@@ -37,7 +37,7 @@ Write each camera's picture offset in `inventory.md` with how it was found. Appl
 
 ## Face touches
 
-His standard: "cut all the moments where i touch my face etc (as a pro director would do)". This skill's `scripts/face_touch.swift`, on Apple's Vision, flags each frame where a hand has three or more confident points inside his face's box enlarged by 15%; ingest runs it on both cameras' whole files. It has caught every touch a frame-by-frame check found, flagged gestures near the neck as well, and missed a scratch behind the ear that the other camera's scan caught. So read the two scans together, and look at each flagged moment on full-size frames.
+For the cut's rule on touches see `roles/editor.md`, "Clean frames". This skill's `scripts/face_touch.swift`, on Apple's Vision, flags each frame where a hand has three or more confident points inside his face's box enlarged by 15%; ingest runs it on both cameras' whole files. It has caught every touch a frame-by-frame check found, flagged gestures near the neck as well, and missed a scratch behind the ear that the other camera's scan caught. So read the two scans together, and look at each flagged moment on full-size frames.
 
 ## The screen recording
 

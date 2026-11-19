@@ -18,7 +18,7 @@ The cut owns when each graphic comes and goes and which word it lights; the stor
 
 ## Two routes, and why
 
-Josh's direction: as much as possible natively in Resolve, "except terminal graphics which are okay in remotion unless there is a better more native sane option".
+Josh's direction is native in Resolve, with terminal graphics the exception (SKILL.md, "Tools").
 
 - **Titles, highlights on app pixels, photos, cards and the closing card** are the look's Fusion title templates, one per kind the look draws, each with published inputs (its words, photos, sizes, regions). Each sits on the titles track as a title item with its inputs set on the item, so a word change is an input change in place. Text+ lays out and wraps its own words: choose every input by looking at the frame. Where a template cannot do something by its inputs, change the template once for the look, never per graphic (`pipeline/README.md` says where they are built).
 - **The terminal, an agent's box and the key-line card** are Remotion clips, because they need per-frame data no Resolve graphic takes (`tools/remotion.md`). Each renders as its own transparent clip and sits on the app track.
