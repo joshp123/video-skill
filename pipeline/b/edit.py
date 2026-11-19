@@ -201,8 +201,17 @@ def change_time(resolve, project, name, at, delta, plan_path):
     new_time = lambda t: t if t <= at else (max(at, t + delta) if delta < 0 else t + delta)
     joins = {(t, round(new_time(a), 3)): l for (t, a), l in joins_of(timeline).items() if not (delta < 0 and at <= a < end)}
     caption_items = timeline.GetItemListInTrack('subtitle', 1) or []
-    across = [c for c in caption_items if where(timeline, c)[0] < at < where(timeline, c)[1]]
+    # a caption cannot be trimmed, so any caption the change reaches into is written again through the file
+    across = [c for c in caption_items if where(timeline, c)[0] < end and where(timeline, c)[1] > at and
+              not (delta > 0 and where(timeline, c)[0] >= at)]
     rewrite_captions = readback.read(resolve, project, name)['captions'] if across else None
+    for kind, track in tracks(timeline):  # refuse before changing anything
+        for item in clips(timeline, kind, track) if kind == 'video' else []:
+            a, b = where(timeline, item)
+            if a < at < b and track in CAMERA_TRACKS and (item.GetSpeed() or {}).get('Percentage', 100) != 100:
+                raise ValueError(f'V{track} clip at {a} is retimed: cut it by hand')
+            if a < at < b and track == TITLES:
+                title_template(item, plan['look'])
     for kind, track in tracks(timeline):
         if kind == 'subtitle' and rewrite_captions is not None:
             continue
@@ -251,17 +260,26 @@ def change_time(resolve, project, name, at, delta, plan_path):
             shift = lambda s: new_time(s * fps) / fps
             c.update(start=shift(c['start']), end=shift(c['end']), words=[dict(w, start=shift(w['start']), end=shift(w['end'])) for w in c['words']])
         timeline = write_captions(resolve, project, timeline, rewrite_captions, plan['look'])
-        notes.append(f'caption {across[0].GetName()!r} ran across frame {at}, so the caption track was written again through '
+        notes.append(f'caption {across[0].GetName()!r} reached into the change at frame {at}, so the caption track was written again through '
                      "the timeline's file: the timeline is its import and has no render cache until Resolve fills it again")
     session.save(resolve)
     return done(timeline, before, began, notes=notes)
 
 
+def title_template(item, look):
+    """(templates folder, the look's template the title ITEM was laid from)."""
+    templates = Path(__file__).resolve().parent / 'templates' / look
+    name = graphic.read_title(item)['template']
+    found = [p.stem for p in templates.glob('*.setting') if graphic.fusion_tool_name(p.stem) == name]
+    if not found:
+        raise ValueError(f'No template of the look {look!r} makes the title {name!r}')
+    return templates, found[0]
+
+
 def relay_title(resolve, project, timeline, item, start, frames, look):
     """Lay title ITEM again at START for FRAMES, with the same template and inputs."""
     read = graphic.read_title(item)
-    templates = Path(__file__).resolve().parent / 'templates' / look
-    template = next(p.stem for p in templates.glob('*.setting') if graphic.fusion_tool_name(p.stem) == read['template'])
+    templates, template = title_template(item, look)
     timeline.DeleteClips([item], False)
     graphic.place_titles(resolve, project, timeline, TITLES, [{'template': template, 'inputs': read['inputs'], 'record': start, 'frames': frames}],
                          templates, Path.cwd(), empty_track=False)

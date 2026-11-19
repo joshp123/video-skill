@@ -66,6 +66,8 @@ Makes the plan's project: colour management (DaVinci YRGB Color Managed, Wide Ga
 
 Builds the first cut once. `assemble.py` turns the plan into `edit-list.json` (its help gives the plan's format): it finds the kept words, has `joins/joins place` put every sound edge inside a measured pause and score every join, aligns every word to the lav for the captions and anchors, and converts everything to timeline frames. Then the timeline above, in this order: picture, titles, sound, **one pass through the timeline's file** (each crossfade's sub-frame geometry and the captions with their word times), then the grade, the blur and the render cache. The file pass comes first because an imported timeline has no render cache. The timeline is read back and compared with the edit list; `differences` lists every mismatch. `assemble`'s report lists what needs a look: edges with no pause, flagged joins, doubtful word times, words heard but not chosen.
 
+To measure a plan without Resolve (its length, every edge with no pause, every flagged join), run `assemble.py PLAN.json --out edit-list.json --force` alone: about 20 s, plus 20 to 50 s the first time a lav stretch is calibrated. The 27 s build above reused run 6's calibration. A camera's grade lives in the plan's `cameras` (`grade`, `group`): `build.py` and `edit.py camera` read it there when no clip of that camera is on the timeline to copy from.
+
 The edit list is the build's input only. After the build, read the cut from the timeline (`readback.py`), never from the list.
 
 ## Changing the cut
