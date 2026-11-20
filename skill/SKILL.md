@@ -1,133 +1,134 @@
 ---
 name: video
-description: Make Josh's demo videos from his own recordings. He talks to two cameras and a lav about a tool he built, usually unscripted and out of order, often with a screen recording; one agent walks the stages a post house works in (ingest, story, cut, colour, motion, finishing) and turns that into a finished vertical short in DaVinci Resolve, while he keeps his words and his taste. Use it when Josh plugs in camera cards, asks to make, cut, finish, fix or take over a video, sends a note on a script or a cut, or says the work is wrong or misaligned.
+description: Plan, cut, grade, caption, and finish Josh's vertical demo videos in DaVinci Resolve Studio from two cameras, a lav, and screen recordings. Use when planning a video before recording, plugging in camera cards, making or revising a cut, or taking over a video in progress.
 ---
-
-<!-- Written by AI on 2026.11.19 by model claude opus 5.5: the goal, what good is, who decides what, and how a video runs, stated plainly; the first cut is built once and every later note is an edit on Resolve's timeline. -->
 
 # Video
 
-## The goal
+## Goal
 
-Josh builds software tools and records himself explaining one: a front camera, a wide camera, a lav, and usually a screen recording of the tool. He mostly talks unscripted and out of order, with restarts and asides. You turn that into a video he is happy to post, doing the editing, grading, sound, graphics, captions and assembly to a professional standard, while the words and the taste stay his.
+Turn Josh's product demos (front camera, wide camera, lav, and screen or terminal output) into a finished vertical short (1080×1920 at camera frame rate, for X first) that he is happy to post.
 
-The deliverable, unless he says otherwise, is a vertical short, 1080 by 1920 at the cameras' frame rate, for X first, as long as the story needs and no longer.
+His attention and waiting time are the scarce resources. Everything runs in the background (`-nogui` Resolve), the first cut is built once onto one live Resolve timeline, and every subsequent note is applied in place in minutes. One frontier agent owns the entire video from pre-shoot plan to final export.
 
-What it costs him is the measure. His attention and his waiting are the scarce things: every round in which he looks, notes five things and then waits for fixes is the cost to cut. So everything runs in the background, out of his way; he chooses the script, watches the finished cut once, and gives his notes in one pass; and each note is applied in minutes on the cut he saw.
+## What makes a good demo video
 
-Each stage's file gives the professional practice that matters at that stage and the facts of his rig, his look and Resolve that you could not know. How you meet the outcome is yours.
+A viewer meets it muted in a phone feed and decides in 1–2 seconds whether to stay:
 
-## What a good demo video is
+- **One promise, kept.** A stranger can say in one sentence what the tool does, what proved it works, and what to do next.
+- **The tool is the star.** On screen early and for most of the runtime, readable at 390 px phone width, running on real data, with whatever Josh names highlighted as he names it.
+- **The first frame is the thumbnail.** Readable muted, shows a person and the tool, natural expression.
+- **Nothing flashes past.** Every card or title holds long enough to read at phone width (~0.33 s/word + 0.5 s).
+- **One design system.** Captions, titles, terminal clips, captures, and cards come from his look (`looks/2026-10-16-signpost-pill/`); both cameras match as one camera from two angles.
+- **Works muted, stays clear of platform UI.** Nothing essential under the top bar (y < 200) or right button column (x > 950 below y 900); captions stay in one fixed band ≥ 120 px below his lower lip.
+- **Clean sound.** Seamless joins, room tone under gaps, delivered at -14 ± 1 LUFS integrated and ≤ -1 dBTP.
+- **One actionable ask** at the end.
 
-A viewer meets it on a phone, in a feed, playing muted, and decides within a second or two whether to stay. Judge the whole before the parts: separately good parts can still make a video that reads as three stitched together.
+If a rule, look value, or tool gets in the way of a better video, flag it to Josh.
 
-- **One promise, kept.** A stranger can say in one sentence what the tool does, what showed them it works, and what to do next. A ramble holds several videos; the short is the one the footage can prove.
-- **The tool is what they came to see:** on screen early and for most of the running time, readable on a phone, working on real data, with his voice over it and what he names lit as he names it.
-- **The first frame is the thumbnail** and says what the video is about with the sound off.
-- **Nothing flashes past.** Every screen with words stays up long enough to read at phone size.
-- **One design.** Captions, titles, terminal, captures and cards look as if one designer made them, and the two cameras look like one camera from two angles.
-- **It works muted,** and nothing a viewer must read sits under the platforms' buttons and bars.
-- **It sounds like him.** Nobody hears a join; the file plays at -14 LUFS integrated, at most -1 dBTP.
-- **It lands on one ask** a viewer can act on from a video. A prompt to paste is one possible ask, not the default.
+## Ownership: Josh vs you
 
-When a rule here, the look or a tool stands in the way of a good video, tell him: the house style and the tools are his to change.
-
-## What is his, and what is yours
-
-- **His words and claims,** exactly as he said them, numbers and estimates included, whatever today's output or the footage shows. Cut for story and length only, and show him what is out. You do the mechanics; he sets the content.
-- **Words on screen in his voice** (a title, a card, the ask). Propose them, his own lines first and yours marked as yours; until he settles a slot the cut carries your proposal, and your message says so. Text written for a machine, such as a prompt a viewer pastes into their agent, is yours to write well; he approves it, and his edits stand exactly.
-- **The script.** Models do not yet choose a good script from his ramble, so he chooses, from a page built to make that quick.
-- **The look,** which he picks once and you reuse until he changes it; it will evolve, and as much of it as possible lives in code.
-- **What of his life the video shows, and the lock.**
-
-**Everything else is yours:** finding the story, the demo content, every cut and join, the camera for each line, framing, layout, grade, sound, graphics, captions and their timing, the finish and the judging, including dropping a word, a pause or a breath where his meaning stands. Tell him what you did; never ask him about craft.
+- **Josh owns:** his spoken words and claims (including numbers and estimates), script choice, look choice, what personal/private data appears, words on screen in his voice (propose his own lines first, mark yours as `Proposed:` until he settles them), and final lock.
+- **You own everything else:** pre-shoot hooks/outline, finding the story, real demo captures, every cut and join, camera choice, framing, colour match, wide-camera blur, graphics, caption phrasing/timing, inspection, and finishing. Report what you did; never ask him about craft.
 
 ## Reading Josh
 
-His intent is in his own words: `record.md` and his messages, read whole, never a summary or an earlier agent's notes. Read them at the start, after a compaction and before any change of direction. An earlier agent's "approved" means nothing unless his words say so.
+Read `record.md` (his verbatim words on this video) whole—never a summary or another agent's notes.
 
-- **Find each note's object first:** which version, which second, which sentence of yours he was answering. Its scope is that object and what caused the problem; keep everything he did not mention.
-- **A question is a question.** When he asks what you think, or asks to discuss, answer in a few lines and build nothing until he says go.
-- **Answer "not X" with the smallest change that meets it,** in the same style, never a swing to the opposite. When the size is unclear, show two or three on one real frame.
-- **A remark is not a rule.** Something he tried or said once is a choice for that case; carry the reason behind it, not its letter. A trial he agrees to is built to the scope he set and labelled provisional.
+- **Scope every note to its exact object** (which version, timestamp, or sentence he answered) and leave everything else untouched.
+- **A question is a question:** if he asks to discuss or asks what you think, answer briefly and build nothing until he says go.
+- **Answer "not X" with the smallest shift** in the same style, never a swing to the opposite. If size/degree is ambiguous, show 2–3 variants on one real frame.
+- **A remark on one video is not a permanent rule.** Keep the reason, not the letter.
 
-## What reaches him, and when
+## Workflow
 
-He never needs the recording in his head. Each thing reaches him whole, in a form he can judge in a minute, made by the real tools on the real footage in his look:
+### 1. Pre-shoot plan (5 min, before recording)
 
-1. **The script page,** as soon as it is right, ideally while the cameras are still up (`roles/story-and-demo.md`).
-2. **Look options,** only when no picked look fits, as stills (`roles/motion.md`).
-3. **The cut, once, finished:** graded, mixed, captioned, every graphic in his look, the wide camera's blur on, as a file he plays on his phone. With it, a few lines: the video in one sentence; what changed and which note prompted it; anything nobody here can judge, at most three moments with their times; any words on screen still your proposal.
-4. **The file to post,** after lock.
+Skip directly to **Ingest** if footage already exists. Otherwise, spend 5 minutes setting up a clean one-shot shoot:
 
-A fault you could find and fix never reaches him: nothing unfinished goes to him. Against that sits his waiting: fixing a fault you have found almost always costs less than a round with him, but searching for faults you have no reason to expect costs his clock. Look once, where only eyes can judge, then send it.
+1. Take Josh's voice/text brain-dump on what the tool does and why it matters.
+2. Propose **2–3 hook + thumbnail concepts** (one line + what is visible on frame 0).
+3. Draft a **5-beat outline** (each beat: the point he wants to make + what will be on screen to prove it). Never write a teleprompter script for him to read stiffly—bullet the beats in his voice so he talks naturally in clean pauses.
+4. Give a **3-item shoot check**:
+   - Demo capture setup: size single-window demos narrow/phone-shaped with enlarged text (Cap Focus Mode), or use Cap display/area capture for multi-window flows (e.g. `agent-keyring` dialogs).
+   - Seeded/clean data so private emails, keys, and unrelated rows stay out of frame.
+   - Start with one sharp clap on both cameras and brief silence for room tone.
 
-Decisions come together in one message, each answerable in a word, your recommendation first, in plain English with no build numbers or names you made up. During a long run, a line when something changes that he would want to know; never hours of silence.
+### 2. Ingest and story
 
-## How a video runs
+Read `tools/rig-and-ingest.md` when starting from cards or raw recordings.
 
-One agent makes the video, walking the stages a post house works in, in their order, as one continuous job rather than a hand-off between agents. Read each stage's file when you reach it, and the parts of `pipeline/README.md` for the tools you are about to use.
+1. Run `pipeline/b/ingest.py start` (copies/hashes media, syncs lav to front camera, extracts room tone, runs CrisperWhisper verbatim transcript and Apple Vision face-touch scans, creates the Resolve project).
+2. Settle `needs_the_model`: confirm log profiles visually, verify wide-camera picture offset by eye (clap and late-take lips), fix proper nouns in a working copy of the transcript, check screen recording for private details, and review flagged face touches on both cameras.
+3. Capture real demo proof (`graphics/content/` + `content.md`): never invent screens, numbers, or agent answers. Re-run CLI tools at the panel's column width via `pipeline/graphics/capture-terminal.py`; crop/conform screen recordings to timeline fps.
+4. Send Josh **one script page** (`versions/script-vN.md`) as soon as it is right—ideally while cameras are still up—measured via `assemble.py --force` alone:
 
-| Stage | Read | Hands on |
-| --- | --- | --- |
-| Ingest | `tools/cameras.md`, `tools/transcription.md` | Footage copied and checked, synced, the lav on the front camera's clock, the verbatim transcript, `inventory.md`, `record.md` |
-| Story and demo | `roles/story-and-demo.md` | The script page he chooses from; the real demo content |
-| The cut | `roles/editor.md` | The first cut: his chosen lines, every join, every camera, captions and graphics spotted |
-| Colour | `roles/colour.md` | Each camera's grade; the wide camera's blur |
-| Motion | `roles/motion.md` | Every graphic in his look |
-| Finishing | `roles/finishing.md`; `roles/director.md`, "Other agents" | The file he watches, looked at first and given one fresh review; after lock, the file he posts |
-| His notes | `roles/director.md` | Each note applied on the cut he saw; other agents; when the work goes wrong |
+```markdown
+# <video>: script, version N
 
-**The order follows cost:** cheap, reversible work first, expensive work once on what will not move. Ingest and transcribe first, while a gap can still be re-recorded. Then the script, because every later stage hangs off which words are in. Work that does not depend on his choice (demo content, room tone, the colour match on this recording's frames) starts while he reads the page.
+72 s, measured from cut edges. <What changed, or "First version.">
+I recommend: <one-line recommendation>
 
-**The first cut is built once,** from the script he chose, in the background, by the pipeline's builder, onto one Resolve timeline. Settle the words and cameras first: which take of each line, every join, the camera and framing of every shot. Captions, graphics and the wide camera's blur go on last, because they hang off where his words fall, and words rarely change after the first watch.
+Decisions for you:
+1. <question only Josh can answer, answerable in a word, with recommendation>
 
-**From then on Resolve's timeline is the only copy of the cut.** A note is an edit on it, looked at on its frames and rendered once from Resolve's cache. Building the cut again is only for a change that remakes most of the film.
+**0:00 · "<his exact spoken words>"**
+<what is on screen: real output or picture in plain English>
 
-## The timeline
+---
+**Worth re-recording while cameras are up:** <point + his nearest words, or "nothing">
+**Options:** <full additions with second cost; off unless he says yes>
+**Left out:** <omitted lines in a few words>
+**What the screens show of you:** <private details and what you propose to hide>
+**Words on screen:** <each slot: his nearest lines first, yours marked Proposed>
+**Captions that tidy your grammar:** <each edit, or "none">
+**The look:** <"as last time", or stills of anything new>
+```
 
-One timeline per video, laid out as an editor lays out a two-camera talking head, every track named, so Josh can open it and change anything himself: the background; the front camera, the main clip, under the whole film; the wide camera on the track above, only where the film shows it; the app (captures, stills, terminal clips); titles; the captions on the subtitle track; the lav pieces on the dialogue track with room tone under the gaps. `pipeline/README.md` gives the tracks. He puts a line back on the front camera by disabling or deleting the wide clip over it.
+Start colour matching and demo captures while he reads the page.
 
-Each camera's clips sit in that camera's colour group with that camera's grade. Nothing is graded at timeline level, because the titles would take the grade too.
+### 3. Build the first cut once and check it directly
 
-**What is kept, and when it is tidied.** Before you apply a round of notes, duplicate the timeline he last saw under a name that says its version; keep that one duplicate until the video is posted, replacing it at each round. The pipeline's tidy deletes every timeline but the current one and the blur carrier, so it runs only once the video is finished and posted. Until then, delete scratch timelines you made by name.
+Read `tools/resolve.md` and `pipeline/README.md` before driving Resolve.
 
-## Running on his Mac, out of his way
+1. **Build once** with `pipeline/b/build.py PLAN.json --timeline NAME`. Order of decisions: settle words, takes (prefer one clean continuous run over stitched fragments), and cameras first; add captions, graphics, and wide-camera blur last so timing hangs off settled words.
+   - Tracks: `V1` Background, `V2` Main camera (whole film, underneath `V3`), `V3` Second/wide camera (only where shown, with blur), `V4` App/captures/Remotion terminals, `V5` Fusion titles/highlights/cards, `A1` Lav dialogue, `A2` Room tone, `Subtitle 1` Captions.
+   - Framing: keep his whole head (hair included) inside the frame and clear of panels/titles; match face size and eye line across both cameras; stay ≤ ~1.12× zoom on 4K source where possible for native sharpness.
+   - Captions: phrase naturally, 1–2 rows, ~15–17 chars/row in Signpost-Pill, hide under opening titles or typed agent boxes, split before any >25-frame word gap (template paging limit).
+   - Colour: per-camera colour groups + CDL on node 1 (`SetCDL`/`GetCDL`), never timeline-level. Match front camera first with look feel, then match wide camera's contrast and skin hue to front (optional reference: Darren Mostyn corpus in `/Users/josh/Documents/Codex/2026-08-19/https-www-youtube-com-darrenmostyn-https-2/outputs/darren-mostyn-youtube-corpus`).
+2. **Use Resolve's MCP as your eyes:**
+   - Call `get_thumbnails` across cuts and layouts to spot issues, then `get_image` at full resolution on every camera cut (eyes open, no face touch, skin/exposure match, head clearance, glasses rim on wide shots) and consecutive frames at every graphic entry/exit (no 1-frame slivers).
+   - `get_image` does not draw the subtitle track: render 1-frame stills (`render.py --preset still --range F F`) to check caption placement, pill coverage, and pill colour `#D9531E` (`(217, 83, 30)`).
+   - Check `describe_grade` to confirm colour management and CDLs.
+3. **Render & check physics + audio:**
+   - Render `phone` preset from Resolve's render cache (`render.py --preset phone --loudness ... --wait-for-cache`), then run `pipeline/b/report.py` to verify `-14 ± 1 LUFS / ≤ -1 dBTP`, zero black/offline frames, and extract 4 s seam WAVs (`all-seams.wav` + per-join WAVs).
+   - **Listen directly:** if running on a native-audio model (Gemini 4 Neon or verified Gemini Flash via `read_file`), listen to `all-seams.wav` (and any non-pause join clip) yourself to verify clean speech, prosody, and room tone; otherwise delegate seam listening to a Gemini subagent via T3 `delegate_task`, or explicitly list any non-pause seams for Josh to hear.
+   - Fix anything wrong **in place** on the live timeline (via Resolve MCP `run_script`/`run_script_unsafe` or `pipeline/b/edit.py`) and render once.
+4. **Deliver once** in `versions/cut-vN.md` / `versions/cut-vN.mp4` (logged in `versions/README.md`) with a short note: one-sentence summary, what changed, at most 3 moments only Josh can judge, and any still-`Proposed:` on-screen copy.
 
-- **Resolve runs windowless** (`-nogui`); nothing takes the foreground or asks him to click. Computer use, when no script reaches something, is Codex's, in the background.
-- **One video job per Mac.** Resolve has one open project, so two agents driving it collide, and two heavy jobs on one Mac drive it into swap. Before you start, check whether Resolve is running with a project you did not open; if so, wait or use the other Mac.
-- **Dialogs, renders, memory, sleep and drive drops** each stop or corrupt scripted work in their own way: read `tools/resolve.md`, "Driving it" and "Rendering", before the first call. The media drive's cable drops and the drive comes back by itself: wait and resume, never fail hard.
-- **Mains power** before anything that runs while he is away.
+### 4. Apply Josh's notes in place
 
-## Tools
+1. Duplicate the timeline he saw (`cut N as seen in vN`) as backup; edit the **live** timeline so it keeps its render cache.
+2. Read the timeline back first (`readback.py`) so any hand edits Josh made in Resolve are preserved.
+3. Make direct edits via Resolve MCP (`SetProperties`, `SetCDL`, `SetPosition`, `SetLeftOffset`/`SetRightOffset`) or `b/edit.py` (`cut`, `insert`, `split`, `camera`, `title`, `still`, `captions`). Batch any caption text/timing edits into one `.drt` pass (it triggers a ~5 min cache refill).
+4. Inspect changed frames with `get_image`, listen to any newly created audio join, and render once from cache.
 
-The tools are in `~/code/video-skill/pipeline/`, linked as `Media/Edits/pipeline`; `pipeline/README.md` says what each does, takes, returns and cannot do. In outline: ingest from cards to a checked session; the first-cut builder; the sound-join placer and checker (`pipeline/joins/`); the word aligner that times captions; the edits every track must follow together (taking time out, a camera switch, a caption retype); the render, from Resolve's cache; the report of checks on a finished cut; and tidying the project.
+### 5. Lock, export, and tidy
 
-Blackmagic's MCP server for Resolve (`davinci-resolve`) drives the same API: `run_script` for calls, `get_image` and `get_thumbnails` for graded frames straight into your view, `search_scripting_api` and `get_scripting_docs` for the API. The tested facts about Resolve are in `tools/resolve.md`. Resolve can usually do what an agent claims it cannot: read the manual and the API, and try it, before saying so.
+After Josh locks:
+1. Render `post` (8 Mbit/s H.264) into `Exports/<slug>/` and `master` (ProRes 422 HQ). Check dark fades at full size on `post`.
+2. Run `b/edit.py PLAN.json --timeline NAME tidy` to remove old timelines and unused media, then quit Resolve and `trash` the render cache folder it reports.
+3. Check Resolve's installed version against `tools/resolve.md`. If newer, read `/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/CHANGELOG.md` and propose retiring any custom workaround Resolve now supports natively.
 
-Do as much as possible natively in Resolve by script, as little as possible by computer use or custom code; terminal graphics in Remotion are the one standing exception, until Resolve has a sane native route. At the end of a video, compare Resolve's version with the one `tools/resolve.md` was last checked against; when it has moved, read the installed scripting `CHANGELOG.md` and propose any custom step that now has a native route, with the test that proves it.
+## Limits and paths
 
-If a tool is wrong or missing something, fix it in `pipeline/` with the smallest change and say so at the end of the video; never fork a copy into a video's folder. Nothing is installed on his machine by hand: the Resolve commands run on the system Python, and the tools that need packages run in the repository's devenvs (`pipeline/README.md`).
-
-## Limits
-
-- **No Gemini, nothing from Google, nothing paid.** **No LUTs:** he shoots log, and Resolve's colour management does the conversion.
-- **Nothing he has seen is lost.** Every file he saw keeps its name and its line in `versions/README.md`. Use `trash`, never `rm`, for anything you did not make.
-- **Leave no mess:** when the video is posted, remove the superseded timelines, scratch projects, caches and renders you made; they fill his disk.
-
-## Where files live
-
-Media is on the SSD at `/Volumes/Josh Extreme Pro USB4 4TB/Media/`; paths below start there. The internal disk is nearly full: small files are fine, renders and caches are not.
-
-- **Source footage:** `Input Media/<camera>/<session>/`. **Exports he posts:** `Exports/<slug>/`. **Caches and scratch:** `Edits/.cache/`. Resolve's cache: `Resolve Cache/`.
-- **Per recording session,** `Edits/<session>/`: `inventory.md` (each file's camera, profile, lens and offsets, with how each was established), `screen-recording.md`, `audio/`, `transcript/`, the face-touch scans.
-- **Per video,** `Edits/YYYY-MM-DD-slug/`: `record.md`, `words.md` (one heading per slot for words on screen, with `Final:` for what he settled and `Proposed:` for yours), `graphics/content/` with `content.md`, `versions/` (everything he saw, numbered, one line each in `versions/README.md`), and the builder's working files. A note of his about this video stays here.
-- **`record.md`** is his words about this video, verbatim, with the agent text he was answering. Write it with the `raw-steering` skill's scripts, which read from each harness's own records who wrote a message: a brief another agent sent into a thread is not his. When no thread is about this video, use the threads about how he wants videos made and the session where this one was recorded.
-- **Looks:** `looks/` in this repository, linked from `Media/Edits/looks/`. The one he picked on 16 Oct, and every video's until he changes it, is `looks/2026-10-16-signpost-pill/`. His moodboard is the Apple Notes note "road trip style guide", with downloads of its references in `Media/Edits/looks/moodboard/`.
-- **Examples** of forms he could judge in one pass (a script page, look options, a decision message, words on screen) are in `~/code/video-skill/skill/examples/` on his Mac only (`examples/README.md`).
-
-## Changing this skill
-
-A note from Josh changes that video. A note about the look changes the look's values. A fault you should have caught is a gap in a tool. None of these becomes a rule here: what one video or one model got wrong is not guidance for the next. This skill changes only when a fact or a goal in it is wrong or missing, at the end of a video, with his approval. A tool fact enters `tools/` only with its source: tested on his Mac with the date, a manual page, or an exact error.
-
-The skill is written in `~/code/video-skill/skill/`. Agents load it as `video` from `~/code/nix/nixos-config/ai/skills/video/` (the same folder as `~/.agents/skills/video`). After an approved change, copy the files of `skill/` that git tracks over it, then commit and push both repositories.
+- **No paid third-party APIs or services** (local tools, Resolve Studio, and Josh's existing model subscriptions including Antigravity/Gemini are fine).
+- **No LUTs** for camera conversion (shoot log, use Resolve colour management).
+- **Never lose what Josh saw** (`versions/cut-vN.mp4` + `versions/README.md`). Use `trash`, never `rm`, on anything you did not create.
+- **One video job per Mac** (Resolve has one open project and blur uses 10+ GB RAM; run on mains power; if SSD drops, wait and relaunch Resolve `-nogui`).
+- **Storage** (keep all media, caches, and renders on the SSD; internal disk is nearly full):
+  - Media root: `/Volumes/Josh Extreme Pro USB4 4TB/Media/` (`Input Media/`, `Edits/<session>/`, `Edits/YYYY-MM-DD-slug/`, `Edits/.cache/`, `Resolve Cache/`, `Exports/<slug>/`).
+  - Pipeline & looks: `~/code/video-skill/pipeline/` and `~/code/video-skill/looks/2026-10-16-signpost-pill/`.
+  - Style moodboard: Apple Notes `"road trip style guide"` and `Media/Edits/looks/moodboard/`.
+  - Private formatting examples (local Mac only): `~/code/video-skill/skill/examples/README.md`.
+- **Skill source of truth:** edit in `~/code/video-skill/skill/`, then sync tracked files to `~/code/nix/nixos-config/ai/skills/video/` (`~/.agents/skills/video`) and commit/push both repos.

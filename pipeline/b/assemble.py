@@ -193,7 +193,7 @@ def from_zero(check):
         j["join"] -= 1
         if "between" in j:
             j["between"] = [b - 1 for b in j["between"]]
-    check["flagged"] = [f - 1 for f in check.get("flagged", [])]
+    check["needs_listen"] = [f - 1 for f in check.get("needs_listen", [])]
     return check
 
 
@@ -290,7 +290,7 @@ def needs_attention(report):
     """What in the report needs the model: the exit code is 1 when this is not empty."""
     lav = report.get("joins") or {}
     return ([f"edge with no pause: piece {e['piece']} {e['side']}" for e in report["edges"]]
-            + [f"join {j['join']} {'flagged' if j['flag'] else 'borderline'}" for j in lav.get("joins", []) if j["flag"] or j.get("borderline")]
+            + [f"join {j['join']} needs listen ({'; '.join(j.get('reasons') or [])})" for j in lav.get("joins", []) if j.get("needs_listen")]
             + [f"caption: {c}" for c in report["captions"] if "is in no caption" in c]
             + [f"doubtful word: {d}" for d in report.get("doubtful_words", [])]
             + [f"unchosen words in piece {u['piece']}: {u['words']!r}" for u in report.get("unchosen_words", [])]
@@ -510,8 +510,7 @@ def assemble(plan_path):
                      captions=captions)
     report["graphic_spans"] = highlight_spans(titles, panels)
     report["edges_near_cuts"] = edges_near_cuts(segments, panels, titles)
-    report["joins_flagged"] = report["joins"].get("flagged")
-    report["calibration_span"] = report["joins"].get("calibration_span")  # joins check --audio needs it with --lav
+    report["joins_needs_listen"] = report["joins"].get("needs_listen", [])
     return edit_list, report
 
 

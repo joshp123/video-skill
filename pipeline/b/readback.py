@@ -12,7 +12,7 @@ readback.py PLAN.json --timeline NAME [--describe]
 - audio: `clips`, every clip on every audio track, sub-frame, in seconds on the timeline's clock, with its fades;
   `crossfades`, every audio transition's track, start, length and type.
 - captions: from the timeline's own .drt export: text, start, end and each word's start and end, in seconds.
---describe prints the timeline in the edit list's shape instead (describe()), which qc.py and the join check read.
+--describe prints the timeline in the edit list's shape instead (describe()), which report.py reads.
 """
 import argparse
 import json
@@ -94,8 +94,8 @@ def read(resolve, project, name):
 
 
 def describe(resolve, project, name, plan_path):
-    """Timeline NAME in the edit list's shape, with the plan's fixed facts (cameras, sound, look): what qc.py and the join
-    check read. A camera segment is whatever shows: the second camera's clip where V3 has one, else the main camera."""
+    """Timeline NAME in the edit list's shape, with the plan's fixed facts (cameras, sound, look): what report.py reads.
+    A camera segment is whatever shows: the second camera's clip where V3 has one, else the main camera."""
     plan = json.loads(Path(plan_path).read_text(encoding='utf-8'))
     folder = Path(plan_path).resolve().parent
     got = read(resolve, project, name)

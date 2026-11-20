@@ -359,7 +359,7 @@ def work(session):
         if checked.get("gaps_over_10_s"):
             state.need(f"the transcript has no words in {checked['gaps_over_10_s']} (front seconds): the recogniser drops words "
                        "after a long pause (on 12 Oct it lost 'Cut. And [UM] d- open this on fucking Google.' at 924.5 s); "
-                       "transcribe each gap you might use again on its own (tools/transcription.md)")
+                       "transcribe each gap you might use again on its own (tools/rig-and-ingest.md)")
     transcript_watch = threading.Thread(target=transcript_done)
     transcript_watch.start()
 
@@ -440,7 +440,7 @@ def work(session):
         state.need("the screen recording's offset on the front clock and its private detail: fix the offset on two events "
                    "both clocks record (his face lit by the screen, key clicks against characters appearing) far apart, and "
                    f"look at each change for emails and names; creation times (not to be trusted, off by seconds): "
-                   f"{screen_index['creation_times']}; frame times: {screen_index['index']} (tools/cameras.md, 'The screen recording')")
+                   f"{screen_index['creation_times']}; frame times: {screen_index['index']} (tools/rig-and-ingest.md)")
 
     # 8. the plan's header, inventory.md, the project
     @stage(state, "plan header")
@@ -510,7 +510,7 @@ def work(session):
     transcript_watch.join()
     state.need("the transcript's names (the recogniser mishears them: on 12 Oct 'codecs' for Codex, 'clawed' for Claude): correct them in a working copy from the tool's "
                "README and help, word by word, keep the raw file, and point the plan's transcript at the copy "
-               "(tools/transcription.md)")
+               "(tools/rig-and-ingest.md)")
     state.need("each camera's picture against its own sound: his lips closing on a p, b or m against the lav, late in the take "
                "(the wide camera's offset above is picture against picture)")
     state.need("record.md: Josh's words about this video (the raw-steering skill's scripts)")
